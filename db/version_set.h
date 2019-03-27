@@ -937,7 +937,11 @@ class VersionSet {
   InternalIterator* MakeInputIterator(
       const Compaction* c, RangeDelAggregator* range_del_agg,
       const EnvOptions& env_options_compactions);
-
+///
+  InternalIterator* MakeColumnCompactionInputIterator(
+      const Compaction* c, RangeDelAggregator* range_del_agg,
+      const EnvOptions& env_options_compactions);
+///
   // Add all files listed in any live version to *live.
   void AddLiveFiles(std::vector<FileDescriptor>* live_list);
 

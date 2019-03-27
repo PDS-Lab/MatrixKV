@@ -75,6 +75,8 @@
 #include "utilities/merge_operators/bytesxor.h"
 #include "utilities/persistent_cache/block_cache_tier.h"
 
+#include "utilities/nvm_mod/my_log.h"
+
 #ifdef OS_WIN
 #include <io.h>  // open/close
 #endif
@@ -192,6 +194,11 @@ DEFINE_string(
     "\tsstables    -- Print sstable info\n"
     "\theapprofile -- Dump a heap profile (if supported by this port)\n"
     "\treplay      -- replay the trace file specified with trace_file\n");
+
+DEFINE_bool(use_nvm_module, false,"");
+DEFINE_bool(reset_nvm_storage, false,"");
+DEFINE_string(pmem_path,"","");
+DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
@@ -3563,6 +3570,15 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           FLAGS_rate_limiter_auto_tuned));
     }
 
+    if (FLAGS_use_nvm_module && options.nvm_setup == nullptr) {
+      auto nvm_setup = new NvmSetup();
+      nvm_setup->use_nvm_module = FLAGS_use_nvm_module;
+      nvm_setup->reset_nvm_storage = FLAGS_reset_nvm_storage;
+      nvm_setup->pmem_path = FLAGS_pmem_path;
+      nvm_setup->pmem_size = FLAGS_pmem_size;
+      options.nvm_setup.reset(nvm_setup);
+    }
+
     options.listeners.emplace_back(listener_);
     if (FLAGS_num_multi_db <= 1) {
       OpenDb(options, FLAGS_db, &db_);
@@ -5733,6 +5749,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 };
 
 int db_bench_tool(int argc, char** argv) {
+  rocksdb::init_log_file();
   rocksdb::port::InstallStackTraceHandler();
   static bool initialized = false;
   if (!initialized) {

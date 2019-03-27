@@ -26,6 +26,9 @@
 #include "rocksdb/options.h"
 #include "util/thread_local.h"
 
+#include "utilities/nvm_mod/nvm_cf_mod.h"
+//#include "utilities/nvm_mod/column_compaction.h"
+
 namespace rocksdb {
 
 class Version;
@@ -270,7 +273,7 @@ class ColumnFamilyData {
   bool NeedsCompaction() const;
   // REQUIRES: DB mutex held
   Compaction* PickCompaction(const MutableCFOptions& mutable_options,
-                             LogBuffer* log_buffer);
+                             LogBuffer* log_buffer,bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr);
 
   // Check if the passed range overlap with any running compactions.
   // REQUIRES: DB mutex held
@@ -382,7 +385,13 @@ class ColumnFamilyData {
   Status AddDirectories();
 
   Directory* GetDataDir(size_t path_id) const;
-
+///
+  bool NeedsColumnCompaction() const;
+  void set_bg_column_compaction(bool value) { bg_column_compaction_ = value; }
+///
+///
+  NvmCfModule* nvmcfmodule = nullptr;
+///
  private:
   friend class ColumnFamilySet;
   ColumnFamilyData(uint32_t id, const std::string& name,
@@ -469,6 +478,10 @@ class ColumnFamilyData {
 
   // Directories corresponding to cf_paths.
   std::vector<std::unique_ptr<Directory>> data_dirs_;
+
+///
+  std::atomic<bool> bg_column_compaction_;
+///
 };
 
 // ColumnFamilySet has interesting thread-safety requirements

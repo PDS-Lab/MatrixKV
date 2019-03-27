@@ -1,0 +1,2501 @@
+DestroyDB soptions.nvm_setup==nullptr
+open /pmem/nvm/cf_0_default.pool
+NvmCfModule:close
+DestroyDB delete dir:/pmem/nvm
+DestroyDB delete file:/pmem/nvm/cf_0_default.pool
+DestroyDB delete file:/pmem/nvm/cf_0_default_sstable.pool
+creat /pmem/nvm/cf_0_default.pool
+pol_path2:/pmem/nvm/cf_0_default_sstable.pool
+creat PersistentBitMap len:36
+creat PersistentSstable path:/pmem/nvm/cf_0_default_sstable.pool map:2453667840 is:0 each_size:68157440 number:36 total_size:2453667840
+creat SstableMetadata level0_stop_writes_trigger:36
+add L0 table:7 index:0
+finish L0 table:7 keynum:15600 size:62 MB
+add L0 table:10 index:1
+finish L0 table:10 keynum:15608 size:62 MB
+add L0 table:12 index:2
+finish L0 table:12 keynum:15618 size:62 MB
+add L0 table:14 index:3
+finish L0 table:14 keynum:15611 size:62 MB
+add L0 table:16 index:4
+finish L0 table:16 keynum:15612 size:62 MB
+add L0 table:18 index:5
+finish L0 table:18 keynum:15609 size:62 MB
+add L0 table:20 index:6
+finish L0 table:20 keynum:15621 size:62 MB
+add L0 table:22 index:7
+finish L0 table:22 keynum:15619 size:62 MB
+add L0 table:24 index:8
+finish L0 table:24 keynum:15623 size:62 MB
+add L0 table:26 index:9
+finish L0 table:26 keynum:15617 size:62 MB
+add L0 table:28 index:10
+finish L0 table:28 keynum:15611 size:62 MB
+add L0 table:30 index:11
+finish L0 table:30 keynum:15616 size:62 MB
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:12
+up end
+immu L0table[30 28 26 24 22 20 18 16 14 12 10 7 ]
+L0 minsmallest:'000000000000001C3030303030303030' seq:49138, type:1 maxlargest:'00000000001E847E3030303030303030' seq:37360, type:1
+nvm cf pick no L1
+L0 select num:12 L0 select size:256.00 MB
+L0smallest:'000000000000001C3030303030303030' seq:49138, type:1 L0largest:'00000000000A93223030303030303030' seq:46974, type:1
+select L0:30 keynum:5419 size:22412984
+select L0:28 keynum:5419 size:22412984
+select L0:26 keynum:5410 size:22375760
+select L0:24 keynum:5437 size:22487432
+select L0:22 keynum:5283 size:21850488
+select L0:20 keynum:5420 size:22417120
+select L0:18 keynum:5489 size:22702504
+select L0:16 keynum:5398 size:22326128
+select L0:14 keynum:5364 size:22185504
+select L0:12 keynum:5459 size:22578424
+select L0:10 keynum:5385 size:22272360
+select L0:7 keynum:5420 size:22417120
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:33 index:12
+finish L0 table:33 keynum:15620 size:62 MB
+add L0 table:35 index:13
+finish L0 table:35 keynum:15626 size:62 MB
+add L0 table:37 index:14
+finish L0 table:37 keynum:15620 size:62 MB
+add L0 table:40 index:15
+finish L0 table:40 keynum:15599 size:62 MB
+add L0 table:42 index:16
+finish L0 table:42 keynum:15622 size:62 MB
+add L0 table:45 index:17
+finish L0 table:45 keynum:15612 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:30 first_key_index:5419 offset:22412984
+file:28 first_key_index:5419 offset:22412984
+file:26 first_key_index:5410 offset:22375760
+file:24 first_key_index:5437 offset:22487432
+file:22 first_key_index:5283 offset:21850488
+file:20 first_key_index:5420 offset:22417120
+file:18 first_key_index:5489 offset:22702504
+file:16 first_key_index:5398 offset:22326128
+file:14 first_key_index:5364 offset:22185504
+file:12 first_key_index:5459 offset:22578424
+file:10 first_key_index:5385 offset:22272360
+file:7 first_key_index:5420 offset:22417120
+add L0 table:47 index:18
+CompactionJob::Install end
+finish L0 table:47 keynum:15629 size:62 MB
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[30 28 26 24 22 20 18 16 14 12 10 7 ]
+L0 minsmallest:'00000000000A932C3030303030303030' seq:42537, type:1 maxlargest:'00000000001E847E3030303030303030' seq:37360, type:1
+L1table:31 ['000000000000001C3030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+nvm cf pick no L1
+L0 select num:12 L0 select size:256.00 MB
+L0smallest:'00000000000A932C3030303030303030' seq:42537, type:1 L0largest:'0000000000151DD73030303030303030' seq:174296, type:1
+select L0:30 keynum:5387 size:22280632
+select L0:28 keynum:5454 size:22557744
+select L0:26 keynum:5370 size:22210320
+select L0:24 keynum:5364 size:22185504
+select L0:22 keynum:5571 size:23041656
+select L0:20 keynum:5406 size:22359216
+select L0:18 keynum:5303 size:21933208
+select L0:16 keynum:5376 size:22235136
+select L0:14 keynum:5350 size:22127600
+select L0:12 keynum:5483 size:22677688
+select L0:10 keynum:5371 size:22214456
+select L0:7 keynum:5468 size:22615648
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:50 index:19
+finish L0 table:50 keynum:15605 size:62 MB
+add L0 table:52 index:20
+finish L0 table:52 keynum:15620 size:62 MB
+add L0 table:55 index:21
+finish L0 table:55 keynum:15630 size:62 MB
+add L0 table:57 index:22
+finish L0 table:57 keynum:15631 size:62 MB
+add L0 table:59 index:23
+finish L0 table:59 keynum:15621 size:62 MB
+add L0 table:62 index:24
+finish L0 table:62 keynum:15631 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:30 first_key_index:10806 offset:44693616
+file:28 first_key_index:10873 offset:44970728
+file:26 first_key_index:10780 offset:44586080
+file:24 first_key_index:10801 offset:44672936
+file:22 first_key_index:10854 offset:44892144
+file:20 first_key_index:10826 offset:44776336
+file:18 first_key_index:10792 offset:44635712
+file:16 first_key_index:10774 offset:44561264
+file:14 first_key_index:10714 offset:44313104
+file:12 first_key_index:10942 offset:45256112
+file:10 first_key_index:10756 offset:44486816
+file:7 first_key_index:10888 offset:45032768
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[30 28 26 24 22 20 18 16 14 12 10 7 ]
+L0 minsmallest:'0000000000151DF03030303030303030' seq:26568, type:1 maxlargest:'00000000001E847E3030303030303030' seq:37360, type:1
+L1table:31 ['000000000000001C3030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1table:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:53 ['00000000000F84A93030303030303030' seq:0, type:1-'0000000000146D173030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+nvm cf pick no L1
+add L0 table:64 index:25
+L0 select num:12 L0 select size:227.04 MB
+L0smallest:'0000000000151DF03030303030303030' seq:26568, type:1 L0largest:'00000000001E847E3030303030303030' seq:37360, type:1
+select L0:30 keynum:4810 size:19894160
+select L0:28 keynum:4738 size:19596368
+select L0:26 keynum:4837 size:20005832
+select L0:24 keynum:4822 size:19943792
+select L0:22 keynum:4765 size:19708040
+select L0:20 keynum:4795 size:19832120
+select L0:18 keynum:4817 size:19923112
+select L0:16 keynum:4838 size:20009968
+select L0:14 keynum:4897 size:20253992
+select L0:12 keynum:4676 size:19339936
+select L0:10 keynum:4852 size:20067872
+select L0:7 keynum:4712 size:19488832
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+finish L0 table:64 keynum:15624 size:62 MB
+add L0 table:67 index:26
+finish L0 table:67 keynum:15608 size:62 MB
+add L0 table:69 index:27
+finish L0 table:69 keynum:15612 size:62 MB
+add L0 table:72 index:28
+finish L0 table:72 keynum:15620 size:62 MB
+add L0 table:74 index:29
+finish L0 table:74 keynum:15619 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:30
+delete l0 table:28
+delete l0 table:26
+delete l0 table:24
+delete l0 table:22
+delete l0 table:20
+delete l0 table:18
+delete l0 table:16
+delete l0 table:14
+delete l0 table:12
+delete l0 table:10
+delete l0 table:7
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:18
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'00000000000000063030303030303030' seq:201742, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:31 ['000000000000001C3030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1table:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:53 ['00000000000F84A93030303030303030' seq:0, type:1-'0000000000146D173030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1table:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:31 ['000000000000001C3030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1over:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1over:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:53 ['00000000000F84A93030303030303030' seq:0, type:1-'0000000000146D173030303030303030' seq:0, type:1]
+L1over:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1over:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:18 L0 select size:177.41 MB
+L0smallest:'00000000000000063030303030303030' seq:201742, type:1 L0largest:'000000000004EDA03030303030303030' seq:426123, type:1
+select L0:74 keynum:2437 size:10079432
+select L0:72 keynum:2497 size:10327592
+select L0:69 keynum:2496 size:10323456
+select L0:67 keynum:2501 size:10344136
+select L0:64 keynum:2485 size:10277960
+select L0:62 keynum:2486 size:10282096
+select L0:59 keynum:2476 size:10240736
+select L0:57 keynum:2533 size:10476488
+select L0:55 keynum:2497 size:10327592
+select L0:52 keynum:2529 size:10459944
+select L0:50 keynum:2534 size:10480624
+select L0:47 keynum:2557 size:10575752
+select L0:45 keynum:2585 size:10691560
+select L0:42 keynum:2454 size:10149744
+select L0:40 keynum:2459 size:10170424
+select L0:37 keynum:2454 size:10149744
+select L0:35 keynum:2495 size:10319320
+select L0:33 keynum:2502 size:10348272
+select L1:31 ['000000000000001C3030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:77 index:0
+finish L0 table:77 keynum:15632 size:62 MB
+add L0 table:79 index:1
+finish L0 table:79 keynum:15621 size:62 MB
+add L0 table:81 index:2
+finish L0 table:81 keynum:15621 size:62 MB
+add L0 table:84 index:3
+finish L0 table:84 keynum:15631 size:62 MB
+add L0 table:86 index:4
+finish L0 table:86 keynum:15618 size:62 MB
+add L0 table:88 index:5
+finish L0 table:88 keynum:15618 size:62 MB
+add L0 table:91 index:6
+finish L0 table:91 keynum:15618 size:62 MB
+add L0 table:93 index:7
+finish L0 table:93 keynum:15618 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:74 first_key_index:2437 offset:10079432
+file:72 first_key_index:2497 offset:10327592
+file:69 first_key_index:2496 offset:10323456
+file:67 first_key_index:2501 offset:10344136
+file:64 first_key_index:2485 offset:10277960
+file:62 first_key_index:2486 offset:10282096
+file:59 first_key_index:2476 offset:10240736
+file:57 first_key_index:2533 offset:10476488
+file:55 first_key_index:2497 offset:10327592
+file:52 first_key_index:2529 offset:10459944
+file:50 first_key_index:2534 offset:10480624
+file:47 first_key_index:2557 offset:10575752
+file:45 first_key_index:2585 offset:10691560
+file:42 first_key_index:2454 offset:10149744
+file:40 first_key_index:2459 offset:10170424
+file:37 first_key_index:2454 offset:10149744
+file:35 first_key_index:2495 offset:10319320
+file:33 first_key_index:2502 offset:10348272
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'000000000004EDA03030303030303030' seq:426123, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1table:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:53 ['00000000000F84A93030303030303030' seq:0, type:1-'0000000000146D173030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1table:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1over:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:53 ['00000000000F84A93030303030303030' seq:0, type:1-'0000000000146D173030303030303030' seq:0, type:1]
+L1over:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1over:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:18 L0 select size:180.34 MB
+L0smallest:'000000000004EDA03030303030303030' seq:426123, type:1 L0largest:'000000000009D9FF3030303030303030' seq:223010, type:1
+select L0:74 keynum:2572 size:10637792
+select L0:72 keynum:2558 size:10579888
+select L0:69 keynum:2553 size:10559208
+select L0:67 keynum:2544 size:10521984
+select L0:64 keynum:2566 size:10612976
+select L0:62 keynum:2518 size:10414448
+select L0:59 keynum:2526 size:10447536
+select L0:57 keynum:2510 size:10381360
+select L0:55 keynum:2541 size:10509576
+select L0:52 keynum:2472 size:10224192
+select L0:50 keynum:2578 size:10662608
+select L0:47 keynum:2485 size:10277960
+select L0:45 keynum:2509 size:10377224
+select L0:42 keynum:2545 size:10526120
+select L0:40 keynum:2605 size:10774280
+select L0:37 keynum:2555 size:10567480
+select L0:35 keynum:2574 size:10646064
+select L0:33 keynum:2509 size:10377224
+select L1:38 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:96 index:8
+finish L0 table:96 keynum:15621 size:62 MB
+add L0 table:98 index:9
+finish L0 table:98 keynum:15619 size:62 MB
+add L0 table:100 index:10
+finish L0 table:100 keynum:15612 size:62 MB
+add L0 table:103 index:11
+finish L0 table:103 keynum:15622 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:74 first_key_index:5009 offset:20717224
+file:72 first_key_index:5055 offset:20907480
+file:69 first_key_index:5049 offset:20882664
+file:67 first_key_index:5045 offset:20866120
+file:64 first_key_index:5051 offset:20890936
+file:62 first_key_index:5004 offset:20696544
+file:59 first_key_index:5002 offset:20688272
+file:57 first_key_index:5043 offset:20857848
+file:55 first_key_index:5038 offset:20837168
+file:52 first_key_index:5001 offset:20684136
+file:50 first_key_index:5112 offset:21143232
+file:47 first_key_index:5042 offset:20853712
+file:45 first_key_index:5094 offset:21068784
+file:42 first_key_index:4999 offset:20675864
+file:40 first_key_index:5064 offset:20944704
+file:37 first_key_index:5009 offset:20717224
+file:35 first_key_index:5069 offset:20965384
+file:33 first_key_index:5011 offset:20725496
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'000000000009D9FF3030303030303030' seq:223010, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1table:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1table:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+L1over:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1over:65 ['0000000000151DF03030303030303030' seq:0, type:1-'00000000001A0F803030303030303030' seq:0, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:3
+L0 select num:18 L0 select size:205.03 MB
+L0smallest:'000000000009D9FF3030303030303030' seq:223010, type:1 L0largest:'00000000000F84A43030303030303030' seq:366063, type:1
+select L0:74 keynum:2863 size:11841368
+select L0:72 keynum:2896 size:11977856
+select L0:69 keynum:2928 size:12110208
+select L0:67 keynum:2942 size:12168112
+select L0:64 keynum:2832 size:11713152
+select L0:62 keynum:2879 size:11907544
+select L0:59 keynum:2892 size:11961312
+select L0:57 keynum:2939 size:12155704
+select L0:55 keynum:2875 size:11891000
+select L0:52 keynum:2898 size:11986128
+select L0:50 keynum:2865 size:11849640
+select L0:47 keynum:2901 size:11998536
+select L0:45 keynum:2849 size:11783464
+select L0:42 keynum:2878 size:11903408
+select L0:40 keynum:2862 size:11837232
+select L0:37 keynum:2922 size:12085392
+select L0:35 keynum:2874 size:11886864
+select L0:33 keynum:2885 size:11932360
+select L1:44 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000A93223030303030303030' seq:46974, type:1]
+select L1:48 ['00000000000A932C3030303030303030' seq:0, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:109 index:30
+finish L0 table:109 keynum:15626 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:74 first_key_index:7872 offset:32558592
+file:72 first_key_index:7951 offset:32885336
+file:69 first_key_index:7977 offset:32992872
+file:67 first_key_index:7987 offset:33034232
+file:64 first_key_index:7883 offset:32604088
+file:62 first_key_index:7883 offset:32604088
+file:59 first_key_index:7894 offset:32649584
+file:57 first_key_index:7982 offset:33013552
+file:55 first_key_index:7913 offset:32728168
+file:52 first_key_index:7899 offset:32670264
+file:50 first_key_index:7977 offset:32992872
+file:47 first_key_index:7943 offset:32852248
+file:45 first_key_index:7943 offset:32852248
+file:42 first_key_index:7877 offset:32579272
+file:40 first_key_index:7926 offset:32781936
+file:37 first_key_index:7931 offset:32802616
+file:35 first_key_index:7943 offset:32852248
+file:33 first_key_index:7896 offset:32657856
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'00000000000F84A43030303030303030' seq:366063, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:0
+L0 select num:18 L0 select size:178.18 MB
+L0smallest:'00000000000F84A43030303030303030' seq:366063, type:1 L0largest:'0000000000146D3C3030303030303030' seq:224731, type:1
+select L0:74 keynum:2549 size:10542664
+select L0:72 keynum:2501 size:10344136
+select L0:69 keynum:2440 size:10091840
+select L0:67 keynum:2430 size:10050480
+select L0:64 keynum:2468 size:10207648
+select L0:62 keynum:2512 size:10389632
+select L0:59 keynum:2580 size:10670880
+select L0:57 keynum:2457 size:10162152
+select L0:55 keynum:2553 size:10559208
+select L0:52 keynum:2537 size:10493032
+select L0:50 keynum:2514 size:10397904
+select L0:47 keynum:2504 size:10356544
+select L0:45 keynum:2480 size:10257280
+select L0:42 keynum:2585 size:10691560
+select L0:40 keynum:2566 size:10612976
+select L0:37 keynum:2521 size:10426856
+select L0:35 keynum:2458 size:10166288
+select L0:33 keynum:2519 size:10418584
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:74 first_key_index:10421 offset:43101256
+file:72 first_key_index:10452 offset:43229472
+file:69 first_key_index:10417 offset:43084712
+file:67 first_key_index:10417 offset:43084712
+file:64 first_key_index:10351 offset:42811736
+file:62 first_key_index:10395 offset:42993720
+file:59 first_key_index:10474 offset:43320464
+file:57 first_key_index:10439 offset:43175704
+file:55 first_key_index:10466 offset:43287376
+file:52 first_key_index:10436 offset:43163296
+file:50 first_key_index:10491 offset:43390776
+file:47 first_key_index:10447 offset:43208792
+file:45 first_key_index:10423 offset:43109528
+file:42 first_key_index:10462 offset:43270832
+file:40 first_key_index:10492 offset:43394912
+file:37 first_key_index:10452 offset:43229472
+file:35 first_key_index:10401 offset:43018536
+file:33 first_key_index:10415 offset:43076440
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'0000000000146D3C3030303030303030' seq:224731, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:18 L0 select size:205.42 MB
+L0smallest:'0000000000146D3C3030303030303030' seq:224731, type:1 L0largest:'00000000001A0FBF3030303030303030' seq:201408, type:1
+select L0:74 keynum:2874 size:11886864
+select L0:72 keynum:2895 size:11973720
+select L0:69 keynum:2860 size:11828960
+select L0:67 keynum:2900 size:11994400
+select L0:64 keynum:2930 size:12118480
+select L0:62 keynum:2864 size:11845504
+select L0:59 keynum:2803 size:11593208
+select L0:57 keynum:2916 size:12060576
+select L0:55 keynum:2859 size:11824824
+select L0:52 keynum:2894 size:11969584
+select L0:50 keynum:2836 size:11729696
+select L0:47 keynum:2945 size:12180520
+select L0:45 keynum:2904 size:12010944
+select L0:42 keynum:2896 size:11977856
+select L0:40 keynum:2903 size:12006808
+select L0:37 keynum:2899 size:11990264
+select L0:35 keynum:2955 size:12221880
+select L0:33 keynum:2947 size:12188792
+select L1:60 ['0000000000146D273030303030303030' seq:0, type:1-'0000000000151DD73030303030303030' seq:174296, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:74 first_key_index:13295 offset:54988120
+file:72 first_key_index:13347 offset:55203192
+file:69 first_key_index:13277 offset:54913672
+file:67 first_key_index:13317 offset:55079112
+file:64 first_key_index:13281 offset:54930216
+file:62 first_key_index:13259 offset:54839224
+file:59 first_key_index:13277 offset:54913672
+file:57 first_key_index:13355 offset:55236280
+file:55 first_key_index:13325 offset:55112200
+file:52 first_key_index:13330 offset:55132880
+file:50 first_key_index:13327 offset:55120472
+file:47 first_key_index:13392 offset:55389312
+file:45 first_key_index:13327 offset:55120472
+file:42 first_key_index:13358 offset:55248688
+file:40 first_key_index:13395 offset:55401720
+file:37 first_key_index:13351 offset:55219736
+file:35 first_key_index:13356 offset:55240416
+file:33 first_key_index:13362 offset:55265232
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[74 72 69 67 64 62 59 57 55 52 50 47 45 42 40 37 35 33 ]
+L0 minsmallest:'00000000001A0FBF3030303030303030' seq:201408, type:1 maxlargest:'00000000001E846E3030303030303030' seq:217547, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:18 L0 select size:162.58 MB
+L0smallest:'00000000001A0FBF3030303030303030' seq:201408, type:1 L0largest:'00000000001E846E3030303030303030' seq:217547, type:1
+select L0:74 keynum:2324 size:9612064
+select L0:72 keynum:2273 size:9401128
+select L0:69 keynum:2335 size:9657560
+select L0:67 keynum:2291 size:9475576
+select L0:64 keynum:2343 size:9690648
+select L0:62 keynum:2372 size:9810592
+select L0:59 keynum:2344 size:9694784
+select L0:57 keynum:2276 size:9413536
+select L0:55 keynum:2305 size:9533480
+select L0:52 keynum:2290 size:9471440
+select L0:50 keynum:2278 size:9421808
+select L0:47 keynum:2237 size:9252232
+select L0:45 keynum:2285 size:9450760
+select L0:42 keynum:2264 size:9363904
+select L0:40 keynum:2204 size:9115744
+select L0:37 keynum:2269 size:9384584
+select L0:35 keynum:2270 size:9388720
+select L0:33 keynum:2258 size:9339088
+select L1:70 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:74
+delete l0 table:72
+delete l0 table:69
+delete l0 table:67
+delete l0 table:64
+delete l0 table:62
+delete l0 table:59
+delete l0 table:57
+delete l0 table:55
+delete l0 table:52
+delete l0 table:50
+delete l0 table:47
+delete l0 table:45
+delete l0 table:42
+delete l0 table:40
+delete l0 table:37
+delete l0 table:35
+delete l0 table:33
+CompactionJob::Install end
+add L0 table:124 index:12
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState new_file_num:14 num:13
+finish L0 table:124 keynum:15618 size:62 MB
+up end
+immu L0table[109 103 100 98 96 93 91 88 86 84 81 79 77 ]
+L0 minsmallest:'00000000000000053030303030303030' seq:491300, type:1 maxlargest:'00000000001E845A3030303030303030' seq:595935, type:1
+L1table:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1table:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1table:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:120 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001C2C243030303030303030' seq:0, type:1]
+L1table:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+L1over:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+L1over:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+L1over:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1over:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1over:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1over:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:120 ['00000000001A0FA23030303030303030' seq:0, type:1-'00000000001C2C243030303030303030' seq:0, type:1]
+L1over:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:5
+L0 select num:13 L0 select size:129.13 MB
+L0smallest:'00000000000000053030303030303030' seq:491300, type:1 L0largest:'000000000004EDA33030303030303030' seq:615418, type:1
+select L0:109 keynum:2553 size:10559208
+select L0:103 keynum:2496 size:10323456
+select L0:100 keynum:2463 size:10186968
+select L0:98 keynum:2526 size:10447536
+select L0:96 keynum:2575 size:10650200
+select L0:93 keynum:2514 size:10397904
+select L0:91 keynum:2512 size:10389632
+select L0:88 keynum:2583 size:10683288
+select L0:86 keynum:2522 size:10430992
+select L0:84 keynum:2547 size:10534392
+select L0:81 keynum:2503 size:10352408
+select L0:79 keynum:2455 size:10153880
+select L0:77 keynum:2488 size:10290368
+select L1:75 ['00000000000000063030303030303030' seq:0, type:1-'0000000000021DB63030303030303030' seq:0, type:1]
+select L1:82 ['0000000000021DBC3030303030303030' seq:0, type:1-'00000000000440413030303030303030' seq:0, type:1]
+select L1:90 ['00000000000440423030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:127 index:13
+finish L0 table:127 keynum:15614 size:62 MB
+add L0 table:129 index:14
+finish L0 table:129 keynum:15617 size:62 MB
+add L0 table:131 index:15
+finish L0 table:131 keynum:15618 size:62 MB
+add L0 table:134 index:16
+finish L0 table:134 keynum:15617 size:62 MB
+add L0 table:136 index:17
+finish L0 table:136 keynum:15616 size:62 MB
+add L0 table:138 index:18
+finish L0 table:138 keynum:15609 size:62 MB
+add L0 table:141 index:19
+finish L0 table:141 keynum:15599 size:62 MB
+add L0 table:143 index:20
+finish L0 table:143 keynum:15610 size:62 MB
+add L0 table:145 index:21
+finish L0 table:145 keynum:15619 size:62 MB
+add L0 table:148 index:22
+finish L0 table:148 keynum:15627 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:109 first_key_index:2553 offset:10559208
+file:103 first_key_index:2496 offset:10323456
+file:100 first_key_index:2463 offset:10186968
+file:98 first_key_index:2526 offset:10447536
+file:96 first_key_index:2575 offset:10650200
+file:93 first_key_index:2514 offset:10397904
+file:91 first_key_index:2512 offset:10389632
+file:88 first_key_index:2583 offset:10683288
+file:86 first_key_index:2522 offset:10430992
+file:84 first_key_index:2547 offset:10534392
+file:81 first_key_index:2503 offset:10352408
+file:79 first_key_index:2455 offset:10153880
+file:77 first_key_index:2488 offset:10290368
+CompactionJob::Install end
+add L0 table:150 index:23
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[109 103 100 98 96 93 91 88 86 84 81 79 77 ]
+L0 minsmallest:'000000000004EDA33030303030303030' seq:615418, type:1 maxlargest:'00000000001E845A3030303030303030' seq:595935, type:1
+L1table:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1table:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1table:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1table:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1table:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+L1over:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+L1over:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:105 ['000000000009D9F63030303030303030' seq:0, type:1-'00000000000BFA653030303030303030' seq:220908, type:1]
+L1over:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:5
+L0 select num:13 L0 select size:129.70 MB
+L0smallest:'000000000004EDA33030303030303030' seq:615418, type:1 L0largest:'000000000009DA013030303030303030' seq:477237, type:1
+select L0:109 keynum:2547 size:10534392
+select L0:103 keynum:2543 size:10517848
+select L0:100 keynum:2618 size:10828048
+select L0:98 keynum:2476 size:10240736
+select L0:96 keynum:2448 size:10124928
+select L0:93 keynum:2529 size:10459944
+select L0:91 keynum:2539 size:10501304
+select L0:88 keynum:2536 size:10488896
+select L0:86 keynum:2541 size:10509576
+select L0:84 keynum:2513 size:10393768
+select L0:81 keynum:2524 size:10439264
+select L0:79 keynum:2564 size:10604704
+select L0:77 keynum:2503 size:10352408
+select L1:94 ['000000000004ED9D3030303030303030' seq:0, type:1-'000000000007088E3030303030303030' seq:0, type:1]
+select L1:101 ['00000000000708953030303030303030' seq:0, type:1-'00000000000923233030303030303030' seq:0, type:1]
+select L1:104 ['00000000000923283030303030303030' seq:0, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+finish L0 table:150 keynum:15622 size:62 MB
+add L0 table:153 index:24
+finish L0 table:153 keynum:15606 size:62 MB
+add L0 table:155 index:25
+finish L0 table:155 keynum:15633 size:62 MB
+add L0 table:157 index:26
+finish L0 table:157 keynum:15619 size:62 MB
+add L0 table:160 index:27
+finish L0 table:160 keynum:15615 size:62 MB
+add L0 table:162 index:28
+finish L0 table:162 keynum:15618 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:109 first_key_index:5100 offset:21093600
+file:103 first_key_index:5039 offset:20841304
+file:100 first_key_index:5081 offset:21015016
+file:98 first_key_index:5002 offset:20688272
+file:96 first_key_index:5023 offset:20775128
+file:93 first_key_index:5043 offset:20857848
+file:91 first_key_index:5051 offset:20890936
+file:88 first_key_index:5119 offset:21172184
+file:86 first_key_index:5063 offset:20940568
+file:84 first_key_index:5060 offset:20928160
+file:81 first_key_index:5027 offset:20791672
+file:79 first_key_index:5019 offset:20758584
+file:77 first_key_index:4991 offset:20642776
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[109 103 100 98 96 93 91 88 86 84 81 79 77 ]
+L0 minsmallest:'000000000009DA013030303030303030' seq:477237, type:1 maxlargest:'00000000001E845A3030303030303030' seq:595935, type:1
+L1table:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1table:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1table:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1table:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1table:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:13 L0 select size:149.97 MB
+L0smallest:'000000000009DA013030303030303030' seq:477237, type:1 L0largest:'00000000000F84A13030303030303030' seq:520267, type:1
+select L0:109 keynum:2907 size:12023352
+select L0:103 keynum:2854 size:11804144
+select L0:100 keynum:2860 size:11828960
+select L0:98 keynum:2922 size:12085392
+select L0:96 keynum:3004 size:12424544
+select L0:93 keynum:2948 size:12192928
+select L0:91 keynum:2875 size:11891000
+select L0:88 keynum:2978 size:12317008
+select L0:86 keynum:2903 size:12006808
+select L0:84 keynum:2972 size:12292192
+select L0:81 keynum:2885 size:11932360
+select L0:79 keynum:2913 size:12048168
+select L0:77 keynum:2999 size:12403864
+select L1:107 ['00000000000E18183030303030303030' seq:425936, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:109 first_key_index:8007 offset:33116952
+file:103 first_key_index:7893 offset:32645448
+file:100 first_key_index:7941 offset:32843976
+file:98 first_key_index:7924 offset:32773664
+file:96 first_key_index:8027 offset:33199672
+file:93 first_key_index:7991 offset:33050776
+file:91 first_key_index:7926 offset:32781936
+file:88 first_key_index:8097 offset:33489192
+file:86 first_key_index:7966 offset:32947376
+file:84 first_key_index:8032 offset:33220352
+file:81 first_key_index:7912 offset:32724032
+file:79 first_key_index:7932 offset:32806752
+file:77 first_key_index:7990 offset:33046640
+CompactionJob::Install end
+add L0 table:169 index:29
+finish L0 table:169 keynum:15611 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[109 103 100 98 96 93 91 88 86 84 81 79 77 ]
+L0 minsmallest:'00000000000F84A13030303030303030' seq:520267, type:1 maxlargest:'00000000001E845A3030303030303030' seq:595935, type:1
+L1table:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1table:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1table:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1table:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1table:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:0
+L0 select num:13 L0 select size:386.37 MB
+L0smallest:'00000000000F84A13030303030303030' seq:520267, type:1 L0largest:'00000000001E49F93030303030303030' seq:537770, type:1
+select L0:109 keynum:7521 size:31106856
+select L0:103 keynum:7623 size:31528728
+select L0:100 keynum:7549 size:31222664
+select L0:98 keynum:7560 size:31268160
+select L0:96 keynum:7487 size:30966232
+select L0:93 keynum:7516 size:31086176
+select L0:91 keynum:7575 size:31330200
+select L0:88 keynum:7422 size:30697392
+select L0:86 keynum:7537 size:31173032
+select L0:84 keynum:7479 size:30933144
+select L0:81 keynum:7584 size:31367424
+select L0:79 keynum:7582 size:31359152
+select L0:77 keynum:7520 size:31102720
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:109 first_key_index:15528 offset:64223808
+file:103 first_key_index:15516 offset:64174176
+file:100 first_key_index:15490 offset:64066640
+file:98 first_key_index:15484 offset:64041824
+file:96 first_key_index:15514 offset:64165904
+file:93 first_key_index:15507 offset:64136952
+file:91 first_key_index:15501 offset:64112136
+file:88 first_key_index:15519 offset:64186584
+file:86 first_key_index:15503 offset:64120408
+file:84 first_key_index:15511 offset:64153496
+file:81 first_key_index:15496 offset:64091456
+file:79 first_key_index:15514 offset:64165904
+file:77 first_key_index:15510 offset:64149360
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+add L0 table:187 index:31
+finish L0 table:187 keynum:15612 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[109 103 100 98 96 93 91 88 86 84 81 79 77 ]
+L0 minsmallest:'00000000001E49F93030303030303030' seq:537770, type:1 maxlargest:'00000000001E845A3030303030303030' seq:595935, type:1
+L1table:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1table:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1table:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1table:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1table:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:13 L0 select size:5.85 MB
+L0smallest:'00000000001E49F93030303030303030' seq:537770, type:1 L0largest:'00000000001E845A3030303030303030' seq:595935, type:1
+select L0:109 keynum:98 size:405328
+select L0:103 keynum:106 size:438416
+select L0:100 keynum:122 size:504592
+select L0:98 keynum:135 size:558360
+select L0:96 keynum:107 size:442552
+select L0:93 keynum:111 size:459096
+select L0:91 keynum:117 size:483912
+select L0:88 keynum:99 size:409464
+select L0:86 keynum:115 size:475640
+select L0:84 keynum:120 size:496320
+select L0:81 keynum:125 size:517000
+select L0:79 keynum:107 size:442552
+select L0:77 keynum:122 size:504592
+select L1:122 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:109
+delete l0 table:103
+delete l0 table:100
+delete l0 table:98
+delete l0 table:96
+delete l0 table:93
+delete l0 table:91
+delete l0 table:88
+delete l0 table:86
+delete l0 table:84
+delete l0 table:81
+delete l0 table:79
+delete l0 table:77
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:19
+up end
+immu L0table[187 169 162 160 157 155 153 150 148 145 143 141 138 136 134 131 129 127 124 ]
+L0 minsmallest:'00000000000000203030303030303030' seq:925178, type:1 maxlargest:'00000000001E847E3030303030303030' seq:796410, type:1
+L1table:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1table:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1table:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1table:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1table:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+L1over:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+L1over:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1over:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1over:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1over:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1over:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1over:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:5
+L0 select num:19 L0 select size:178.74 MB
+L0smallest:'00000000000000203030303030303030' seq:925178, type:1 L0largest:'000000000004A7BB3030303030303030' seq:853055, type:1
+select L0:187 keynum:2359 size:9756824
+select L0:169 keynum:2347 size:9707192
+select L0:162 keynum:2349 size:9715464
+select L0:160 keynum:2476 size:10240736
+select L0:157 keynum:2325 size:9616200
+select L0:155 keynum:2411 size:9971896
+select L0:153 keynum:2306 size:9537616
+select L0:150 keynum:2375 size:9823000
+select L0:148 keynum:2461 size:10178696
+select L0:145 keynum:2401 size:9930536
+select L0:143 keynum:2299 size:9508664
+select L0:141 keynum:2345 size:9698920
+select L0:138 keynum:2338 size:9669968
+select L0:136 keynum:2357 size:9748552
+select L0:134 keynum:2413 size:9980168
+select L0:131 keynum:2482 size:10265552
+select L0:129 keynum:2438 size:10083568
+select L0:127 keynum:2446 size:10116656
+select L0:124 keynum:2388 size:9876768
+select L1:125 ['00000000000000053030303030303030' seq:491300, type:1-'0000000000018DF33030303030303030' seq:0, type:1]
+select L1:132 ['0000000000018DF63030303030303030' seq:0, type:1-'00000000000319103030303030303030' seq:0, type:1]
+select L1:139 ['00000000000319133030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:195 index:0
+finish L0 table:195 keynum:15609 size:62 MB
+add L0 table:197 index:1
+finish L0 table:197 keynum:15612 size:62 MB
+add L0 table:199 index:2
+finish L0 table:199 keynum:15625 size:62 MB
+add L0 table:202 index:3
+finish L0 table:202 keynum:15620 size:62 MB
+add L0 table:204 index:4
+finish L0 table:204 keynum:15610 size:62 MB
+add L0 table:206 index:5
+finish L0 table:206 keynum:15619 size:62 MB
+add L0 table:209 index:6
+finish L0 table:209 keynum:15618 size:62 MB
+add L0 table:211 index:7
+finish L0 table:211 keynum:15618 size:62 MB
+add L0 table:213 index:8
+finish L0 table:213 keynum:15620 size:62 MB
+add L0 table:216 index:9
+finish L0 table:216 keynum:15609 size:62 MB
+add L0 table:218 index:10
+finish L0 table:218 keynum:15615 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:187 first_key_index:2359 offset:9756824
+file:169 first_key_index:2347 offset:9707192
+file:162 first_key_index:2349 offset:9715464
+file:160 first_key_index:2476 offset:10240736
+file:157 first_key_index:2325 offset:9616200
+file:155 first_key_index:2411 offset:9971896
+file:153 first_key_index:2306 offset:9537616
+file:150 first_key_index:2375 offset:9823000
+file:148 first_key_index:2461 offset:10178696
+file:145 first_key_index:2401 offset:9930536
+file:143 first_key_index:2299 offset:9508664
+file:141 first_key_index:2345 offset:9698920
+file:138 first_key_index:2338 offset:9669968
+file:136 first_key_index:2357 offset:9748552
+file:134 first_key_index:2413 offset:9980168
+file:131 first_key_index:2482 offset:10265552
+file:129 first_key_index:2438 offset:10083568
+file:127 first_key_index:2446 offset:10116656
+file:124 first_key_index:2388 offset:9876768
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[187 169 162 160 157 155 153 150 148 145 143 141 138 136 134 131 129 127 124 ]
+L0 minsmallest:'000000000004A7BB3030303030303030' seq:853055, type:1 maxlargest:'00000000001E847E3030303030303030' seq:796410, type:1
+L1table:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1table:200 ['000000000001261D3030303030303030' seq:563949, type:1-'0000000000024DFE3030303030303030' seq:934228, type:1]
+L1table:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1table:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1table:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1table:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1table:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+L1over:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+L1over:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+L1over:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1over:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:7
+L0 select num:19 L0 select size:186.54 MB
+L0smallest:'000000000004A7BB3030303030303030' seq:853055, type:1 L0largest:'0000000000098D263030303030303030' seq:758253, type:1
+select L0:187 keynum:2405 size:9947080
+select L0:169 keynum:2531 size:10468216
+select L0:162 keynum:2472 size:10224192
+select L0:160 keynum:2494 size:10315184
+select L0:157 keynum:2428 size:10042208
+select L0:155 keynum:2521 size:10426856
+select L0:153 keynum:2562 size:10596432
+select L0:150 keynum:2582 size:10679152
+select L0:148 keynum:2448 size:10124928
+select L0:145 keynum:2573 size:10641928
+select L0:143 keynum:2515 size:10402040
+select L0:141 keynum:2562 size:10596432
+select L0:138 keynum:2479 size:10253144
+select L0:136 keynum:2516 size:10406176
+select L0:134 keynum:2442 size:10100112
+select L0:131 keynum:2346 size:9703056
+select L0:129 keynum:2502 size:10348272
+select L0:127 keynum:2457 size:10162152
+select L0:124 keynum:2458 size:10166288
+select L1:146 ['000000000004A7B83030303030303030' seq:0, type:1-'000000000004ED9A3030303030303030' seq:647491, type:1]
+select L1:151 ['000000000004ED9D3030303030303030' seq:0, type:1-'00000000000679523030303030303030' seq:0, type:1]
+select L1:158 ['00000000000679533030303030303030' seq:0, type:1-'000000000007FFCB3030303030303030' seq:0, type:1]
+select L1:163 ['000000000007FFCE3030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:225 index:11
+finish L0 table:225 keynum:15615 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:187 first_key_index:4764 offset:19703904
+file:169 first_key_index:4878 offset:20175408
+file:162 first_key_index:4821 offset:19939656
+file:160 first_key_index:4970 offset:20555920
+file:157 first_key_index:4753 offset:19658408
+file:155 first_key_index:4932 offset:20398752
+file:153 first_key_index:4868 offset:20134048
+file:150 first_key_index:4957 offset:20502152
+file:148 first_key_index:4909 offset:20303624
+file:145 first_key_index:4974 offset:20572464
+file:143 first_key_index:4814 offset:19910704
+file:141 first_key_index:4907 offset:20295352
+file:138 first_key_index:4817 offset:19923112
+file:136 first_key_index:4873 offset:20154728
+file:134 first_key_index:4855 offset:20080280
+file:131 first_key_index:4828 offset:19968608
+file:129 first_key_index:4940 offset:20431840
+file:127 first_key_index:4903 offset:20278808
+file:124 first_key_index:4846 offset:20043056
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[187 169 162 160 157 155 153 150 148 145 143 141 138 136 134 131 129 127 124 ]
+L0 minsmallest:'0000000000098D263030303030303030' seq:758253, type:1 maxlargest:'00000000001E847E3030303030303030' seq:796410, type:1
+L1table:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1table:200 ['000000000001261D3030303030303030' seq:563949, type:1-'0000000000024DFE3030303030303030' seq:934228, type:1]
+L1table:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1table:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1table:222 ['000000000006F45F3030303030303030' seq:957415, type:1-'00000000000818E03030303030303030' seq:733428, type:1]
+L1table:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1table:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+L1over:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:19 L0 select size:177.94 MB
+L0smallest:'0000000000098D263030303030303030' seq:758253, type:1 L0largest:'00000000000E30C83030303030303030' seq:744793, type:1
+select L0:187 keynum:2389 size:9880904
+select L0:169 keynum:2357 size:9748552
+select L0:162 keynum:2338 size:9669968
+select L0:160 keynum:2417 size:9996712
+select L0:157 keynum:2424 size:10025664
+select L0:155 keynum:2407 size:9955352
+select L0:153 keynum:2385 size:9864360
+select L0:150 keynum:2340 size:9678240
+select L0:148 keynum:2316 size:9578976
+select L0:145 keynum:2318 size:9587248
+select L0:143 keynum:2359 size:9756824
+select L0:141 keynum:2390 size:9885040
+select L0:138 keynum:2379 size:9839544
+select L0:136 keynum:2446 size:10116656
+select L0:134 keynum:2394 size:9901584
+select L0:131 keynum:2371 size:9806456
+select L0:129 keynum:2356 size:9744416
+select L0:127 keynum:2394 size:9901584
+select L0:124 keynum:2333 size:9649288
+select L1:164 ['0000000000098D243030303030303030' seq:637930, type:1-'000000000009D9F43030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:187 first_key_index:7153 offset:29584808
+file:169 first_key_index:7235 offset:29923960
+file:162 first_key_index:7159 offset:29609624
+file:160 first_key_index:7387 offset:30552632
+file:157 first_key_index:7177 offset:29684072
+file:155 first_key_index:7339 offset:30354104
+file:153 first_key_index:7253 offset:29998408
+file:150 first_key_index:7297 offset:30180392
+file:148 first_key_index:7225 offset:29882600
+file:145 first_key_index:7292 offset:30159712
+file:143 first_key_index:7173 offset:29667528
+file:141 first_key_index:7297 offset:30180392
+file:138 first_key_index:7196 offset:29762656
+file:136 first_key_index:7319 offset:30271384
+file:134 first_key_index:7249 offset:29981864
+file:131 first_key_index:7199 offset:29775064
+file:129 first_key_index:7296 offset:30176256
+file:127 first_key_index:7297 offset:30180392
+file:124 first_key_index:7179 offset:29692344
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[187 169 162 160 157 155 153 150 148 145 143 141 138 136 134 131 129 127 124 ]
+L0 minsmallest:'00000000000E30C83030303030303030' seq:744793, type:1 maxlargest:'00000000001E847E3030303030303030' seq:796410, type:1
+L1table:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1table:200 ['000000000001261D3030303030303030' seq:563949, type:1-'0000000000024DFE3030303030303030' seq:934228, type:1]
+L1table:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1table:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1table:222 ['000000000006F45F3030303030303030' seq:957415, type:1-'00000000000818E03030303030303030' seq:733428, type:1]
+L1table:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1table:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1table:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1table:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+L1over:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:19 L0 select size:618.47 MB
+L0smallest:'00000000000E30C83030303030303030' seq:744793, type:1 L0largest:'00000000001E49FB3030303030303030' seq:965510, type:1
+select L0:187 keynum:8343 size:34506648
+select L0:169 keynum:8270 size:34204720
+select L0:162 keynum:8334 size:34469424
+select L0:160 keynum:8122 size:33592592
+select L0:157 keynum:8329 size:34448744
+select L0:155 keynum:8175 size:33811800
+select L0:153 keynum:8228 size:34031008
+select L0:150 keynum:8214 size:33973104
+select L0:148 keynum:8260 size:34163360
+select L0:145 keynum:8231 size:34043416
+select L0:143 keynum:8297 size:34316392
+select L0:141 keynum:8176 size:33815936
+select L0:138 keynum:8307 size:34357752
+select L0:136 keynum:8205 size:33935880
+select L0:134 keynum:8263 size:34175768
+select L0:131 keynum:8301 size:34332936
+select L0:129 keynum:8232 size:34047552
+select L0:127 keynum:8196 size:33898656
+select L0:124 keynum:8314 size:34386704
+select L1:166 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F849E3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:187 first_key_index:15496 offset:64091456
+file:169 first_key_index:15505 offset:64128680
+file:162 first_key_index:15493 offset:64079048
+file:160 first_key_index:15509 offset:64145224
+file:157 first_key_index:15506 offset:64132816
+file:155 first_key_index:15514 offset:64165904
+file:153 first_key_index:15481 offset:64029416
+file:150 first_key_index:15511 offset:64153496
+file:148 first_key_index:15485 offset:64045960
+file:145 first_key_index:15523 offset:64203128
+file:143 first_key_index:15470 offset:63983920
+file:141 first_key_index:15473 offset:63996328
+file:138 first_key_index:15503 offset:64120408
+file:136 first_key_index:15524 offset:64207264
+file:134 first_key_index:15512 offset:64157632
+file:131 first_key_index:15500 offset:64108000
+file:129 first_key_index:15528 offset:64223808
+file:127 first_key_index:15493 offset:64079048
+file:124 first_key_index:15493 offset:64079048
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+add L0 table:245 index:30
+finish L0 table:245 keynum:15619 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[187 169 162 160 157 155 153 150 148 145 143 141 138 136 134 131 129 127 124 ]
+L0 minsmallest:'00000000001E49FB3030303030303030' seq:965510, type:1 maxlargest:'00000000001E847E3030303030303030' seq:796410, type:1
+L1table:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1table:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1table:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1table:222 ['000000000006F45F3030303030303030' seq:957415, type:1-'00000000000818E03030303030303030' seq:733428, type:1]
+L1table:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1table:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1table:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1table:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1table:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+L1over:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:19 L0 select size:8.60 MB
+L0smallest:'00000000001E49FB3030303030303030' seq:965510, type:1 L0largest:'00000000001E847E3030303030303030' seq:796410, type:1
+select L0:187 keynum:116 size:479776
+select L0:169 keynum:106 size:438416
+select L0:162 keynum:125 size:517000
+select L0:160 keynum:106 size:438416
+select L0:157 keynum:113 size:467368
+select L0:155 keynum:119 size:492184
+select L0:153 keynum:125 size:517000
+select L0:150 keynum:111 size:459096
+select L0:148 keynum:142 size:587312
+select L0:145 keynum:96 size:397056
+select L0:143 keynum:140 size:579040
+select L0:141 keynum:126 size:521136
+select L0:138 keynum:106 size:438416
+select L0:136 keynum:92 size:380512
+select L0:134 keynum:105 size:434280
+select L0:131 keynum:118 size:488048
+select L0:129 keynum:89 size:368104
+select L0:127 keynum:121 size:500456
+select L0:124 keynum:125 size:517000
+select L1:192 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:37360, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:187
+delete l0 table:169
+delete l0 table:162
+delete l0 table:160
+delete l0 table:157
+delete l0 table:155
+delete l0 table:153
+delete l0 table:150
+delete l0 table:148
+delete l0 table:145
+delete l0 table:143
+delete l0 table:141
+delete l0 table:138
+delete l0 table:136
+delete l0 table:134
+delete l0 table:131
+delete l0 table:129
+delete l0 table:127
+delete l0 table:124
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:13
+up end
+immu L0table[245 225 218 216 213 211 209 206 204 202 199 197 195 ]
+L0 minsmallest:'00000000000000003030303030303030' seq:1009265, type:1 maxlargest:'00000000001E84503030303030303030' seq:1144847, type:1
+L1table:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1table:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1table:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1table:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1table:222 ['000000000006F45F3030303030303030' seq:957415, type:1-'00000000000818E03030303030303030' seq:733428, type:1]
+L1table:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1table:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1table:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1table:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1table:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+L1over:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+L1over:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+L1over:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1over:222 ['000000000006F45F3030303030303030' seq:957415, type:1-'00000000000818E03030303030303030' seq:733428, type:1]
+L1over:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1over:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1over:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1over:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1over:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1over:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:6
+L0 select num:13 L0 select size:150.93 MB
+L0smallest:'00000000000000003030303030303030' seq:1009265, type:1 L0largest:'000000000005CF9E3030303030303030' seq:1062633, type:1
+select L0:245 keynum:2820 size:11663520
+select L0:225 keynum:2978 size:12317008
+select L0:218 keynum:2960 size:12242560
+select L0:216 keynum:2971 size:12288056
+select L0:213 keynum:2964 size:12259104
+select L0:211 keynum:2901 size:11998536
+select L0:209 keynum:2960 size:12242560
+select L0:206 keynum:2934 size:12135024
+select L0:204 keynum:2938 size:12151568
+select L0:202 keynum:2978 size:12317008
+select L0:199 keynum:2925 size:12097800
+select L0:197 keynum:2995 size:12387320
+select L0:195 keynum:2941 size:12163976
+select L1:193 ['00000000000000053030303030303030' seq:491300, type:1-'000000000001261B3030303030303030' seq:0, type:1]
+select L1:214 ['000000000003737E3030303030303030' seq:900516, type:1-'0000000000049A343030303030303030' seq:714337, type:1]
+select L1:219 ['0000000000049A363030303030303030' seq:0, type:1-'000000000004A7B73030303030303030' seq:551337, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:258 index:12
+finish L0 table:258 keynum:15621 size:62 MB
+add L0 table:260 index:13
+finish L0 table:260 keynum:15617 size:62 MB
+add L0 table:262 index:14
+finish L0 table:262 keynum:15624 size:62 MB
+add L0 table:265 index:15
+finish L0 table:265 keynum:15623 size:62 MB
+add L0 table:267 index:16
+finish L0 table:267 keynum:15621 size:62 MB
+add L0 table:269 index:17
+finish L0 table:269 keynum:15618 size:62 MB
+add L0 table:272 index:18
+finish L0 table:272 keynum:15629 size:62 MB
+add L0 table:274 index:19
+finish L0 table:274 keynum:15600 size:62 MB
+add L0 table:276 index:20
+finish L0 table:276 keynum:15611 size:62 MB
+add L0 table:279 index:21
+finish L0 table:279 keynum:15607 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:245 first_key_index:2820 offset:11663520
+file:225 first_key_index:2978 offset:12317008
+file:218 first_key_index:2960 offset:12242560
+file:216 first_key_index:2971 offset:12288056
+file:213 first_key_index:2964 offset:12259104
+file:211 first_key_index:2901 offset:11998536
+file:209 first_key_index:2960 offset:12242560
+file:206 first_key_index:2934 offset:12135024
+file:204 first_key_index:2938 offset:12151568
+file:202 first_key_index:2978 offset:12317008
+file:199 first_key_index:2925 offset:12097800
+file:197 first_key_index:2995 offset:12387320
+file:195 first_key_index:2941 offset:12163976
+CompactionJob::Install end
+add L0 table:282 index:22
+finish L0 table:282 keynum:15619 size:62 MB
+add L0 table:284 index:23
+finish L0 table:284 keynum:15609 size:62 MB
+add L0 table:286 index:24
+finish L0 table:286 keynum:15618 size:62 MB
+add L0 table:288 index:25
+finish L0 table:288 keynum:15619 size:62 MB
+add L0 table:291 index:26
+finish L0 table:291 keynum:15616 size:62 MB
+add L0 table:293 index:27
+finish L0 table:293 keynum:15622 size:62 MB
+add L0 table:295 index:28
+finish L0 table:295 keynum:15619 size:62 MB
+add L0 table:298 index:29
+finish L0 table:298 keynum:15606 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[245 225 218 216 213 211 209 206 204 202 199 197 195 ]
+L0 minsmallest:'000000000005CF9E3030303030303030' seq:1062633, type:1 maxlargest:'00000000001E84503030303030303030' seq:1144847, type:1
+L1table:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+L1table:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1table:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1table:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1table:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1table:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1table:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1table:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1table:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1table:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+L1over:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+L1over:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+L1over:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1over:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1over:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1over:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:6
+L0 select num:13 L0 select size:167.42 MB
+L0smallest:'000000000005CF9E3030303030303030' seq:1062633, type:1 L0largest:'00000000000C320C3030303030303030' seq:1151385, type:1
+select L0:245 keynum:3286 size:13590896
+select L0:225 keynum:3267 size:13512312
+select L0:218 keynum:3263 size:13495768
+select L0:216 keynum:3205 size:13255880
+select L0:213 keynum:3319 size:13727384
+select L0:211 keynum:3253 size:13454408
+select L0:209 keynum:3220 size:13317920
+select L0:206 keynum:3319 size:13727384
+select L0:204 keynum:3223 size:13330328
+select L0:202 keynum:3288 size:13599168
+select L0:199 keynum:3251 size:13446136
+select L0:197 keynum:3270 size:13524720
+select L0:195 keynum:3282 size:13574352
+select L1:221 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006F45E3030303030303030' seq:808865, type:1]
+select L1:223 ['00000000000818E13030303030303030' seq:885590, type:1-'0000000000093FA03030303030303030' seq:0, type:1]
+select L1:226 ['0000000000093FA63030303030303030' seq:0, type:1-'0000000000098D233030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:245 first_key_index:6106 offset:25254416
+file:225 first_key_index:6245 offset:25829320
+file:218 first_key_index:6223 offset:25738328
+file:216 first_key_index:6176 offset:25543936
+file:213 first_key_index:6283 offset:25986488
+file:211 first_key_index:6154 offset:25452944
+file:209 first_key_index:6180 offset:25560480
+file:206 first_key_index:6253 offset:25862408
+file:204 first_key_index:6161 offset:25481896
+file:202 first_key_index:6266 offset:25916176
+file:199 first_key_index:6176 offset:25543936
+file:197 first_key_index:6265 offset:25912040
+file:195 first_key_index:6223 offset:25738328
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[245 225 218 216 213 211 209 206 204 202 199 197 195 ]
+L0 minsmallest:'00000000000C320C3030303030303030' seq:1151385, type:1 maxlargest:'00000000001E84503030303030303030' seq:1144847, type:1
+L1table:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+L1table:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1table:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1table:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1table:301 ['000000000008B19D3030303030303030' seq:0, type:1-'00000000000A2FC13030303030303030' seq:995005, type:1]
+L1table:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1table:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1table:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1table:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1table:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+L1over:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+L1over:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1over:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:4
+L0 select num:13 L0 select size:412.06 MB
+L0smallest:'00000000000C320C3030303030303030' seq:1151385, type:1 L0largest:'00000000001BD3803030303030303030' seq:1027778, type:1
+select L0:245 keynum:8092 size:33468512
+select L0:225 keynum:8028 size:33203808
+select L0:218 keynum:8052 size:33303072
+select L0:216 keynum:8074 size:33394064
+select L0:213 keynum:8004 size:33104544
+select L0:211 keynum:8021 size:33174856
+select L0:209 keynum:8112 size:33551232
+select L0:206 keynum:8004 size:33104544
+select L0:204 keynum:8081 size:33423016
+select L0:202 keynum:7987 size:33034232
+select L0:199 keynum:8036 size:33236896
+select L0:197 keynum:7948 size:32872928
+select L0:195 keynum:8028 size:33203808
+select L1:228 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30BD3030303030303030' seq:745875, type:1]
+select L1:232 ['00000000000E30C13030303030303030' seq:600976, type:1-'00000000000F59593030303030303030' seq:812751, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:307 index:31
+finish L0 table:307 keynum:15620 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:245 first_key_index:14198 offset:58722928
+file:225 first_key_index:14273 offset:59033128
+file:218 first_key_index:14275 offset:59041400
+file:216 first_key_index:14250 offset:58938000
+file:213 first_key_index:14287 offset:59091032
+file:211 first_key_index:14175 offset:58627800
+file:209 first_key_index:14292 offset:59111712
+file:206 first_key_index:14257 offset:58966952
+file:204 first_key_index:14242 offset:58904912
+file:202 first_key_index:14253 offset:58950408
+file:199 first_key_index:14212 offset:58780832
+file:197 first_key_index:14213 offset:58784968
+file:195 first_key_index:14251 offset:58942136
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+add L0 table:319 index:32
+finish L0 table:319 keynum:15620 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[245 225 218 216 213 211 209 206 204 202 199 197 195 ]
+L0 minsmallest:'00000000001BD3803030303030303030' seq:1027778, type:1 maxlargest:'00000000001E84503030303030303030' seq:1144847, type:1
+L1table:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+L1table:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1table:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1table:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1table:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1table:305 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30763030303030303030' seq:780193, type:1]
+L1table:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1table:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+L1over:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:3
+L0 select num:13 L0 select size:70.33 MB
+L0smallest:'00000000001BD3803030303030303030' seq:1027778, type:1 L0largest:'00000000001E84503030303030303030' seq:1144847, type:1
+select L0:245 keynum:1421 size:5877256
+select L0:225 keynum:1342 size:5550512
+select L0:218 keynum:1340 size:5542240
+select L0:216 keynum:1359 size:5620824
+select L0:213 keynum:1333 size:5513288
+select L0:211 keynum:1443 size:5968248
+select L0:209 keynum:1326 size:5484336
+select L0:206 keynum:1362 size:5633232
+select L0:204 keynum:1368 size:5658048
+select L0:202 keynum:1367 size:5653912
+select L0:199 keynum:1413 size:5844168
+select L0:197 keynum:1399 size:5786264
+select L0:195 keynum:1358 size:5616688
+select L1:237 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001E49EB3030303030303030' seq:778162, type:1]
+select L1:255 ['00000000001E49ED3030303030303030' seq:427591, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:245
+delete l0 table:225
+delete l0 table:218
+delete l0 table:216
+delete l0 table:213
+delete l0 table:211
+delete l0 table:209
+delete l0 table:206
+delete l0 table:204
+delete l0 table:202
+delete l0 table:199
+delete l0 table:197
+delete l0 table:195
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:20
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'000000000000000C3030303030303030' seq:1363622, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+L1table:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1table:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1table:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1table:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1table:305 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30763030303030303030' seq:780193, type:1]
+L1table:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:327 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001DCDCA3030303030303030' seq:1045326, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+L1over:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1over:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1over:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1over:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1over:305 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30763030303030303030' seq:780193, type:1]
+L1over:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1over:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1over:327 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001DCDCA3030303030303030' seq:1045326, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:20 L0 select size:153.69 MB
+L0smallest:'000000000000000C3030303030303030' seq:1363622, type:1 L0largest:'000000000003CBF03030303030303030' seq:1199876, type:1
+select L0:319 keynum:1882 size:7783952
+select L0:307 keynum:1974 size:8164464
+select L0:298 keynum:1936 size:8007296
+select L0:295 keynum:1994 size:8247184
+select L0:293 keynum:1919 size:7936984
+select L0:291 keynum:1983 size:8201688
+select L0:288 keynum:1950 size:8065200
+select L0:286 keynum:1896 size:7841856
+select L0:284 keynum:2007 size:8300952
+select L0:282 keynum:1946 size:8048656
+select L0:279 keynum:1946 size:8048656
+select L0:276 keynum:1959 size:8102424
+select L0:274 keynum:1948 size:8056928
+select L0:272 keynum:1952 size:8073472
+select L0:269 keynum:1929 size:7978344
+select L0:267 keynum:1947 size:8052792
+select L0:265 keynum:1933 size:7994888
+select L0:262 keynum:1949 size:8061064
+select L0:260 keynum:1970 size:8147920
+select L0:258 keynum:1945 size:8044520
+select L1:256 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000FE3C3030303030303030' seq:0, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:331 index:0
+finish L0 table:331 keynum:15614 size:62 MB
+add L0 table:333 index:1
+finish L0 table:333 keynum:15614 size:62 MB
+add L0 table:335 index:2
+finish L0 table:335 keynum:15614 size:62 MB
+add L0 table:338 index:3
+finish L0 table:338 keynum:15610 size:62 MB
+add L0 table:340 index:4
+finish L0 table:340 keynum:15612 size:62 MB
+add L0 table:342 index:5
+finish L0 table:342 keynum:15613 size:62 MB
+add L0 table:345 index:6
+finish L0 table:345 keynum:15622 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:319 first_key_index:1882 offset:7783952
+file:307 first_key_index:1974 offset:8164464
+file:298 first_key_index:1936 offset:8007296
+file:295 first_key_index:1994 offset:8247184
+file:293 first_key_index:1919 offset:7936984
+file:291 first_key_index:1983 offset:8201688
+file:288 first_key_index:1950 offset:8065200
+file:286 first_key_index:1896 offset:7841856
+file:284 first_key_index:2007 offset:8300952
+file:282 first_key_index:1946 offset:8048656
+file:279 first_key_index:1946 offset:8048656
+file:276 first_key_index:1959 offset:8102424
+file:274 first_key_index:1948 offset:8056928
+file:272 first_key_index:1952 offset:8073472
+file:269 first_key_index:1929 offset:7978344
+file:267 first_key_index:1947 offset:8052792
+file:265 first_key_index:1933 offset:7994888
+file:262 first_key_index:1949 offset:8061064
+file:260 first_key_index:1970 offset:8147920
+file:258 first_key_index:1945 offset:8044520
+CompactionJob::Install end
+add L0 table:348 index:7
+finish L0 table:348 keynum:15612 size:62 MB
+add L0 table:350 index:8
+finish L0 table:350 keynum:15610 size:62 MB
+add L0 table:352 index:9
+finish L0 table:352 keynum:15607 size:62 MB
+add L0 table:357 index:10
+finish L0 table:357 keynum:15614 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'000000000003CBF03030303030303030' seq:1199876, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1table:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1table:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1table:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1table:305 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30763030303030303030' seq:780193, type:1]
+L1table:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:327 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001DCDCA3030303030303030' seq:1045326, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+L1over:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+L1over:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+L1over:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1over:305 ['00000000000C32083030303030303030' seq:970891, type:1-'00000000000E30763030303030303030' seq:780193, type:1]
+L1over:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1over:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1over:327 ['00000000001BD37F3030303030303030' seq:805580, type:1-'00000000001DCDCA3030303030303030' seq:1045326, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:6
+L0 select num:20 L0 select size:257.85 MB
+L0smallest:'000000000003CBF03030303030303030' seq:1199876, type:1 L0largest:'00000000000A2FD73030303030303030' seq:1279535, type:1
+select L0:319 keynum:3303 size:13661208
+select L0:307 keynum:3254 size:13458544
+select L0:298 keynum:3344 size:13830784
+select L0:295 keynum:3261 size:13487496
+select L0:293 keynum:3273 size:13537128
+select L0:291 keynum:3230 size:13359280
+select L0:288 keynum:3255 size:13462680
+select L0:286 keynum:3289 size:13603304
+select L0:284 keynum:3255 size:13462680
+select L0:282 keynum:3308 size:13681888
+select L0:279 keynum:3213 size:13288968
+select L0:276 keynum:3260 size:13483360
+select L0:274 keynum:3216 size:13301376
+select L0:272 keynum:3231 size:13363416
+select L0:269 keynum:3275 size:13545400
+select L0:267 keynum:3210 size:13276560
+select L0:265 keynum:3295 size:13628120
+select L0:262 keynum:3266 size:13508176
+select L0:260 keynum:3298 size:13640528
+select L0:258 keynum:3336 size:13797696
+select L1:270 ['000000000003CBEC3030303030303030' seq:0, type:1-'0000000000054E733030303030303030' seq:1080362, type:1]
+select L1:277 ['0000000000054E963030303030303030' seq:992394, type:1-'000000000005CF913030303030303030' seq:1025569, type:1]
+select L1:299 ['000000000005CF993030303030303030' seq:714233, type:1-'000000000006CD6A3030303030303030' seq:722359, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:319 first_key_index:5185 offset:21445160
+file:307 first_key_index:5228 offset:21623008
+file:298 first_key_index:5280 offset:21838080
+file:295 first_key_index:5255 offset:21734680
+file:293 first_key_index:5192 offset:21474112
+file:291 first_key_index:5213 offset:21560968
+file:288 first_key_index:5205 offset:21527880
+file:286 first_key_index:5185 offset:21445160
+file:284 first_key_index:5262 offset:21763632
+file:282 first_key_index:5254 offset:21730544
+file:279 first_key_index:5159 offset:21337624
+file:276 first_key_index:5219 offset:21585784
+file:274 first_key_index:5164 offset:21358304
+file:272 first_key_index:5183 offset:21436888
+file:269 first_key_index:5204 offset:21523744
+file:267 first_key_index:5157 offset:21329352
+file:265 first_key_index:5228 offset:21623008
+file:262 first_key_index:5215 offset:21569240
+file:260 first_key_index:5268 offset:21788448
+file:258 first_key_index:5281 offset:21842216
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+add L0 table:369 index:11
+finish L0 table:369 keynum:15606 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'00000000000A2FD73030303030303030' seq:1279535, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:360 ['00000000000621373030303030303030' seq:800853, type:1-'0000000000076C6D3030303030303030' seq:1325900, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1table:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+L1over:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1over:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:20 L0 select size:161.33 MB
+L0smallest:'00000000000A2FD73030303030303030' seq:1279535, type:1 L0largest:'00000000000E307A3030303030303030' seq:1237631, type:1
+select L0:319 keynum:2065 size:8540840
+select L0:307 keynum:2038 size:8429168
+select L0:298 keynum:2068 size:8553248
+select L0:295 keynum:1977 size:8176872
+select L0:293 keynum:2020 size:8354720
+select L0:291 keynum:2005 size:8292680
+select L0:288 keynum:2114 size:8743504
+select L0:286 keynum:2091 size:8648376
+select L0:284 keynum:2045 size:8458120
+select L0:282 keynum:2072 size:8569792
+select L0:279 keynum:2041 size:8441576
+select L0:276 keynum:2075 size:8582200
+select L0:274 keynum:2006 size:8296816
+select L0:272 keynum:2035 size:8416760
+select L0:269 keynum:1994 size:8247184
+select L0:267 keynum:2043 size:8449848
+select L0:265 keynum:2036 size:8420896
+select L0:262 keynum:2100 size:8685600
+select L0:260 keynum:1976 size:8172736
+select L0:258 keynum:2099 size:8681464
+select L1:302 ['00000000000A2FD53030303030303030' seq:1160777, type:1-'00000000000C32053030303030303030' seq:1116347, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:319 first_key_index:7250 offset:29986000
+file:307 first_key_index:7266 offset:30052176
+file:298 first_key_index:7348 offset:30391328
+file:295 first_key_index:7232 offset:29911552
+file:293 first_key_index:7212 offset:29828832
+file:291 first_key_index:7218 offset:29853648
+file:288 first_key_index:7319 offset:30271384
+file:286 first_key_index:7276 offset:30093536
+file:284 first_key_index:7307 offset:30221752
+file:282 first_key_index:7326 offset:30300336
+file:279 first_key_index:7200 offset:29779200
+file:276 first_key_index:7294 offset:30167984
+file:274 first_key_index:7170 offset:29655120
+file:272 first_key_index:7218 offset:29853648
+file:269 first_key_index:7198 offset:29770928
+file:267 first_key_index:7200 offset:29779200
+file:265 first_key_index:7264 offset:30043904
+file:262 first_key_index:7315 offset:30254840
+file:260 first_key_index:7244 offset:29961184
+file:258 first_key_index:7380 offset:30523680
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'00000000000E307A3030303030303030' seq:1237631, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+L1over:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:20 L0 select size:385.47 MB
+L0smallest:'00000000000E307A3030303030303030' seq:1237631, type:1 L0largest:'000000000017B99F3030303030303030' seq:1284950, type:1
+select L0:319 keynum:4880 size:20183680
+select L0:307 keynum:4898 size:20258128
+select L0:298 keynum:4808 size:19885888
+select L0:295 keynum:4959 size:20510424
+select L0:293 keynum:4926 size:20373936
+select L0:291 keynum:4930 size:20390480
+select L0:288 keynum:4816 size:19918976
+select L0:286 keynum:4893 size:20237448
+select L0:284 keynum:4891 size:20229176
+select L0:282 keynum:4869 size:20138184
+select L0:279 keynum:4898 size:20258128
+select L0:276 keynum:4872 size:20150592
+select L0:274 keynum:4909 size:20303624
+select L0:272 keynum:4871 size:20146456
+select L0:269 keynum:4957 size:20502152
+select L0:267 keynum:4921 size:20353256
+select L0:265 keynum:4894 size:20241584
+select L0:262 keynum:4862 size:20109232
+select L0:260 keynum:4864 size:20117504
+select L0:258 keynum:4809 size:19890024
+select L1:308 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F30E83030303030303030' seq:875954, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:382 index:30
+finish L0 table:382 keynum:15621 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:319 first_key_index:12130 offset:50169680
+file:307 first_key_index:12164 offset:50310304
+file:298 first_key_index:12156 offset:50277216
+file:295 first_key_index:12191 offset:50421976
+file:293 first_key_index:12138 offset:50202768
+file:291 first_key_index:12148 offset:50244128
+file:288 first_key_index:12135 offset:50190360
+file:286 first_key_index:12169 offset:50330984
+file:284 first_key_index:12198 offset:50450928
+file:282 first_key_index:12195 offset:50438520
+file:279 first_key_index:12098 offset:50037328
+file:276 first_key_index:12166 offset:50318576
+file:274 first_key_index:12079 offset:49958744
+file:272 first_key_index:12089 offset:50000104
+file:269 first_key_index:12155 offset:50273080
+file:267 first_key_index:12121 offset:50132456
+file:265 first_key_index:12158 offset:50285488
+file:262 first_key_index:12177 offset:50364072
+file:260 first_key_index:12108 offset:50078688
+file:258 first_key_index:12189 offset:50413704
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'000000000017B99F3030303030303030' seq:1284950, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1table:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:20 L0 select size:165.78 MB
+L0smallest:'000000000017B99F3030303030303030' seq:1284950, type:1 L0largest:'00000000001BD37E3030303030303030' seq:1390368, type:1
+select L0:319 keynum:2096 size:8669056
+select L0:307 keynum:2088 size:8635968
+select L0:298 keynum:2091 size:8648376
+select L0:295 keynum:2113 size:8739368
+select L0:293 keynum:2107 size:8714552
+select L0:291 keynum:2146 size:8875856
+select L0:288 keynum:2115 size:8747640
+select L0:286 keynum:2146 size:8875856
+select L0:284 keynum:2026 size:8379536
+select L0:282 keynum:2071 size:8565656
+select L0:279 keynum:2126 size:8793136
+select L0:276 keynum:2068 size:8553248
+select L0:274 keynum:2135 size:8830360
+select L0:272 keynum:2166 size:8958576
+select L0:269 keynum:2064 size:8536704
+select L0:267 keynum:2055 size:8499480
+select L0:265 keynum:2088 size:8635968
+select L0:262 keynum:2112 size:8735232
+select L0:260 keynum:2102 size:8693872
+select L0:258 keynum:2114 size:8743504
+select L1:311 ['000000000017B99F3030303030303030' seq:1149605, type:1-'00000000001BD37A3030303030303030' seq:1058001, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:319 first_key_index:14226 offset:58838736
+file:307 first_key_index:14252 offset:58946272
+file:298 first_key_index:14247 offset:58925592
+file:295 first_key_index:14304 offset:59161344
+file:293 first_key_index:14245 offset:58917320
+file:291 first_key_index:14294 offset:59119984
+file:288 first_key_index:14250 offset:58938000
+file:286 first_key_index:14315 offset:59206840
+file:284 first_key_index:14224 offset:58830464
+file:282 first_key_index:14266 offset:59004176
+file:279 first_key_index:14224 offset:58830464
+file:276 first_key_index:14234 offset:58871824
+file:274 first_key_index:14214 offset:58789104
+file:272 first_key_index:14255 offset:58958680
+file:269 first_key_index:14219 offset:58809784
+file:267 first_key_index:14176 offset:58631936
+file:265 first_key_index:14246 offset:58921456
+file:262 first_key_index:14289 offset:59099304
+file:260 first_key_index:14210 offset:58772560
+file:258 first_key_index:14303 offset:59157208
+CompactionJob::Install end
+add L0 table:398 index:33
+finish L0 table:398 keynum:15609 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[319 307 298 295 293 291 288 286 284 282 279 276 274 272 269 267 265 262 260 258 ]
+L0 minsmallest:'00000000001BD37E3030303030303030' seq:1390368, type:1 maxlargest:'00000000001E847E3030303030303030' seq:1363279, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1table:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+L1over:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+nvm cf pick have L1
+L1Range_index:1
+L0 select num:20 L0 select size:107.86 MB
+L0smallest:'00000000001BD37E3030303030303030' seq:1390368, type:1 L0largest:'00000000001E847E3030303030303030' seq:1363279, type:1
+select L0:319 keynum:1394 size:5765584
+select L0:307 keynum:1368 size:5658048
+select L0:298 keynum:1359 size:5620824
+select L0:295 keynum:1315 size:5438840
+select L0:293 keynum:1377 size:5695272
+select L0:291 keynum:1322 size:5467792
+select L0:288 keynum:1369 size:5662184
+select L0:286 keynum:1303 size:5389208
+select L0:284 keynum:1385 size:5728360
+select L0:282 keynum:1353 size:5596008
+select L0:279 keynum:1383 size:5720088
+select L0:276 keynum:1377 size:5695272
+select L0:274 keynum:1386 size:5732496
+select L0:272 keynum:1374 size:5682864
+select L0:269 keynum:1399 size:5786264
+select L0:267 keynum:1445 size:5976520
+select L0:265 keynum:1377 size:5695272
+select L0:262 keynum:1335 size:5521560
+select L0:260 keynum:1407 size:5819352
+select L0:258 keynum:1318 size:5451248
+select L1:328 ['00000000001DCDD13030303030303030' seq:698866, type:1-'00000000001E847E3030303030303030' seq:796410, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:319
+delete l0 table:307
+delete l0 table:298
+delete l0 table:295
+delete l0 table:293
+delete l0 table:291
+delete l0 table:288
+delete l0 table:286
+delete l0 table:284
+delete l0 table:282
+delete l0 table:279
+delete l0 table:276
+delete l0 table:274
+delete l0 table:272
+delete l0 table:269
+delete l0 table:267
+delete l0 table:265
+delete l0 table:262
+delete l0 table:260
+delete l0 table:258
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+UpdateCompactionState all:14
+up end
+immu L0table[398 382 369 357 352 350 348 345 342 340 338 335 333 331 ]
+L0 minsmallest:'000000000000000A3030303030303030' seq:1605291, type:1 maxlargest:'00000000001E847B3030303030303030' seq:1664622, type:1
+L1table:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1table:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1table:405 ['00000000001BD37E3030303030303030' seq:1390368, type:1-'00000000001E463A3030303030303030' seq:947147, type:1]
+L1table:406 ['00000000001E463B3030303030303030' seq:678586, type:1-'00000000001E847E3030303030303030' seq:1363279, type:1]
+L1over:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+L1over:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1over:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1over:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1over:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1over:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1over:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1over:405 ['00000000001BD37E3030303030303030' seq:1390368, type:1-'00000000001E463A3030303030303030' seq:947147, type:1]
+L1over:406 ['00000000001E463B3030303030303030' seq:678586, type:1-'00000000001E847E3030303030303030' seq:1363279, type:1]
+nvm cf pick have L1
+L1Range_index:3
+L0 select num:14 L0 select size:130.71 MB
+L0smallest:'000000000000000A3030303030303030' seq:1605291, type:1 L0largest:'000000000004A28C3030303030303030' seq:1689298, type:1
+select L0:398 keynum:2378 size:9835408
+select L0:382 keynum:2313 size:9566568
+select L0:369 keynum:2362 size:9769232
+select L0:357 keynum:2402 size:9934672
+select L0:352 keynum:2343 size:9690648
+select L0:350 keynum:2372 size:9810592
+select L0:348 keynum:2388 size:9876768
+select L0:345 keynum:2338 size:9669968
+select L0:342 keynum:2365 size:9781640
+select L0:340 keynum:2315 size:9574840
+select L0:338 keynum:2418 size:10000848
+select L0:335 keynum:2350 size:9719600
+select L0:333 keynum:2462 size:10182832
+select L0:331 keynum:2333 size:9649288
+select L1:329 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000D77C3030303030303030' seq:515028, type:1]
+select L1:358 ['000000000003CBEC3030303030303030' seq:0, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+add L0 table:409 index:12
+finish L0 table:409 keynum:15619 size:62 MB
+add L0 table:411 index:13
+finish L0 table:411 keynum:15619 size:62 MB
+add L0 table:413 index:14
+finish L0 table:413 keynum:15608 size:62 MB
+add L0 table:416 index:15
+finish L0 table:416 keynum:15615 size:62 MB
+add L0 table:418 index:16
+finish L0 table:418 keynum:15617 size:62 MB
+add L0 table:420 index:17
+finish L0 table:420 keynum:15606 size:62 MB
+add L0 table:423 index:18
+finish L0 table:423 keynum:15630 size:62 MB
+add L0 table:425 index:19
+finish L0 table:425 keynum:15618 size:62 MB
+add L0 table:427 index:20
+finish L0 table:427 keynum:15607 size:62 MB
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:398 first_key_index:2378 offset:9835408
+file:382 first_key_index:2313 offset:9566568
+file:369 first_key_index:2362 offset:9769232
+file:357 first_key_index:2402 offset:9934672
+file:352 first_key_index:2343 offset:9690648
+file:350 first_key_index:2372 offset:9810592
+file:348 first_key_index:2388 offset:9876768
+file:345 first_key_index:2338 offset:9669968
+file:342 first_key_index:2365 offset:9781640
+file:340 first_key_index:2315 offset:9574840
+file:338 first_key_index:2418 offset:10000848
+file:335 first_key_index:2350 offset:9719600
+file:333 first_key_index:2462 offset:10182832
+file:331 first_key_index:2333 offset:9649288
+CompactionJob::Install end
+add L0 table:430 index:21
+finish L0 table:430 keynum:15623 size:62 MB
+add L0 table:432 index:22
+finish L0 table:432 keynum:15618 size:62 MB
+add L0 table:434 index:23
+finish L0 table:434 keynum:15607 size:62 MB
+add L0 table:436 index:24
+finish L0 table:436 keynum:15627 size:62 MB
+add L0 table:439 index:25
+finish L0 table:439 keynum:15619 size:62 MB
+add L0 table:441 index:26
+finish L0 table:441 keynum:15620 size:62 MB
+add L0 table:443 index:27
+finish L0 table:443 keynum:15624 size:62 MB
+add L0 table:446 index:28
+finish L0 table:446 keynum:15616 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[398 382 369 357 352 350 348 345 342 340 338 335 333 331 ]
+L0 minsmallest:'000000000004A28C3030303030303030' seq:1689298, type:1 maxlargest:'00000000001E847B3030303030303030' seq:1664622, type:1
+L1table:407 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000C5B93030303030303030' seq:647277, type:1]
+L1table:421 ['000000000003F5BC3030303030303030' seq:1583272, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1table:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1table:405 ['00000000001BD37E3030303030303030' seq:1390368, type:1-'00000000001E463A3030303030303030' seq:947147, type:1]
+L1table:406 ['00000000001E463B3030303030303030' seq:678586, type:1-'00000000001E847E3030303030303030' seq:1363279, type:1]
+L1over:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+L1over:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1over:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1over:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1over:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1over:405 ['00000000001BD37E3030303030303030' seq:1390368, type:1-'00000000001E463A3030303030303030' seq:947147, type:1]
+L1over:406 ['00000000001E463B3030303030303030' seq:678586, type:1-'00000000001E847E3030303030303030' seq:1363279, type:1]
+nvm cf pick have L1
+L1Range_index:3
+L0 select num:14 L0 select size:156.53 MB
+L0smallest:'000000000004A28C3030303030303030' seq:1689298, type:1 L0largest:'00000000000A2FDA3030303030303030' seq:1512598, type:1
+select L0:398 keynum:2867 size:11857912
+select L0:382 keynum:2769 size:11452584
+select L0:369 keynum:2931 size:12122616
+select L0:357 keynum:2803 size:11593208
+select L0:352 keynum:2844 size:11762784
+select L0:350 keynum:2713 size:11220968
+select L0:348 keynum:2820 size:11663520
+select L0:345 keynum:2872 size:11878592
+select L0:342 keynum:2779 size:11493944
+select L0:340 keynum:2811 size:11626296
+select L0:338 keynum:2808 size:11613888
+select L0:335 keynum:2900 size:11994400
+select L0:333 keynum:2809 size:11618024
+select L0:331 keynum:2958 size:12234288
+select L1:359 ['000000000004A2793030303030303030' seq:1428477, type:1-'00000000000621353030303030303030' seq:1128701, type:1]
+select L1:361 ['0000000000076C723030303030303030' seq:1200265, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:398 first_key_index:5245 offset:21693320
+file:382 first_key_index:5082 offset:21019152
+file:369 first_key_index:5293 offset:21891848
+file:357 first_key_index:5205 offset:21527880
+file:352 first_key_index:5187 offset:21453432
+file:350 first_key_index:5085 offset:21031560
+file:348 first_key_index:5208 offset:21540288
+file:345 first_key_index:5210 offset:21548560
+file:342 first_key_index:5144 offset:21275584
+file:340 first_key_index:5126 offset:21201136
+file:338 first_key_index:5226 offset:21614736
+file:335 first_key_index:5250 offset:21714000
+file:333 first_key_index:5271 offset:21800856
+file:331 first_key_index:5291 offset:21883576
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[398 382 369 357 352 350 348 345 342 340 338 335 333 331 ]
+L0 minsmallest:'00000000000A2FDA3030303030303030' seq:1512598, type:1 maxlargest:'00000000001E847B3030303030303030' seq:1664622, type:1
+L1table:407 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000C5B93030303030303030' seq:647277, type:1]
+L1table:421 ['000000000003F5BC3030303030303030' seq:1583272, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:449 ['000000000004A2793030303030303030' seq:1428477, type:1-'000000000005F0923030303030303030' seq:1297818, type:1]
+L1table:450 ['000000000005F0943030303030303030' seq:1096502, type:1-'00000000000845FF3030303030303030' seq:1437606, type:1]
+L1table:451 ['00000000000846053030303030303030' seq:1416653, type:1-'00000000000A2E863030303030303030' seq:1426892, type:1]
+L1table:452 ['00000000000A2E8C3030303030303030' seq:1676015, type:1-'00000000000A2FCE3030303030303030' seq:1331641, type:1]
+L1table:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1table:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1over:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+L1over:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1over:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+nvm cf pick have L1
+L1Range_index:3
+L0 select num:14 L0 select size:137.09 MB
+L0smallest:'00000000000A2FDA3030303030303030' seq:1512598, type:1 L0largest:'00000000000F09943030303030303030' seq:1667470, type:1
+select L0:398 keynum:2486 size:10282096
+select L0:382 keynum:2526 size:10447536
+select L0:369 keynum:2412 size:9976032
+select L0:357 keynum:2504 size:10356544
+select L0:352 keynum:2518 size:10414448
+select L0:350 keynum:2579 size:10666744
+select L0:348 keynum:2552 size:10555072
+select L0:345 keynum:2453 size:10145608
+select L0:342 keynum:2489 size:10294504
+select L0:340 keynum:2463 size:10186968
+select L0:338 keynum:2470 size:10215920
+select L0:335 keynum:2445 size:10112520
+select L0:333 keynum:2404 size:9942944
+select L0:331 keynum:2455 size:10153880
+select L1:371 ['00000000000C1FCC3030303030303030' seq:984723, type:1-'00000000000E30753030303030303030' seq:1214295, type:1]
+select L1:378 ['00000000000E30783030303030303030' seq:946417, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:398 first_key_index:7731 offset:31975416
+file:382 first_key_index:7608 offset:31466688
+file:369 first_key_index:7705 offset:31867880
+file:357 first_key_index:7709 offset:31884424
+file:352 first_key_index:7705 offset:31867880
+file:350 first_key_index:7664 offset:31698304
+file:348 first_key_index:7760 offset:32095360
+file:345 first_key_index:7663 offset:31694168
+file:342 first_key_index:7633 offset:31570088
+file:340 first_key_index:7589 offset:31388104
+file:338 first_key_index:7696 offset:31830656
+file:335 first_key_index:7695 offset:31826520
+file:333 first_key_index:7675 offset:31743800
+file:331 first_key_index:7746 offset:32037456
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[398 382 369 357 352 350 348 345 342 340 338 335 333 331 ]
+L0 minsmallest:'00000000000F09943030303030303030' seq:1667470, type:1 maxlargest:'00000000001E847B3030303030303030' seq:1664622, type:1
+L1table:407 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000C5B93030303030303030' seq:647277, type:1]
+L1table:421 ['000000000003F5BC3030303030303030' seq:1583272, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:449 ['000000000004A2793030303030303030' seq:1428477, type:1-'000000000005F0923030303030303030' seq:1297818, type:1]
+L1table:450 ['000000000005F0943030303030303030' seq:1096502, type:1-'00000000000845FF3030303030303030' seq:1437606, type:1]
+L1table:451 ['00000000000846053030303030303030' seq:1416653, type:1-'00000000000A2E863030303030303030' seq:1426892, type:1]
+L1table:458 ['00000000000D219B3030303030303030' seq:1673861, type:1-'00000000000E87FE3030303030303030' seq:0, type:1]
+L1table:459 ['00000000000E88003030303030303030' seq:1645959, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1over:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+nvm cf pick have L1
+L1Range_index:0
+L0 select num:14 L0 select size:160.74 MB
+L0smallest:'00000000000F09943030303030303030' seq:1667470, type:1 L0largest:'000000000014BAD53030303030303030' seq:1565027, type:1
+select L0:398 keynum:2929 size:12114344
+select L0:382 keynum:2987 size:12354232
+select L0:369 keynum:2934 size:12135024
+select L0:357 keynum:2929 size:12114344
+select L0:352 keynum:2925 size:12097800
+select L0:350 keynum:2895 size:11973720
+select L0:348 keynum:2866 size:11853776
+select L0:345 keynum:2855 size:11808280
+select L0:342 keynum:2932 size:12126752
+select L0:340 keynum:2933 size:12130888
+select L0:338 keynum:2850 size:11787600
+select L0:335 keynum:2928 size:12110208
+select L0:333 keynum:2910 size:12035760
+select L0:331 keynum:2878 size:11903408
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+file:398 first_key_index:10660 offset:44089760
+file:382 first_key_index:10595 offset:43820920
+file:369 first_key_index:10639 offset:44002904
+file:357 first_key_index:10638 offset:43998768
+file:352 first_key_index:10630 offset:43965680
+file:350 first_key_index:10559 offset:43672024
+file:348 first_key_index:10626 offset:43949136
+file:345 first_key_index:10518 offset:43502448
+file:342 first_key_index:10565 offset:43696840
+file:340 first_key_index:10522 offset:43518992
+file:338 first_key_index:10546 offset:43618256
+file:335 first_key_index:10623 offset:43936728
+file:333 first_key_index:10585 offset:43779560
+file:331 first_key_index:10624 offset:43940864
+CompactionJob::Install end
+CompactionJob::Install start
+CompactionJob::Install end
+do column compaction
+pick column compaction
+nvm cf pick column compaction
+up s
+up end
+immu L0table[398 382 369 357 352 350 348 345 342 340 338 335 333 331 ]
+L0 minsmallest:'000000000014BAD53030303030303030' seq:1565027, type:1 maxlargest:'00000000001E847B3030303030303030' seq:1664622, type:1
+L1table:407 ['00000000000000003030303030303030' seq:1009265, type:1-'000000000000C5B93030303030303030' seq:647277, type:1]
+L1table:421 ['000000000003F5BC3030303030303030' seq:1583272, type:1-'000000000004A2783030303030303030' seq:1192591, type:1]
+L1table:449 ['000000000004A2793030303030303030' seq:1428477, type:1-'000000000005F0923030303030303030' seq:1297818, type:1]
+L1table:450 ['000000000005F0943030303030303030' seq:1096502, type:1-'00000000000845FF3030303030303030' seq:1437606, type:1]
+L1table:451 ['00000000000846053030303030303030' seq:1416653, type:1-'00000000000A2E863030303030303030' seq:1426892, type:1]
+L1table:458 ['00000000000D219B3030303030303030' seq:1673861, type:1-'00000000000E87FE3030303030303030' seq:0, type:1]
+L1table:459 ['00000000000E88003030303030303030' seq:1645959, type:1-'00000000000F09893030303030303030' seq:740971, type:1]
+L1table:467 ['0000000000134AE53030303030303030' seq:1497309, type:1-'000000000014BAC53030303030303030' seq:1593944, type:1]
+L1table:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+L1over:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+nvm cf pick have L1
+L1Range_index:2
+L0 select num:14 L0 select size:277.09 MB
+L0smallest:'000000000014BAD53030303030303030' seq:1565027, type:1 L0largest:'00000000001E847B3030303030303030' seq:1664622, type:1
+select L0:398 keynum:4949 size:20469064
+select L0:382 keynum:5026 size:20787536
+select L0:369 keynum:4967 size:20543512
+select L0:357 keynum:4976 size:20580736
+select L0:352 keynum:4977 size:20584872
+select L0:350 keynum:5051 size:20890936
+select L0:348 keynum:4986 size:20622096
+select L0:345 keynum:5104 size:21110144
+select L0:342 keynum:5048 size:20878528
+select L0:340 keynum:5090 size:21052240
+select L0:338 keynum:5064 size:20944704
+select L0:335 keynum:4991 size:20642776
+select L0:333 keynum:5029 size:20799944
+select L0:331 keynum:4990 size:20638640
+select L1:383 ['000000000014BAC73030303030303030' seq:1442791, type:1-'000000000017B9973030303030303030' seq:1225063, type:1]
+column compaction Compaction Get
+column compaction job run
+column compaction job MakeColumnCompactionInputIterator
+CompactionJob::Install start
+InstallColumnCompactionItem start
+delete l0 table:398
+delete l0 table:382
+delete l0 table:369
+delete l0 table:357
+delete l0 table:352
+delete l0 table:350
+delete l0 table:348
+delete l0 table:345
+delete l0 table:342
+delete l0 table:340
+delete l0 table:338
+delete l0 table:335
+delete l0 table:333
+delete l0 table:331
+CompactionJob::Install end
+add L0 table:481 index:0
+finish L0 table:481 keynum:15604 size:62 MB
+CompactionJob::Install start
+CompactionJob::Install end
+NvmCfModule:close

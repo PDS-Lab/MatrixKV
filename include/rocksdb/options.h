@@ -47,6 +47,7 @@ class Slice;
 class Statistics;
 class InternalKeyComparator;
 class WalFilter;
+class NvmSetup;
 
 // DB contents are stored in a set of blocks, each of which holds a
 // sequence of key,value pairs.  Each block may be compressed before
@@ -992,6 +993,8 @@ struct DBOptions {
   // Currently, any WAL-enabled writes after atomic flush may be replayed
   // independently if the process crashes later and tries to recover.
   bool atomic_flush = false;
+
+  std::shared_ptr<NvmSetup> nvm_setup = nullptr;
 };
 
 // Options to control the behavior of a database (passed to DB::Open)

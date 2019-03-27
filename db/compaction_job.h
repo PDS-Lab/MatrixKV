@@ -44,6 +44,8 @@
 #include "util/stop_watch.h"
 #include "util/thread_local.h"
 
+#include "utilities/nvm_mod/nvm_cf_mod.h"
+
 namespace rocksdb {
 
 class Arena;
