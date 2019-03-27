@@ -714,10 +714,11 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
   ColumnFamilyData* cfd = compact_->compaction->column_family_data();
   cfd->internal_stats()->AddCompactionStats(
       compact_->compaction->output_level(), compaction_stats_);
-
+  RECORD_LOG("CompactionJob::Install start\n");
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
   }
+  RECORD_LOG("CompactionJob::Install end\n");
   VersionStorageInfo::LevelSummaryStorage tmp;
   auto vstorage = cfd->current()->storage_info();
   const auto& stats = compaction_stats_;
@@ -799,6 +800,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
   stream.EndArray();
 
   CleanupCompaction();
+  //log_buffer_->FlushBufferToLog();
   return status;
 }
 
@@ -810,9 +812,18 @@ void CompactionJob::ProcessKeyValueCompaction(SubcompactionState* sub_compact) {
 
   // Although the v2 aggregator is what the level iterator(s) know about,
   // the AddTombstones calls will be propagated down to the v1 aggregator.
-  std::unique_ptr<InternalIterator> input(versions_->MakeInputIterator(
+  std::unique_ptr<InternalIterator> input = nullptr;
+  if(sub_compact->compaction->GetColumnCompactionItem() == nullptr){
+    input.reset(versions_->MakeInputIterator(
       sub_compact->compaction, &range_del_agg, env_optiosn_for_read_));
-
+  }
+  else{  //column compaction
+    RECORD_LOG("column compaction job run\n");
+    log_buffer_->FlushBufferToLog();
+    input.reset(versions_->MakeColumnCompactionInputIterator(
+      sub_compact->compaction, &range_del_agg, env_optiosn_for_read_));
+    RECORD_LOG("column compaction job MakeColumnCompactionInputIterator\n");
+  }
   AutoThreadOperationStageUpdater stage_updater(
       ThreadStatus::STAGE_COMPACTION_PROCESS_KV);
 
@@ -1442,7 +1453,7 @@ Status CompactionJob::InstallCompactionResults(
 
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
-
+  compaction->InstallColumnCompactionItem(compact_->compaction->edit());
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       compaction->edit()->AddFile(compaction->output_level(), out.meta);

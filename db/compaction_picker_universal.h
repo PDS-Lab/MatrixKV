@@ -21,7 +21,7 @@ class UniversalCompactionPicker : public CompactionPicker {
   virtual Compaction* PickCompaction(const std::string& cf_name,
                                      const MutableCFOptions& mutable_cf_options,
                                      VersionStorageInfo* vstorage,
-                                     LogBuffer* log_buffer) override;
+                                     LogBuffer* log_buffer,bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr) override;
 
   virtual int MaxOutputLevel() const override { return NumberLevels() - 1; }
 

@@ -22,12 +22,16 @@
 #include "rocksdb/options.h"
 #include "rocksdb/status.h"
 
+#include "utilities/nvm_mod/nvm_cf_mod.h"
+
 namespace rocksdb {
 
 class LogBuffer;
 class Compaction;
 class VersionStorageInfo;
 struct CompactionInputFiles;
+class NvmCfModule;
+
 
 class CompactionPicker {
  public:
@@ -42,7 +46,7 @@ class CompactionPicker {
   virtual Compaction* PickCompaction(const std::string& cf_name,
                                      const MutableCFOptions& mutable_cf_options,
                                      VersionStorageInfo* vstorage,
-                                     LogBuffer* log_buffer) = 0;
+                                     LogBuffer* log_buffer,bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr) = 0;
 
   // Return a compaction object for compacting the range [begin,end] in
   // the specified level.  Returns nullptr if there is nothing in that
@@ -123,6 +127,7 @@ class CompactionPicker {
   // REQUIRES: inputs is not empty
   void GetRange(const CompactionInputFiles& inputs, InternalKey* smallest,
                 InternalKey* largest) const;
+  void GetRange(InternalKey* smallest, InternalKey* largest, InternalKey* smallest1, InternalKey* largest1, InternalKey* smallest2, InternalKey* largest2) const;
 
   // Stores the minimal range that covers all entries in inputs1 and inputs2
   // in *smallest, *largest.
@@ -228,7 +233,7 @@ class LevelCompactionPicker : public CompactionPicker {
   virtual Compaction* PickCompaction(const std::string& cf_name,
                                      const MutableCFOptions& mutable_cf_options,
                                      VersionStorageInfo* vstorage,
-                                     LogBuffer* log_buffer) override;
+                                     LogBuffer* log_buffer,bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr) override;
 
   virtual bool NeedsCompaction(
       const VersionStorageInfo* vstorage) const override;
@@ -246,7 +251,7 @@ class NullCompactionPicker : public CompactionPicker {
   Compaction* PickCompaction(const std::string& /*cf_name*/,
                              const MutableCFOptions& /*mutable_cf_options*/,
                              VersionStorageInfo* /*vstorage*/,
-                             LogBuffer* /*log_buffer*/) override {
+                             LogBuffer* /*log_buffer*/,bool /*for_column_compaction = false*/ ,NvmCfModule* /*nvmcf = nullptr*/ ) override {
     return nullptr;
   }
 

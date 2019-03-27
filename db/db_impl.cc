@@ -95,6 +95,10 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/my_log.h"
+#include "utilities/nvm_mod/nvm_flush_job.h"
+
+
 namespace rocksdb {
 const std::string kDefaultColumnFamilyName("default");
 void DumpRocksDBBuildVersion(Logger* log);
@@ -2644,6 +2648,25 @@ Status DestroyDB(const std::string& dbname, const Options& options,
   const std::string lockname = LockFileName(dbname);
   Status result = env->LockFile(lockname, &lock);
   if (result.ok()) {
+    if(soptions.nvm_setup != nullptr){
+      if(soptions.nvm_setup->pmem_path.size() != 0){
+        RECORD_LOG("DestroyDB delete dir:%s\n",soptions.nvm_setup->pmem_path.c_str());
+        std::vector<std::string> nvmfiles;
+        env->GetChildren(soptions.nvm_setup->pmem_path, &nvmfiles);  
+        Status delnvm;
+        for (const std::string& nvmfile : nvmfiles) {
+          std::string nvm_path_to_delete = soptions.nvm_setup->pmem_path + "/" + nvmfile;
+          delnvm = env->DeleteFile(nvm_path_to_delete);
+          if(delnvm.ok()){
+            RECORD_LOG("DestroyDB delete file:%s\n",nvm_path_to_delete.c_str());
+          }
+        }
+        env->DeleteDir(soptions.nvm_setup->pmem_path);
+      }
+    }
+    else{
+      RECORD_LOG("DestroyDB soptions.nvm_setup==nullptr\n");
+    }
     uint64_t number;
     FileType type;
     InfoLogPrefix info_log_prefix(!soptions.db_log_dir.empty(), dbname);

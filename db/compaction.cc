@@ -219,7 +219,8 @@ Compaction::Compaction(VersionStorageInfo* vstorage,
                        std::vector<FileMetaData*> _grandparents,
                        bool _manual_compaction, double _score,
                        bool _deletion_compaction,
-                       CompactionReason _compaction_reason)
+                       CompactionReason _compaction_reason,
+                       ColumnCompactionItem* ccitem)
     : input_vstorage_(vstorage),
       start_level_(_inputs[0].level),
       output_level_(_output_level),
@@ -242,7 +243,8 @@ Compaction::Compaction(VersionStorageInfo* vstorage,
       is_full_compaction_(IsFullCompaction(vstorage, inputs_)),
       is_manual_compaction_(_manual_compaction),
       is_trivial_move_(false),
-      compaction_reason_(_compaction_reason) {
+      compaction_reason_(_compaction_reason),
+      ccitem_(ccitem){
   MarkFilesBeingCompacted(true);
   if (is_manual_compaction_) {
     compaction_reason_ = CompactionReason::kManualCompaction;
@@ -265,11 +267,30 @@ Compaction::Compaction(VersionStorageInfo* vstorage,
                                 &arena_);
     }
   }
-
-  GetBoundaryKeys(vstorage, inputs_, &smallest_user_key_, &largest_user_key_);
+  if(ccitem_ == nullptr){
+    GetBoundaryKeys(vstorage, inputs_, &smallest_user_key_, &largest_user_key_);
+  }
+  else{ //column compaction
+    RECORD_LOG("column compaction Compaction Get\n");
+    if(inputs_.size() == 1 ){
+      smallest_user_key_ = ccitem_->L0smallest.user_key();
+      largest_user_key_ = ccitem_->L0largest.user_key();
+    }
+    else{
+      const Comparator* ucmp = vstorage->InternalComparator()->user_comparator();
+      Slice start1,end1,start2,end2;
+      start1 = ccitem_->L0smallest.user_key();
+      end1 = ccitem_->L0largest.user_key();
+      start2 = inputs_[1].files[0]->smallest.user_key();
+      end2 = inputs_[1].files.back()->largest.user_key();
+      smallest_user_key_ = ucmp->Compare(start1, start2) < 0 ? start1 : start2;
+      largest_user_key_ = ucmp->Compare(end1, end2) > 0 ? end1 : end2;
+    }
+  }
 }
 
 Compaction::~Compaction() {
+  if(ccitem_) delete ccitem_;
   if (input_version_ != nullptr) {
     input_version_->Unref();
   }
@@ -299,12 +320,14 @@ bool Compaction::IsTrivialMove() const {
   // a very expensive merge later on.
   // If start_level_== output_level_, the purpose is to force compaction
   // filter to be applied to that level, and thus cannot be a trivial move.
-
-  // Check if start level have files with overlapping ranges
-  if (start_level_ == 0 && input_vstorage_->level0_non_overlapping() == false) {
-    // We cannot move files from L0 to L1 if the files are overlapping
+  if (start_level_ == 0){
     return false;
   }
+  // Check if start level have files with overlapping ranges
+  /*if (start_level_ == 0 && input_vstorage_->level0_non_overlapping() == false) {
+    // We cannot move files from L0 to L1 if the files are overlapping
+    return false;
+  }*/
 
   if (is_manual_compaction_ &&
       (immutable_cf_options_.compaction_filter != nullptr ||
@@ -348,11 +371,40 @@ bool Compaction::IsTrivialMove() const {
 
 void Compaction::AddInputDeletions(VersionEdit* out_edit) {
   for (size_t which = 0; which < num_input_levels(); which++) {
+    if(level(which) == 0) continue;
     for (size_t i = 0; i < inputs_[which].size(); i++) {
       out_edit->DeleteFile(level(which), inputs_[which][i]->fd.GetNumber());
     }
   }
 }
+///
+void Compaction::InstallColumnCompactionItem(VersionEdit* cedit){
+  if(ccitem_ == nullptr) return;
+  RECORD_LOG("InstallColumnCompactionItem start\n");
+  persistent_ptr<FileEntry> file = nullptr;
+  for(unsigned int i = 0;i < ccitem_->files.size();i++){
+    file = ccitem_->files.at(i);
+    if(file->first_key_index + ccitem_->keys_num.at(i) == file->keys_num){ //该文件已compaction完
+      RECORD_LOG("delete l0 table:%lu\n",file->filenum);
+      cedit->DeleteFile(0,file->filenum);
+      cfd_->nvmcfmodule->DeleteL0file(file->filenum);
+
+    }
+    else{ //该文件还有数据，更新元数据信息
+      file->first_key_index = file->first_key_index + ccitem_->keys_num.at(i);
+      file->offset = file->keys_meta[file->first_key_index].offset;
+
+
+      RECORD_LOG("file:%lu first_key_index:%lu offset:%lu\n",file->filenum,file->first_key_index,file->offset);
+      //auto f = ccitem_->L0compactionfiles.at(i);
+      //TODO:smallest_seqno and largest_seqno need update 
+      //f->smallest = file->keys_meta[file->first_key_index].key;
+      //f->fd.file_size -= ccitem_->keys_size.at(i);
+    }
+  }
+}
+
+////
 
 bool Compaction::KeyNotExistsBeyondOutputLevel(
     const Slice& user_key, std::vector<size_t>* level_ptrs) const {

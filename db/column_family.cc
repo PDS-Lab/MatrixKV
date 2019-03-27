@@ -430,9 +430,12 @@ ColumnFamilyData::ColumnFamilyData(
       queued_for_compaction_(false),
       prev_compaction_needed_bytes_(0),
       allow_2pc_(db_options.allow_2pc),
-      last_memtable_id_(0) {
+      last_memtable_id_(0),
+      bg_column_compaction_(false){
   Ref();
-
+  if(ioptions_.nvm_cf_options->use_nvm_module && name_.size() != 0){
+    nvmcfmodule = NewNvmCfModule(ioptions_.nvm_cf_options.get(),name,id,&ioptions_.internal_comparator);
+  }
   // Convert user defined table properties collector factories to internal ones.
   GetIntTblPropCollectorFactory(ioptions_, &int_tbl_prop_collector_factories_);
 
@@ -483,6 +486,9 @@ ColumnFamilyData::ColumnFamilyData(
 
 // DB mutex held
 ColumnFamilyData::~ColumnFamilyData() {
+  if(nvmcfmodule != nullptr){
+    delete nvmcfmodule;
+  }
   assert(refs_.load(std::memory_order_relaxed) == 0);
   // remove from linked list
   auto prev = prev_;
@@ -909,13 +915,35 @@ void ColumnFamilyData::CreateNewMemtable(
 }
 
 bool ColumnFamilyData::NeedsCompaction() const {
-  return compaction_picker_->NeedsCompaction(current_->storage_info());
+  if(NeedsColumnCompaction()){
+    return true;
+  }
+  else{
+    return compaction_picker_->NeedsCompaction(current_->storage_info());
+  }
 }
+///
+bool ColumnFamilyData::NeedsColumnCompaction() const{
+  if(bg_column_compaction_){   //暂时只允许一个column compaction
+    return false;
+  }
+  auto* vstorage = current_->storage_info();
+  for (int i = 0; i <= vstorage->MaxInputLevel(); i++) {
+    if (vstorage->CompactionScoreLevel(i) == 0) continue;
 
+    if (vstorage->CompactionScore(i) >= 2) {
+      return false;
+    }
+  }
+  //bool need = nvmcfmodule->NeedsColumnCompaction();
+  return vstorage->NumLevelFiles(0) >= Level0_column_compaction_trigger;
+
+}
+///
 Compaction* ColumnFamilyData::PickCompaction(
-    const MutableCFOptions& mutable_options, LogBuffer* log_buffer) {
+    const MutableCFOptions& mutable_options, LogBuffer* log_buffer,bool for_column_compaction,NvmCfModule* nvmcf) {
   auto* result = compaction_picker_->PickCompaction(
-      GetName(), mutable_options, current_->storage_info(), log_buffer);
+      GetName(), mutable_options, current_->storage_info(), log_buffer,for_column_compaction,nvmcf);
   if (result != nullptr) {
     result->SetInputVersion(current_);
   }

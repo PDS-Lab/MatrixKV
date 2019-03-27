@@ -52,6 +52,8 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/column_compaction_iterator.h"
+
 namespace rocksdb {
 
 namespace {
@@ -1410,7 +1412,7 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     // compensated_file_size, making lower-level to higher-level compaction
     // will be triggered, which creates higher-level files whose num_deletions
     // will be updated here.
-    for (int level = 0;
+    for (int level = 1;
          level < storage_info_.num_levels_ && init_count < kMaxInitCount;
          ++level) {
       for (auto* file_meta : storage_info_.files_[level]) {
@@ -1436,7 +1438,7 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     // load the table-property of a file in higher-level to initialize
     // that value.
     for (int level = storage_info_.num_levels_ - 1;
-         storage_info_.accumulated_raw_value_size_ == 0 && level >= 0;
+         storage_info_.accumulated_raw_value_size_ == 0 && level >= 1;
          --level) {
       for (int i = static_cast<int>(storage_info_.files_[level].size()) - 1;
            storage_info_.accumulated_raw_value_size_ == 0 && i >= 0; --i) {
@@ -4394,7 +4396,59 @@ InternalIterator* VersionSet::MakeInputIterator(
   delete[] list;
   return result;
 }
+///
+InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
+      const Compaction* c, RangeDelAggregator* range_del_agg,
+      const EnvOptions& env_options_compactions){
+  auto cfd = c->column_family_data();
+  ReadOptions read_options;
+  read_options.verify_checksums = true;
+  read_options.fill_cache = false;
+  // Compaction iterators shouldn't be confined to a single prefix.
+  // Compactions use Seek() for
+  // (a) concurrent compactions,
+  // (b) CompactionFilter::Decision::kRemoveAndSkipUntil.
+  read_options.total_order_seek = true;
 
+  // Level-0 files have to be merged together.  For other levels,
+  // we will make a concatenating iterator per level.
+  // TODO(opt): use concatenating iterator for level-0 if there is no overlap
+  const size_t space = (c->level() == 0 ? c->input_levels(0)->num_files +
+                                              c->num_input_levels() - 1
+                                        : c->num_input_levels());
+  InternalIterator** list = new InternalIterator* [space];
+  size_t num = 0;
+  persistent_ptr<FileEntry> file = nullptr;
+  for (size_t which = 0; which < c->num_input_levels(); which++) {
+    if (c->input_levels(which)->num_files != 0) {
+      if (c->level(which) == 0) {
+        for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
+          file = c->GetColumnCompactionItem()->files.at(i);
+
+          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->keys_num.at(i));
+        }
+      } else {
+        // Create concatenating iterator for the files from this level
+        list[num++] = new LevelIterator(
+            cfd->table_cache(), read_options, env_options_compactions,
+            cfd->internal_comparator(), c->input_levels(which),
+            c->mutable_cf_options()->prefix_extractor.get(),
+            false /* should_sample */,
+            nullptr /* no per level latency histogram */,
+            true /* for_compaction */, false /* skip_filters */,
+            static_cast<int>(which) /* level */, range_del_agg,
+            c->boundaries(which));
+      }
+    }
+  }
+  assert(num <= space);
+  InternalIterator* result =
+      NewMergingIterator(&c->column_family_data()->internal_comparator(), list,
+                         static_cast<int>(num));
+  delete[] list;
+  return result;
+}
+///
 // verify that the files listed in this compaction are present
 // in the current version
 bool VersionSet::VerifyCompactionFileConsistency(Compaction* c) {

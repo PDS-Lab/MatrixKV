@@ -151,7 +151,7 @@ class VersionBuilder::Rep {
     }
 #endif
     // make sure the files are sorted correctly
-    for (int level = 0; level < num_levels_; level++) {
+    for (int level = 1; level < num_levels_; level++) {
       auto& level_files = vstorage->LevelFiles(level);
       for (size_t i = 1; i < level_files.size(); i++) {
         auto f1 = level_files[i - 1];
@@ -273,6 +273,7 @@ class VersionBuilder::Rep {
       const auto number = del_file.second;
       if (level < num_levels_) {
         levels_[level].deleted_files.insert(number);
+        //printf("delete num:%lu\n",number);
         CheckConsistencyForDeletes(edit, number, level);
 
         auto exising = levels_[level].added_files.find(number);
@@ -329,6 +330,7 @@ class VersionBuilder::Rep {
                         base_files.size() + unordered_added_files.size());
 
       // Sort added files for the level.
+      //printf("level:%d base:%lu add:%lu\n",level,base_files.size(),unordered_added_files.size());
       std::vector<FileMetaData*> added_files;
       added_files.reserve(unordered_added_files.size());
       for (const auto& pair : unordered_added_files) {
@@ -415,8 +417,10 @@ class VersionBuilder::Rep {
   void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f) {
     if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
       // f is to-be-deleted table file
+      //printf("remove table:%lu\n",f->fd.GetNumber());
       vstorage->RemoveCurrentStats(f);
     } else {
+      //printf("add table:%lu\n",f->fd.GetNumber());
       vstorage->AddFile(level, f, info_log_);
     }
   }
