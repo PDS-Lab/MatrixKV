@@ -46,9 +46,12 @@ class NvmCfModule {
 
   void DeleteL0file(uint64_t filenumber);
 
+  bool Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value);
+
 
  private:
-
+  bool UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end);
+  bool BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user_key,int *find_index,int *pre_left = nullptr,int *pre_right = nullptr);
 
   NvmCfOptions* nvmcfoption_;
 

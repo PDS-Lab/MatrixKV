@@ -147,6 +147,7 @@ void SstableMetadata::UpdateKeyNext(persistent_ptr<FileEntry> &file){
             old_index++;
         }
     }
+    file->key_point_filenum = file->next->filenum;
 }
 void SstableMetadata::UpdateCompactionState(int num){
     if(immu_head != nullptr || immu_tail != nullptr){

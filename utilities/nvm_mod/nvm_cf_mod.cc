@@ -297,9 +297,83 @@ void NvmCfModule::DeleteL0file(uint64_t filenumber){
   pinfo_->sst_meta_->DeteleFile(filenumber);
 }
 
+bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value){
+  auto L0files = vstorage->LevelFiles(0);
+  std::vector<persistent_ptr<FileEntry>> newfiles;
+  std::vector<persistent_ptr<FileEntry>> immufiles;
+  uint64_t immufiles_num = pinfo_->sst_meta_->GetImmuFileEntryNum();
+  persistent_ptr<FileEntry> tmp = nullptr;
+  for(tmp=pinfo_->sst_meta_->immu_head;tmp != nullptr; tmp=tmp->next){
+    immufiles.push_back(tmp);
+  }
+  uint64_t head_no = newfiles + immufiles_num - L0files.size();
+  tmp = pinfo_->sst_meta_->head;
+  while(head_no > 0){
+    tmp = tmp->next;
+    head_no--;
+  }
+  for(;tmp != nullptr; tmp=tmp->next){
+    newfiles.push_back(tmp);
+  }
+  Slice ikey = lkey.internal_key();
+  Slice user_key = lkey.user_key();
+  persistent_ptr<FileEntry> file = nullptr;
+  int find_index = -1;
+  int pre_left = -1;
+  int pre_right = -1;
+  uint64_t last_file_num = -1;
+  for(unsigned int i = 0;i < newfiles.size();i++){
+    file = newfiles.at(i);
+    if(UserKeyInRange(&user_key,&(file->keys_meta[file->first_key_index].key),&(file->keys_meta[file->keys_num - 1]))){
+        if(BinarySearchInFile(file,user_key,&find_index,&pre_left,&pre_right)){
+          
+        }
+    }
+  }
+
+}
+bool NvmCfModule::UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end){
+  auto user_comparator = vinfo_->icmp_->user_comparator();
+  if(user_comparator_->Compare(user_key,start->user_key()) < 0 || user_comparator_->Compare(user_key,end->user_key()) > 0 ){
+    return false;
+  }
+  return true;
+}
+
+bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
+  auto user_comparator = vinfo_->icmp_->user_comparator();
+  int left = file->first_key_index;
+  if(pre_left != nullptr && *pre_left > 0){
+    left = *pre_left;
+  }
+  int right = file->keys_num - 1;
+  if(pre_right != nullptr && *pre_right > 0){
+    left = *pre_right;
+  }
+
+  int mid = 0;
+  while(left <= right){
+    mid = (left + right)/2;
+    if(user_comparator_->Compare(file->keys_meta[mid].key.user_key(),user_key) == 0){
+      *find_index = mid;
+      return true;
+    }
+    else if(user_comparator_->Compare(file->keys_meta[mid].key.user_key(),user_key) > 0){
+      right = mid - 1;
+    }
+    else{
+      left = mid + 1;
+    }
+  }
+  *pre_right = left;
+  *pre_left = right;
+  return false;
+
+}
 
 NvmCfModule* NewNvmCfModule(NvmCfOptions* nvmcfoption,const std::string &cf_name,uint32_t cf_id,const InternalKeyComparator* icmp){
   return new NvmCfModule(nvmcfoption,cf_name,cf_id,icmp);
 }
+
 
 }  // namespace rocksdb

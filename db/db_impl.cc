@@ -1310,9 +1310,16 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
   }
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
-    sv->current->Get(read_options, lkey, pinnable_val, &s, &merge_context,
+
+    if(cfd->nvmcfmodule !=nullptr && cfd->nvmcfmodule->Get(sv->current->storage_info(),&s,lkey, pinnable_val->GetSelf())){
+      done = true;
+      pinnable_val->PinSelf();
+    }
+    else{
+      sv->current->Get(read_options, lkey, pinnable_val, &s, &merge_context,
                      &max_covering_tombstone_seq, value_found, nullptr, nullptr,
                      callback, is_blob_index);
+    }
     RecordTick(stats_, MEMTABLE_MISS);
   }
 

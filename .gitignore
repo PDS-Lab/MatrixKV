@@ -75,3 +75,4 @@ fbcode/
 fbcode
 buckifier/*.pyc
 .vscode
+NVM_LOG

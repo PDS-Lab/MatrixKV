@@ -45,6 +45,7 @@ struct FileEntry{
     struct KeysMetadata* keys_meta = nullptr; //指向多个（keys_num个）连续内存的KeysMetadata
     p<uint64_t> keys_num;
     p<uint64_t> first_key_index;          //index 从0开始
+    p<uint64_t> key_point_filenum;       //key 指向下一个文件的filenum，防止中间删除了文件
     //persistent_ptr<KeysMetadata> keys_meta = nullptr;  //先不存AEP
     //InternalKey smallest;           
     //InternalKey largest;
@@ -54,6 +55,7 @@ struct FileEntry{
     FileEntry(uint64_t a,int b,uint64_t c):filenum(a),sstable_index(b),offset(c){
       keys_num = 0;
       first_key_index = 0;
+      key_point_filenum = 0;
     }
     ~FileEntry(){
       if(keys_meta != nullptr){
