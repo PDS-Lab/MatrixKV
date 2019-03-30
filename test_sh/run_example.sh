@@ -7,6 +7,7 @@ bench_compression="snappy" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
+#bench_benchmarks="fillseq,stats"
 bench_num="2000000"
 bench_readnum="2000000"
 bench_sync="0"
