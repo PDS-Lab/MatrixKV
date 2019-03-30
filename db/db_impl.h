@@ -58,7 +58,6 @@
 #include "util/stop_watch.h"
 #include "util/thread_local.h"
 #include "util/trace_replay.h"
-#include "options/cf_options.h"
 
 namespace rocksdb {
 
@@ -884,7 +883,7 @@ class DBImpl : public DB {
   // Delete obsolete files and log status and information of file deletion
   void DeleteObsoleteFileImpl(int job_id, const std::string& fname,
                               const std::string& path_to_sync, FileType type,
-                              uint64_t number);
+                              uint64_t number,std::vector<NvmCfModule*> *nvmcfs = nullptr);
 
   // Background process needs to call
   //     auto x = CaptureCurrentFileNumberInPendingOutputs()
@@ -1548,7 +1547,7 @@ Status FlushMemTablesToNvm(
   void InstallSuperVersionAndScheduleWork(
       ColumnFamilyData* cfd, SuperVersionContext* sv_context,
       const MutableCFOptions& mutable_cf_options,
-      FlushReason flush_reason = FlushReason::kOthers);
+      FlushReason flush_reason = FlushReason::kOthers,Compaction* compaction = nullptr);
 
 #ifndef ROCKSDB_LITE
   using DB::GetPropertiesOfAllTables;

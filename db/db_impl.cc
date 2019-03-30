@@ -97,6 +97,7 @@
 
 #include "utilities/nvm_mod/my_log.h"
 #include "utilities/nvm_mod/nvm_flush_job.h"
+#include "utilities/nvm_mod/global_statistic.h"
 
 
 namespace rocksdb {
@@ -1189,6 +1190,7 @@ InternalIterator* DBImpl::NewInternalIterator(const ReadOptions& read_options,
   if (s.ok()) {
     // Collect iterators for files in L0 - Ln
     if (read_options.read_tier != kMemtableTier) {
+      cfd->nvmcfmodule->AddIterators(super_version->current->storage_info(),&merge_iter_builder);
       super_version->current->AddIterators(read_options, env_options_,
                                            &merge_iter_builder, range_del_agg);
     }

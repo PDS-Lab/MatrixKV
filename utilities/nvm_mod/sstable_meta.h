@@ -70,7 +70,7 @@ class SstableMetadata {
   SstableMetadata(pool_base& pop,const InternalKeyComparator* icmp,int level0_stop_writes_trigger);
   ~SstableMetadata();
   persistent_ptr<FileEntry> AddFile(uint64_t filenumber,int index,uint64_t oft);
-  persistent_ptr<FileEntry> FindFile(uint64_t filenumber,bool forward = true);
+  persistent_ptr<FileEntry> FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true);
   bool DeteleFile(uint64_t filenumber);
 
   void UpdateKeyNext(persistent_ptr<FileEntry> &file);

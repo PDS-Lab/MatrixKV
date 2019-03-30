@@ -1,6 +1,7 @@
 #include "nvm_cf_mod.h"
 
 #include "db/version_set.h"
+#include "column_compaction_iterator.h"
 
 namespace rocksdb {
 
@@ -97,9 +98,26 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   
   persistent_ptr<FileEntry> tmp = nullptr;
   RECORD_LOG("immu L0table[");
+  unsigned int j = 0;
+  bool find_immutable = false;
   for(tmp=pinfo_->sst_meta_->immu_head;tmp != nullptr; tmp=tmp->next){
-    immufiles.push_back(tmp);
-    RECORD_LOG("%lu ",tmp->filenum);
+    j = 0;
+    find_immutable = false;
+    while(j < L0files.size()){
+      if(L0files.at(j)->fd.GetNumber() == tmp->filenum){
+        find_immutable = true;
+        break;
+      }
+      j++;
+    }
+    if(find_immutable){
+      immufiles.push_back(tmp);
+      RECORD_LOG("%lu ",tmp->filenum);
+
+    }
+    else{
+      RECORD_LOG("!%lu ",tmp->filenum);
+    }
   }
   RECORD_LOG("]\n");
   if(immufiles.size() > L0files.size()){
@@ -176,7 +194,6 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
       }
     }
     c->L0select_size = all_comption_size;
-    unsigned int j = 0;
     FileMetaData* ftmp = nullptr;
     uint64_t filenum = 0;
     L0files = vstorage->LevelFiles(0);
@@ -246,7 +263,6 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
       }
     }
     c->L0select_size = all_comption_size;
-    unsigned int j = 0;
     FileMetaData* ftmp = nullptr;
     uint64_t filenum = 0;
     L0files = vstorage->LevelFiles(0);
@@ -293,48 +309,54 @@ double NvmCfModule::GetCompactionScore(){
 void NvmCfModule::DeleteL0file(uint64_t filenumber){
   persistent_ptr<FileEntry> tmp = pinfo_->sst_meta_->FindFile(filenumber);
   if(tmp == nullptr) return;
+  RECORD_LOG("delete l0 table:%lu\n",filenumber);
   pinfo_->ptr_sst_->DeleteSstable(tmp->sstable_index);
   pinfo_->sst_meta_->DeteleFile(filenumber);
 }
 
 bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value){
   auto L0files = vstorage->LevelFiles(0);
-  std::vector<persistent_ptr<FileEntry>> newfiles;
-  std::vector<persistent_ptr<FileEntry>> immufiles;
-  uint64_t immufiles_num = pinfo_->sst_meta_->GetImmuFileEntryNum();
+  std::vector<persistent_ptr<FileEntry>> findfiles;
+  
   persistent_ptr<FileEntry> tmp = nullptr;
-  for(tmp=pinfo_->sst_meta_->immu_head;tmp != nullptr; tmp=tmp->next){
-    immufiles.push_back(tmp);
+  for(unsigned int i = 0;i < L0files.size();i++){
+    tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
+    findfiles.push_back(tmp);
   }
-  uint64_t head_no = newfiles + immufiles_num - L0files.size();
-  tmp = pinfo_->sst_meta_->head;
-  while(head_no > 0){
-    tmp = tmp->next;
-    head_no--;
-  }
-  for(;tmp != nullptr; tmp=tmp->next){
-    newfiles.push_back(tmp);
-  }
-  Slice ikey = lkey.internal_key();
+  
   Slice user_key = lkey.user_key();
   persistent_ptr<FileEntry> file = nullptr;
   int find_index = -1;
   int pre_left = -1;
   int pre_right = -1;
-  uint64_t last_file_num = -1;
-  for(unsigned int i = 0;i < newfiles.size();i++){
-    file = newfiles.at(i);
-    if(UserKeyInRange(&user_key,&(file->keys_meta[file->first_key_index].key),&(file->keys_meta[file->keys_num - 1]))){
-        if(BinarySearchInFile(file,user_key,&find_index,&pre_left,&pre_right)){
-          
+  uint64_t last_file_num = 0;
+  for(unsigned int i = 0;i < findfiles.size();i++){
+    file = findfiles.at(i);
+    if(last_file_num != file->filenum){
+      pre_left = -1;
+      pre_right = -1;
+    }
+    if(UserKeyInRange(&user_key,&(file->keys_meta[file->first_key_index].key),&(file->keys_meta[file->keys_num - 1].key))){
+        if(BinarySearchInFile(file,&user_key,&find_index,&pre_left,&pre_right)){
+          GetValueInFile(file,find_index,value);
+          *s=Status::OK();
+          return true;
         }
+        if(pre_left >= (int)file->first_key_index && pre_left < (int)file->keys_num){
+          pre_left = (int)file->keys_meta[pre_left].next - 1;
+        }
+        if(pre_right >= (int)file->first_key_index && pre_right < (int)file->keys_num){
+          pre_right = (int)file->keys_meta[pre_right].next;
+        }
+        last_file_num = file->filenum;
     }
   }
+  return false;
 
 }
 bool NvmCfModule::UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end){
   auto user_comparator = vinfo_->icmp_->user_comparator();
-  if(user_comparator_->Compare(user_key,start->user_key()) < 0 || user_comparator_->Compare(user_key,end->user_key()) > 0 ){
+  if(user_comparator->Compare(*user_key,start->user_key()) < 0 || user_comparator->Compare(*user_key,end->user_key()) > 0 ){
     return false;
   }
   return true;
@@ -352,13 +374,13 @@ bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user
   }
 
   int mid = 0;
-  while(left <= right){
+  while(left <= right){  //有等号可确定跳出循环时 right < left
     mid = (left + right)/2;
-    if(user_comparator_->Compare(file->keys_meta[mid].key.user_key(),user_key) == 0){
+    if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) == 0){
       *find_index = mid;
       return true;
     }
-    else if(user_comparator_->Compare(file->keys_meta[mid].key.user_key(),user_key) > 0){
+    else if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) > 0){
       right = mid - 1;
     }
     else{
@@ -368,6 +390,36 @@ bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user
   *pre_right = left;
   *pre_left = right;
   return false;
+
+}
+bool NvmCfModule::GetValueInFile(persistent_ptr<FileEntry> &file,int find_index,std::string *value){
+  char* data_addr = GetIndexPtr(file->sstable_index);
+  uint64_t key_value_offset = file->keys_meta[find_index].offset;
+  uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
+  key_value_offset += 8;
+  key_value_offset += key_size;
+  uint64_t value_size = DecodeFixed64(data_addr + key_value_offset);
+  key_value_offset += 8;
+  value->assign(data_addr + key_value_offset,value_size);
+  return true;
+}
+void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){
+  auto L0files = vstorage->LevelFiles(0);
+  std::vector<persistent_ptr<FileEntry>> findfiles;
+  
+  persistent_ptr<FileEntry> tmp = nullptr;
+  for(unsigned int i = 0;i < L0files.size();i++){
+    tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
+    findfiles.push_back(tmp);
+  }
+  persistent_ptr<FileEntry> file = nullptr;
+  uint64_t key_num = 0;
+  for(unsigned int i = 0;i < findfiles.size();i++){
+    file = findfiles.at(i);
+    key_num = file->keys_num - file->first_key_index;
+    merge_iter_builder->AddIterator(NewColumnCompactionItemIterator(GetIndexPtr(file->sstable_index),file,key_num));
+  }
+
 
 }
 

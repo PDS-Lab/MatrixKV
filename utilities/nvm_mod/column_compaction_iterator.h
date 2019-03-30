@@ -2,7 +2,8 @@
 
 #include "common.h"
 
-//#include "table/internal_iterator.h"
+#include "table/internal_iterator.h"
+#include "sstable_meta.h"
 
 namespace rocksdb {
 using namespace pmem;
@@ -118,8 +119,6 @@ private:
 
 };
 
-InternalIterator* NewColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t keys_num){
-    return new ColumnCompactionItemIterator(raw_data,file,keys_num);
-
-}
+InternalIterator* NewColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t keys_num);
+   
 }

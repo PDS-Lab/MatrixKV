@@ -33,7 +33,7 @@ persistent_ptr<FileEntry> SstableMetadata::AddFile(uint64_t filenumber,int index
     new_file_num = new_file_num + 1;
     return tmp;
 }
-persistent_ptr<FileEntry> SstableMetadata::FindFile(uint64_t filenumber,bool forward){
+persistent_ptr<FileEntry> SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_error_print){
     persistent_ptr<FileEntry> tmp=nullptr;
     if(forward){
         for(tmp = head;tmp != nullptr;tmp = tmp->next){
@@ -51,7 +51,7 @@ persistent_ptr<FileEntry> SstableMetadata::FindFile(uint64_t filenumber,bool for
         return tmp;
     }
     else{
-        printf("no find FileEntry:%lu\n",filenumber);
+        if(have_error_print) printf("no find FileEntry:%lu\n",filenumber);
         return tmp;
     }
 }

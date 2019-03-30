@@ -258,11 +258,22 @@ bool CompareCandidateFile(const JobContext::CandidateFileInfo& first,
 // Delete obsolete files and log status and information of file deletion
 void DBImpl::DeleteObsoleteFileImpl(int job_id, const std::string& fname,
                                     const std::string& path_to_sync,
-                                    FileType type, uint64_t number) {
+                                    FileType type, uint64_t number,std::vector<NvmCfModule*> *nvmcfs) {
   Status file_deletion_status;
   if (type == kTableFile) {
-    file_deletion_status =
+    bool deleted = false;
+    for(unsigned int i = 0;i < nvmcfs->size();i++){
+      if(nvmcfs->at(i)->FindFile(number,true,false) != nullptr){
+        nvmcfs->at(i)->DeleteL0file(number);
+        deleted = true;
+        file_deletion_status = Status::OK();
+        break;
+      }
+    }
+    if(!deleted) {
+      file_deletion_status =
         DeleteSSTFile(&immutable_db_options_, fname, path_to_sync);
+    }
   } else {
     file_deletion_status = env_->DeleteFile(fname);
   }
@@ -487,7 +498,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
       InstrumentedMutexLock guard_lock(&mutex_);
       SchedulePendingPurge(fname, dir_to_sync, type, number, state.job_id);
     } else {
-      DeleteObsoleteFileImpl(state.job_id, fname, dir_to_sync, type, number);
+      DeleteObsoleteFileImpl(state.job_id, fname, dir_to_sync, type, number,&state.nvmcfs);
     }
   }
 

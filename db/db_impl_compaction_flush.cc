@@ -358,6 +358,9 @@ Status DBImpl::FlushMemTablesToNvm(const autovector<BGFlushArg>& bg_flush_args, 
     SuperVersionContext* superversion_context = arg.superversion_context_;
     s = FlushMemTableToNvm(cfd, mutable_cf_options, made_progress,
                                 job_context, superversion_context, log_buffer);
+    if(s.ok()){
+      job_context->nvmcfs.push_back(cfd->nvmcfmodule);
+    }
     if (!s.ok()) {
       break;
     }
@@ -2158,7 +2161,7 @@ Status DBImpl::BackgroundFlush(bool* made_progress, JobContext* job_context,
                                         job_context, log_buffer);
     } else {
       status = FlushMemTablesToOutputFiles(bg_flush_args, made_progress,
-                                           job_context, log_buffer);
+                                           job_context, log_buffer);                            
     }
     // All the CFDs in the FlushReq must have the same flush reason, so just
     // grab the first one
@@ -2482,7 +2485,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       // compact.
       return Status::OK();
     }
-
+    job_context->nvmcfs.push_back(cfd->nvmcfmodule);
     is_column_compaction = cfd->NeedsColumnCompaction();
     if(is_column_compaction){
       RECORD_LOG("do column compaction\n");
@@ -2705,7 +2708,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     if (status.ok()) {
       InstallSuperVersionAndScheduleWork(
           c->column_family_data(), &job_context->superversion_contexts[0],
-          *c->mutable_cf_options(), FlushReason::kAutoCompaction);
+          *c->mutable_cf_options(), FlushReason::kAutoCompaction,c.get());
     }
     *made_progress = true;
   }
@@ -2906,7 +2909,7 @@ bool DBImpl::MCOverlap(ManualCompactionState* m, ManualCompactionState* m1) {
 void DBImpl::InstallSuperVersionAndScheduleWork(
     ColumnFamilyData* cfd, SuperVersionContext* sv_context,
     const MutableCFOptions& mutable_cf_options,
-    FlushReason /* flush_reason */) {
+    FlushReason /* flush_reason */,Compaction* compaction) {
   // TODO(yanqin) investigate if 'flush_reason' can be removed since it's not
   // used.
   mutex_.AssertHeld();
@@ -2924,7 +2927,9 @@ void DBImpl::InstallSuperVersionAndScheduleWork(
     sv_context->NewSuperVersion();
   }
   cfd->InstallSuperVersion(sv_context, &mutex_, mutable_cf_options);
-
+  if(compaction != nullptr){ //保证版本更新后，再更新数据
+    compaction->InstallColumnCompactionItem();
+  }
   // Whenever we install new SuperVersion, we might need to issue new flushes or
   // compactions.
   SchedulePendingCompaction(cfd);

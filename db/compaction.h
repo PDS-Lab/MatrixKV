@@ -295,7 +295,7 @@ class Compaction {
   uint64_t MaxInputFileCreationTime() const;
 ///
   ColumnCompactionItem* GetColumnCompactionItem() const { return ccitem_; };
-  void InstallColumnCompactionItem(VersionEdit* cedit);
+  void InstallColumnCompactionItem();
 ///
 
  private:

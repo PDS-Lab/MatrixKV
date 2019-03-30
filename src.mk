@@ -229,6 +229,8 @@ LIB_SOURCES =                                                   \
   utilities/nvm_mod/sstable_meta.cc   \
   utilities/nvm_mod/nvm_flush_job.cc  \
   utilities/nvm_mod/l0_table_builder.cc  \
+  utilities/nvm_mod/global_statistic.cc  \
+  utilities/nvm_mod/column_compaction_iterator.cc  \
 
 
 ifeq (,$(shell $(CXX) -fsyntax-only -maltivec -xc /dev/null 2>&1))

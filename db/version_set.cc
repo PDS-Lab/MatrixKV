@@ -114,7 +114,7 @@ class FilePicker {
              const Comparator* user_comparator,
              const InternalKeyComparator* internal_comparator)
       : num_levels_(num_levels),
-        curr_level_(static_cast<unsigned int>(-1)),
+        curr_level_(static_cast<unsigned int>(0)),
         returned_file_level_(static_cast<unsigned int>(-1)),
         hit_file_level_(static_cast<unsigned int>(-1)),
         search_left_bound_(0),
@@ -135,7 +135,7 @@ class FilePicker {
 #endif
     // Setup member variables to search first level.
     search_ended_ = !PrepareNextLevel();
-    if (!search_ended_) {
+    /*if (!search_ended_) {
       // Prefetch Level 0 table data to avoid cache miss if possible.
       for (unsigned int i = 0; i < (*level_files_brief_)[0].num_files; ++i) {
         auto* r = (*level_files_brief_)[0].files[i].fd.table_reader;
@@ -143,7 +143,7 @@ class FilePicker {
           r->Prepare(ikey);
         }
       }
-    }
+    }*/
   }
 
   int GetCurrentLevel() const { return curr_level_; }
@@ -1001,7 +1001,7 @@ void Version::AddIterators(const ReadOptions& read_options,
                            RangeDelAggregator* range_del_agg) {
   assert(storage_info_.finalized_);
 
-  for (int level = 0; level < storage_info_.num_non_empty_levels(); level++) {
+  for (int level = 1; level < storage_info_.num_non_empty_levels(); level++) {
     AddIteratorsForLevel(read_options, soptions, merge_iter_builder, level,
                          range_del_agg);
   }

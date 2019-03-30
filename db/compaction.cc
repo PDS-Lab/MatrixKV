@@ -376,18 +376,24 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
       out_edit->DeleteFile(level(which), inputs_[which][i]->fd.GetNumber());
     }
   }
+  if(ccitem_ == nullptr) return;
+  persistent_ptr<FileEntry> file = nullptr;
+  for(unsigned int i = 0;i < ccitem_->files.size();i++){
+    file = ccitem_->files.at(i);
+    if(file->first_key_index + ccitem_->keys_num.at(i) == file->keys_num){ //该文件已compaction完
+      out_edit->DeleteFile(0,file->filenum);
+    }
+  }
+
 }
 ///
-void Compaction::InstallColumnCompactionItem(VersionEdit* cedit){
+void Compaction::InstallColumnCompactionItem(){
   if(ccitem_ == nullptr) return;
   RECORD_LOG("InstallColumnCompactionItem start\n");
   persistent_ptr<FileEntry> file = nullptr;
   for(unsigned int i = 0;i < ccitem_->files.size();i++){
     file = ccitem_->files.at(i);
     if(file->first_key_index + ccitem_->keys_num.at(i) == file->keys_num){ //该文件已compaction完
-      RECORD_LOG("delete l0 table:%lu\n",file->filenum);
-      cedit->DeleteFile(0,file->filenum);
-      cfd_->nvmcfmodule->DeleteL0file(file->filenum);
 
     }
     else{ //该文件还有数据，更新元数据信息
@@ -396,10 +402,10 @@ void Compaction::InstallColumnCompactionItem(VersionEdit* cedit){
 
 
       RECORD_LOG("file:%lu first_key_index:%lu offset:%lu\n",file->filenum,file->first_key_index,file->offset);
-      //auto f = ccitem_->L0compactionfiles.at(i);
+      auto f = ccitem_->L0compactionfiles.at(i);
       //TODO:smallest_seqno and largest_seqno need update 
-      //f->smallest = file->keys_meta[file->first_key_index].key;
-      //f->fd.file_size -= ccitem_->keys_size.at(i);
+      f->smallest = file->keys_meta[file->first_key_index].key;
+      f->fd.file_size -= ccitem_->keys_size.at(i);
     }
   }
 }

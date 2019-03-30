@@ -1453,7 +1453,7 @@ Status CompactionJob::InstallCompactionResults(
 
   // Add compaction inputs
   compaction->AddInputDeletions(compact_->compaction->edit());
-  compaction->InstallColumnCompactionItem(compact_->compaction->edit());
+  //compaction->InstallColumnCompactionItem(compact_->compaction->edit());
   for (const auto& sub_compact : compact_->sub_compact_states) {
     for (const auto& out : sub_compact.outputs) {
       compaction->edit()->AddFile(compaction->output_level(), out.meta);

@@ -8,6 +8,7 @@
 #include <string>
 
 //#include "db/version_set.h"
+#include "table/merging_iterator.h"
 
 #include "common.h"
 #include "nvm_option.h"
@@ -47,11 +48,15 @@ class NvmCfModule {
   void DeleteL0file(uint64_t filenumber);
 
   bool Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value);
+  void AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder);
+
+  persistent_ptr<FileEntry> FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true) { return pinfo_->sst_meta_->FindFile(filenumber,forward,have_error_print); }
 
 
  private:
   bool UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end);
   bool BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user_key,int *find_index,int *pre_left = nullptr,int *pre_right = nullptr);
+  bool GetValueInFile(persistent_ptr<FileEntry> &file,int find_index,std::string *value);
 
   NvmCfOptions* nvmcfoption_;
 
