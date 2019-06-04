@@ -15,6 +15,8 @@ t6:
 	g++ obj_rw.cc -o t6 -lpmemobj -lpmem -pthread
 t7:
 	g++ objtest.cc -o t7 -lpmemobj -lpmem -pthread -std=c++11
+t8:
+	g++ libpmem_test.cc -o t8 -lpmem -pthread
 
 clean:
 	rm -f test
@@ -24,3 +26,4 @@ clean:
 	rm -f t5
 	rm -f t6
 	rm -f t7
+	rm -f t8

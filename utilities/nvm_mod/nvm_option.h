@@ -46,7 +46,7 @@ struct NvmOptions {
 struct NvmCfOptions {
   NvmCfOptions() = delete;
 
-  NvmCfOptions(const std::shared_ptr<NvmSetup> setup,uint64_t s_write_buffer_size,int s_level0_stop_writes_trigger,uint64_t s_target_file_size_base);
+  NvmCfOptions(const std::shared_ptr<NvmSetup> setup,uint64_t s_write_buffer_size,int s_max_write_buffer_number,int s_level0_stop_writes_trigger,uint64_t s_target_file_size_base);
 
   ~NvmCfOptions() {}
 
@@ -55,6 +55,7 @@ struct NvmCfOptions {
   std::string pmem_path;
   uint64_t cf_pmem_size;
   uint64_t write_buffer_size;
+  int max_write_buffer_number;
   int level0_stop_writes_trigger;
   uint64_t target_file_size_base;
 

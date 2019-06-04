@@ -1,7 +1,7 @@
 #! /bin/sh
 
 
-bench_db_path="/home/lzw/ceshi"
+bench_db_path="/home/hm/ceshi"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
@@ -9,7 +9,7 @@ bench_compression="snappy" #"snappy,none"
 bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="2000000"
-bench_readnum="2000000"
+bench_readnum="1000000"
 bench_sync="0"
 bench_direct="0"
 bench_statistics="0"

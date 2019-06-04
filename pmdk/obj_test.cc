@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	TOID(struct my_root) root = POBJ_ROOT(pop, struct my_root);
 
 	TX_BEGIN(pop) {
-		TX_MEMCPY(D_RW(root)->buf + 8, buf, strlen(buf));
+		TX_MEMCPY(D_RW(root)->buf, buf, strlen(buf));
 	} TX_END
 
     printf("%s\n",D_RO(root)->buf + 2);

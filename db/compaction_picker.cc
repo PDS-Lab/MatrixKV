@@ -1306,13 +1306,13 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   }
 }
 
-bool LevelCompactionBuilder::SetupOtherL0FilesIfNeeded() {
+/*bool LevelCompactionBuilder::SetupOtherL0FilesIfNeeded() {
   if (start_level_ == 0 && output_level_ != 0) {
     return compaction_picker_->GetOverlappingL0Files(
         vstorage_, &start_level_inputs_, output_level_, &parent_index_);
   }
   return true;
-}
+}*/
 
 bool LevelCompactionBuilder::SetupOtherInputsIfNeeded() {
   // Setup input files from output level. For output to L0, we only compact

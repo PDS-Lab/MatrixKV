@@ -39,7 +39,7 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
       pinfo_->sst_bitmap_ = make_persistent<PersistentBitMap>(
           pop_, nvmcfoption_->level0_stop_writes_trigger);
       pinfo_->ptr_sst_ = make_persistent<PersistentSstable>(
-          pol_path2, nvmcfoption_->write_buffer_size + 1 * 1024 * 1024,
+          pol_path2, nvmcfoption_->write_buffer_size*nvmcfoption_->max_write_buffer_number + 1 * 1024 * 1024,
           nvmcfoption_->level0_stop_writes_trigger, pinfo_->sst_bitmap_);
       pinfo_->sst_meta_ = make_persistent<SstableMetadata>(pop_,icmp,nvmcfoption_->level0_stop_writes_trigger);
       pinfo_->inited_ = true;
