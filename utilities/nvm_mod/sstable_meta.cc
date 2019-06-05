@@ -46,20 +46,13 @@ persistent_ptr<FileEntry> SstableMetadata::FindFile(uint64_t filenumber,bool for
         }
 
     }
-    tmp = ImmuFindFile(filenumber,forward);
-    if(tmp != nullptr){
-        return tmp;
-    }
-    else{
-        if(have_error_print) printf("no find FileEntry:%lu\n",filenumber);
-        return tmp;
-    }
+    if(have_error_print) printf("no find FileEntry:%lu\n",filenumber);
+    return tmp;
+    
 }
 bool SstableMetadata::DeteleFile(uint64_t filenumber){
-    if(ImmuDeteleFile(filenumber)){
-        return true;
-    }
-    persistent_ptr<FileEntry> tmp = FindFile(filenumber,0);
+
+    persistent_ptr<FileEntry> tmp = FindFile(filenumber,false);
     if(tmp == nullptr){
         return false;
     }
@@ -85,7 +78,7 @@ bool SstableMetadata::DeteleFile(uint64_t filenumber){
     new_file_num = new_file_num - 1;
     return true;
 }
-persistent_ptr<FileEntry> SstableMetadata::ImmuFindFile(uint64_t filenumber,bool forward){
+/*persistent_ptr<FileEntry> SstableMetadata::ImmuFindFile(uint64_t filenumber,bool forward){
     persistent_ptr<FileEntry> tmp=nullptr;
     if(forward){
         for(tmp = immu_head;tmp != nullptr;tmp = tmp->next){
@@ -121,12 +114,10 @@ bool SstableMetadata::ImmuDeteleFile(uint64_t filenumber){
         tmp->prev->next = tmp->next;
         tmp->next->prev = tmp->prev; 
     }
-    transaction::run(pop_, [&] {
-        delete_persistent<FileEntry>(tmp);
-    });
+    
     return true;
 
-}
+}*/
 void SstableMetadata::UpdateKeyNext(persistent_ptr<FileEntry> &file){
     if(file->next == nullptr || file->keys_num == 0){
         return ;
@@ -149,49 +140,61 @@ void SstableMetadata::UpdateKeyNext(persistent_ptr<FileEntry> &file){
     }
     file->key_point_filenum = file->next->filenum;
 }
-void SstableMetadata::UpdateCompactionState(int num){
-    if(immu_head != nullptr || immu_tail != nullptr){
-        return;
-    }
-    if(new_file_num == (uint64_t)num){
-    //if(new_file_num >= (uint64_t)(level0_stop_writes_trigger_/2)){
-        RECORD_LOG("UpdateCompactionState all:%d\n",num);
-        transaction::run(pop_, [&] {
-            immu_head = head;
-            immu_tail = tail;
-            head = nullptr;
-            tail = nullptr;
-            new_file_num = 0;
-        });
-
-    }
-    else{
-        persistent_ptr<FileEntry> tmp = tail;
-        int i = num;
-        while(i > 1){
-            tmp = tmp->prev;
-            i--;
+void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files){
+    if (!compaction_files.empty()){   //不为空,则检测是否一致
+        int comfile = compaction_files.size() - 1;
+        int L0file = L0files.size() - 1;
+        bool consistency = true;
+        for(;comfile >= 0;) {
+            if(compaction_files[comfile] == L0files[L0file]->fd.GetNumber()) {
+                comfile--;
+                L0file--;
+            }
+            else { //不一致
+                consistency = false;
+                break;
+            }
         }
-        RECORD_LOG("UpdateCompactionState new_file_num:%lu num:%d\n",new_file_num,num);
-        transaction::run(pop_, [&] {
-            immu_tail = tail;
-            tail = tmp->prev;
-            tail->next = nullptr;
-            immu_head = tmp;
-            immu_head->prev = nullptr;
-            new_file_num = new_file_num - num;
-        });
+        if (consistency) {  //一致则继续
+            return;
+        }
+        else {  //不一致，清空compaction_files，重选
+            RECORD_LOG("UpdateCompactionState warn:L0:[");
+            for(L0file = 0; L0file < L0files.size(); L0file++){
+                RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
+            }
+            RECORD_LOG("] compaction_files:[");
+            for(comfile=0; comfile < compaction_files.size(); comfile++){
+                RECORD_LOG("%ld ",compaction_files[comfile]);
+            }
+            RECORD_LOG("]\n");
 
+            compaction_files.clear();
+        }
+        
     }
+    if (L0files.size() < Level0_column_compaction_trigger) {
+        RECORD_LOG("warn:L0 size:%d < Level0_column_compaction_trigger:%ld\n",L0files.size(), Level0_column_compaction_trigger);
+    }
+    int i = L0files.size() - 1;
+    for(;i >= 0; i--){  //目前所有table加入compaction_files，后面可设置数量
+        compaction_files.insert(compaction_files.begin(),L0files[i]->fd.GetNumber());
+    }
+    RECORD_LOG("UpdateCompactionState:[");
+    for(i=0; i < compaction_files.size(); i++){
+        RECORD_LOG("%ld ",compaction_files[i]);
+    }
+    RECORD_LOG("]\n");
 }
-uint64_t SstableMetadata::GetImmuFileEntryNum(){
-    uint64_t file_num = 0;
-    persistent_ptr<FileEntry> tmp = nullptr;
-    for(tmp = immu_head;tmp != nullptr;tmp = tmp->next){
-            file_num++;
+void SstableMetadata::DeleteCompactionFile(uint64_t filenumber){
+    std::vector<uint64_t>::iterator it = compaction_files.begin();
+    for(; it != compaction_files.end(); it++) {
+        if((*it) == filenumber) {
+            compaction_files.erase(it);
+            return;
+        }
     }
-    return file_num;
-
+    RECORD_LOG("warn: no delete compaction file:%ld\n",filenumber);
 }
 
 }

@@ -383,6 +383,7 @@ class Compaction {
   CompactionReason compaction_reason_;
 ///
   ColumnCompactionItem* ccitem_;
+  std::vector<uint64_t> column_compaction_delete_file_;
 ///
 };
 

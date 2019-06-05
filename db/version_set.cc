@@ -367,6 +367,7 @@ Version::~Version() {
         assert(cfd_ != nullptr);
         uint32_t path_id = f->fd.GetPathId();
         assert(path_id < cfd_->ioptions()->cf_paths.size());
+        printf("obsolete_files_:%ld\n",f->fd.GetNumber());
         vset_->obsolete_files_.push_back(
             ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path));
       }
@@ -4566,10 +4567,15 @@ void VersionSet::GetObsoleteFiles(std::vector<ObsoleteFileInfo>* files,
   std::vector<ObsoleteFileInfo> pending_files;
   for (auto& f : obsolete_files_) {
     if (f.metadata->fd.GetNumber() < min_pending_output) {
+      printf("add ctx:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);
       files->push_back(std::move(f));
     } else {
+      printf("add pending_files:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);
       pending_files.push_back(std::move(f));
     }
+  }
+  if (!files->empty()) {
+    
   }
   obsolete_files_.swap(pending_files);
 }

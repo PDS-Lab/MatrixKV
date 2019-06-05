@@ -83,54 +83,67 @@ bool NvmCfModule::AddL0TableRoom(uint64_t filenum, char** raw,
 
 ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vstorage){
   ColumnCompactionItem* c = nullptr;
-  c = new ColumnCompactionItem();
   //todo:选择数据
   auto L0files = vstorage->LevelFiles(0);
-  UpdateCompactionState(L0files.size());
+  UpdateCompactionState(L0files); //更新compaction files
 
-  uint64_t immufiles_num = pinfo_->sst_meta_->GetImmuFileEntryNum();
-  assert(immufiles_num != 0);
+
+
+  uint64_t comfiles_num = pinfo_->sst_meta_->compaction_files.size();   //compaction files number
+  if(comfiles_num == 0){
+    RECORD_LOG("error:comfiles_num == 0, l0:%ld\n",L0files.size());
+    return nullptr;
+  }
   
-  std::vector<persistent_ptr<FileEntry>> immufiles;
-  uint64_t *keys_num = new uint64_t[immufiles_num];   //file对应加入compaction的keys num
-  uint64_t *keys_size = new uint64_t[immufiles_num];
-  immufiles.reserve(immufiles_num);
   
+  std::vector<persistent_ptr<FileEntry>> comfiles;   //compaction files
+  std::vector<uint64_t> first_key_indexs;       //file <-> first_key_indexs
+  uint64_t *keys_num = new uint64_t[comfiles_num];   //file对应加入compaction的keys num
+  uint64_t *keys_size = new uint64_t[comfiles_num];
+  comfiles.reserve(comfiles_num);
+  first_key_indexs.reserve(comfiles_num);
+
   persistent_ptr<FileEntry> tmp = nullptr;
-  RECORD_LOG("immu L0table[");
-  unsigned int j = 0;
-  bool find_immutable = false;
-  for(tmp=pinfo_->sst_meta_->immu_head;tmp != nullptr; tmp=tmp->next){
+  int j = 0;
+  bool find_file = false;
+  for(int i=0;i < comfiles_num; i++) {
+    tmp = FindFile(pinfo_->sst_meta_->compaction_files[i]);
+    comfiles.push_back(tmp);
+
     j = 0;
-    find_immutable = false;
+    find_file = false;
     while(j < L0files.size()){
       if(L0files.at(j)->fd.GetNumber() == tmp->filenum){
-        find_immutable = true;
+        find_file = true;
         break;
       }
       j++;
     }
-    if(find_immutable){
-      immufiles.push_back(tmp);
-      RECORD_LOG("%lu ",tmp->filenum);
-
+    if(find_file){
+      first_key_indexs.push(L0files.at(j)->first_key_index);  //对应文件的first_key_index插入
     }
-    else{
-      RECORD_LOG("!%lu ",tmp->filenum);
+    else {
+      RECORD_LOG("error:L0files no find_file:%ld",tmp->filenum);
+      return nullptr;    //未找到对应文件，错误
     }
+  }
+  
+  RECORD_LOG("compaction L0table[");
+  for(int i = 0;i < comfiles.size(); i++){
+    RECORD_LOG("%ld ",comfiles[i]->filenum);
   }
   RECORD_LOG("]\n");
-  if(immufiles.size() > L0files.size()){
-    RECORD_LOG("error:immufiles:%lu L0files:%lu\n",immufiles.size(),L0files.size());
-  }
-  for(unsigned int i=0;i < immufiles_num; i++){
+  
+
+  for(unsigned int i=0;i < comfiles_num; i++) {
     keys_num[i] = 0;
     keys_size[i] = 0;
   }
 
+  c = new ColumnCompactionItem();
   uint64_t all_comption_size = 0;
   auto user_comparator = vinfo_->icmp_->user_comparator(); //比较只根据user key比较
-  KeysMergeIterator* k_iter = new KeysMergeIterator(&immufiles,user_comparator);
+  KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,user_comparator);
   
   uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base;
   uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base;
@@ -138,18 +151,18 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   int keys_index = -1;
   uint64_t itemsize = 0;
 
-  InternalKey minsmallest; //  smallest <= immufiles  <= largest       
+  InternalKey minsmallest; //  smallest <= comfiles  <= largest       
   InternalKey maxlargest;
 
   k_iter->SeekToLast();
   if(k_iter->Valid()){
     k_iter->GetCurret(files_index,keys_index);
-    maxlargest = immufiles.at(files_index)->keys_meta[keys_index].key;
+    maxlargest = comfiles.at(files_index)->keys_meta[keys_index].key;
   }
   k_iter->SeekToFirst();
   if(k_iter->Valid()){
     k_iter->GetCurret(files_index,keys_index);
-    minsmallest = immufiles.at(files_index)->keys_meta[keys_index].key;
+    minsmallest = comfiles.at(files_index)->keys_meta[keys_index].key;
     RECORD_LOG("L0 minsmallest:%s maxlargest:%s\n",minsmallest.DebugString(true).c_str(),maxlargest.DebugString(true).c_str());
   }
 
@@ -168,26 +181,26 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     RECORD_LOG("nvm cf pick no L1\n");
     if(k_iter->Valid()){
       k_iter->GetCurret(files_index,keys_index);
-      c->L0smallest = immufiles.at(files_index)->keys_meta[keys_index].key;
+      c->L0smallest = comfiles.at(files_index)->keys_meta[keys_index].key;
     }
     while(k_iter->Valid()){
       if(all_comption_size >= L1NoneCompactionSizeStop) {
-        c->L0largest = immufiles.at(files_index)->keys_meta[keys_index].key;
+        c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
         break;
       }
       k_iter->GetCurret(files_index,keys_index);
-      itemsize = immufiles.at(files_index)->keys_meta[keys_index].size;
+      itemsize = comfiles.at(files_index)->keys_meta[keys_index].size;
       keys_num[files_index]++;
       keys_size[files_index] += itemsize;
       all_comption_size += itemsize;
       k_iter->Next();
     }
     if(all_comption_size > 0 && !k_iter->Valid()){
-      c->L0largest = immufiles.at(files_index)->keys_meta[keys_index].key;
+      c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
     }
-    for(unsigned int index = 0;index < immufiles_num;index++){
+    for(unsigned int index = 0;index < comfiles_num;index++){
       if(keys_num[index] != 0){
-        tmp = immufiles.at(index);
+        tmp = comfiles.at(index);
         c->files.push_back(tmp);
         c->keys_num.push_back(keys_num[index]);
         c->keys_size.push_back(keys_size[index]);
@@ -231,32 +244,32 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     
     if(k_iter->Valid()){
       k_iter->GetCurret(files_index,keys_index);
-      c->L0smallest = immufiles.at(files_index)->keys_meta[keys_index].key;
+      c->L0smallest = comfiles.at(files_index)->keys_meta[keys_index].key;
     }
     while(k_iter->Valid()){
       k_iter->GetCurret(files_index,keys_index);
-      key_current = immufiles.at(files_index)->keys_meta[keys_index].key;
+      key_current = comfiles.at(files_index)->keys_meta[keys_index].key;
       if( ((L1Range_index != L1Ranges.size()) && (L1Range_index % 2 == 0) && (user_comparator->Compare(ExtractUserKey(key_current.Encode()),ExtractUserKey(L1Ranges.at(L1Range_index).Encode())) >= 0)) || \
             ((L1Range_index % 2 == 1) && (user_comparator->Compare(ExtractUserKey(key_current.Encode()),ExtractUserKey(L1Ranges.at(L1Range_index).Encode())) > 0)) ){
         if(all_comption_size >= L1HaveCompactionSizeStop){
-          c->L0largest = immufiles.at(files_index)->keys_meta[keys_index].key;
+          c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
           break;
         }
         L1Range_index++;
       }
-      itemsize = immufiles.at(files_index)->keys_meta[keys_index].size;
+      itemsize = comfiles.at(files_index)->keys_meta[keys_index].size;
       keys_num[files_index]++;
       keys_size[files_index] += itemsize;
       all_comption_size += itemsize;
       k_iter->Next();
     }
     if(all_comption_size > 0 && !k_iter->Valid()){
-      c->L0largest = immufiles.at(files_index)->keys_meta[keys_index].key;
+      c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
     }
 
-    for(unsigned int index = 0;index < immufiles_num;index++){
+    for(unsigned int index = 0;index < comfiles_num;index++){
       if(keys_num[index] != 0){
-        tmp = immufiles.at(index);
+        tmp = comfiles.at(index);
         c->files.push_back(tmp);
         c->keys_num.push_back(keys_num[index]);
         c->keys_size.push_back(keys_size[index]);

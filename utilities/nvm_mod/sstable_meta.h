@@ -73,23 +73,26 @@ class SstableMetadata {
   persistent_ptr<FileEntry> FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true);
   bool DeteleFile(uint64_t filenumber);
 
+  void DeleteCompactionFile(uint64_t filenumber);
+
   void UpdateKeyNext(persistent_ptr<FileEntry> &file);
-  void UpdateCompactionState(int num);
+  void UpdateCompactionState(std::vector<FileMetaData*>& L0files);
 
-  uint64_t GetImmuFileEntryNum();
+  //uint64_t GetImmuFileEntryNum();
 
 
-persistent_ptr<FileEntry> head = nullptr;  //链表，新的插入头，旧的在尾
+persistent_ptr<FileEntry> head = nullptr;  //链表，新的插入头，旧的在尾，保持所有L0的sstable
 persistent_ptr<FileEntry> tail = nullptr;
 p<uint64_t> new_file_num;
 
-persistent_ptr<FileEntry> immu_head = nullptr;  //L0 commpaction file
-persistent_ptr<FileEntry> immu_tail = nullptr;
+//persistent_ptr<FileEntry> immu_head = nullptr;  //L0 commpaction file，只是复制指针，
+//persistent_ptr<FileEntry> immu_tail = nullptr;
+std::vector<uint64_t> compaction_files;    //L0 commpaction file
 
 
  private:
- persistent_ptr<FileEntry> ImmuFindFile(uint64_t filenumber,bool forward = true);
- bool ImmuDeteleFile(uint64_t filenumber);
+ //persistent_ptr<FileEntry> ImmuFindFile(uint64_t filenumber,bool forward = true);
+ //bool ImmuDeteleFile(uint64_t filenumber);
 
   pool_base& pop_;
   p<int> level0_stop_writes_trigger_;

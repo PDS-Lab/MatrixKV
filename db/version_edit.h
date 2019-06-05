@@ -88,6 +88,10 @@ struct FileMetaData {
   InternalKey smallest;            // Smallest internal key served by table
   InternalKey largest;             // Largest internal key served by table
 
+
+  bool is_level0 ;         //nvm need
+  uint64_t first_key_index;   //nvm need
+
   // Needs to be disposed when refs becomes 0.
   Cache::Handle* table_reader_handle;
 
@@ -125,7 +129,9 @@ struct FileMetaData {
         refs(0),
         being_compacted(false),
         init_stats_from_file(false),
-        marked_for_compaction(false) {}
+        marked_for_compaction(false),
+        is_level0(false),
+        first_key_index(0){}
 
   // REQUIRED: Keys must be given to the function in sorted order (it expects
   // the last key to be the largest).
@@ -236,7 +242,7 @@ class VersionEdit {
                uint64_t file_size, const InternalKey& smallest,
                const InternalKey& largest, const SequenceNumber& smallest_seqno,
                const SequenceNumber& largest_seqno,
-               bool marked_for_compaction) {
+               bool marked_for_compaction, bool is_level0 = false, uint64_t first_key_index = 0) {
     assert(smallest_seqno <= largest_seqno);
     FileMetaData f;
     f.fd = FileDescriptor(file, file_path_id, file_size, smallest_seqno,
@@ -246,6 +252,8 @@ class VersionEdit {
     f.fd.smallest_seqno = smallest_seqno;
     f.fd.largest_seqno = largest_seqno;
     f.marked_for_compaction = marked_for_compaction;
+    f.is_level0 = is_level0;
+    f.first_key_index = first_key_index;
     new_files_.emplace_back(level, std::move(f));
   }
 

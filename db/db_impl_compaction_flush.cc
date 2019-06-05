@@ -2615,6 +2615,10 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
             "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
             c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
             c->output_level(), f->fd.GetFileSize());
+          printf(
+          "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
+          c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
+          c->output_level(), f->fd.GetFileSize());
         ++moved_files;
         moved_bytes += f->fd.GetFileSize();
       }
@@ -2708,14 +2712,11 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     if (status.ok()) {
       InstallSuperVersionAndScheduleWork(
           c->column_family_data(), &job_context->superversion_contexts[0],
-          *c->mutable_cf_options(), FlushReason::kAutoCompaction,c.get());
+          *c->mutable_cf_options(), FlushReason::kAutoCompaction);
     }
     *made_progress = true;
   }
   if (c != nullptr) {
-    if(is_column_compaction){
-      c->column_family_data()->set_bg_column_compaction(false);
-    }
     c->ReleaseCompactionFiles(status);
     *made_progress = true;
 
@@ -2909,7 +2910,7 @@ bool DBImpl::MCOverlap(ManualCompactionState* m, ManualCompactionState* m1) {
 void DBImpl::InstallSuperVersionAndScheduleWork(
     ColumnFamilyData* cfd, SuperVersionContext* sv_context,
     const MutableCFOptions& mutable_cf_options,
-    FlushReason /* flush_reason */,Compaction* compaction) {
+    FlushReason /* flush_reason */) {
   // TODO(yanqin) investigate if 'flush_reason' can be removed since it's not
   // used.
   mutex_.AssertHeld();
@@ -2927,9 +2928,7 @@ void DBImpl::InstallSuperVersionAndScheduleWork(
     sv_context->NewSuperVersion();
   }
   cfd->InstallSuperVersion(sv_context, &mutex_, mutable_cf_options);
-  if(compaction != nullptr){ //保证版本更新后，再更新数据
-    compaction->InstallColumnCompactionItem();
-  }
+
   // Whenever we install new SuperVersion, we might need to issue new flushes or
   // compactions.
   SchedulePendingCompaction(cfd);

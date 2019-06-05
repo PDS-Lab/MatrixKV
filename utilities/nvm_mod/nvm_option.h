@@ -12,8 +12,9 @@
 namespace rocksdb {
 
   static const int Level0_column_compaction_trigger = 12;     //触发column compaction的文件个数
-  static const int Column_compaction_no_L1_select_L0 = 4;     //column compaction时没有L1文件交集时,选择L0数据量进行column compaction的文件个数
-  static const int Column_compaction_have_L1_select_L0 = 2;   //column compaction时有L1文件交集时,选择L0数据量进行column compaction的文件个数
+  static const double Beyond_this_delay_column_compaction = 3;  //当其它层(除了L0层)的数据量/阈值比值超过这个值时，其它层compaction优先
+  static const int Column_compaction_no_L1_select_L0 = 4;     //column compaction时没有L1文件交集时,至少选择L0数据量进行column compaction的文件个数
+  static const int Column_compaction_have_L1_select_L0 = 2;   //column compaction时有L1文件交集时,至少选择L0数据量进行column compaction的文件个数
 
 struct NvmSetup {
   bool use_nvm_module = false;

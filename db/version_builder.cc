@@ -300,8 +300,11 @@ class VersionBuilder::Rep {
         f->refs = 1;
 
         assert(levels_[level].added_files.find(f->fd.GetNumber()) ==
-               levels_[level].added_files.end());
-        levels_[level].deleted_files.erase(f->fd.GetNumber());
+                  levels_[level].added_files.end());
+
+        if(!f->is_level0){  //L0可能删除和插入相同filenum
+          levels_[level].deleted_files.erase(f->fd.GetNumber());
+        }
         levels_[level].added_files[f->fd.GetNumber()] = f;
       } else {
         uint64_t number = new_file.second.fd.GetNumber();
@@ -312,6 +315,23 @@ class VersionBuilder::Rep {
           has_invalid_levels_ = true;
         }
       }
+    }
+
+    for (int i = 0; i < num_levels_; i++) {
+      printf("add:[%d:",i);
+      const auto& added = levels_[i].added_files;
+      for (auto& pair : added) {
+        printf("%ld ",pair.second->fd.GetNumber());
+      }
+      printf("]\n");
+    }
+    for (int i = 0; i < num_levels_; i++) {
+      printf("delete:[%d:",i);
+      const auto& dele = levels_[i].deleted_files;
+      for (auto& d : dele) {
+        printf("%ld ",d);
+      }
+      printf("]\n");
     }
   }
 
@@ -358,7 +378,8 @@ class VersionBuilder::Rep {
                 (added_iter != added_end && cmp(*added_iter, *base_iter))) {
           MaybeAddFile(vstorage, level, *added_iter++);
         } else {
-          MaybeAddFile(vstorage, level, *base_iter++);
+
+          MaybeAddFile(vstorage, level, *base_iter++, true);
         }
       }
     }
@@ -414,14 +435,26 @@ class VersionBuilder::Rep {
     }
   }
 
-  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f) {
-    if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
-      // f is to-be-deleted table file
-      //printf("remove table:%lu\n",f->fd.GetNumber());
-      vstorage->RemoveCurrentStats(f);
-    } else {
-      //printf("add table:%lu\n",f->fd.GetNumber());
-      vstorage->AddFile(level, f, info_log_);
+  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f, bool is_base_iter = false) {
+    if (is_base_iter) {
+      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
+        // f is to-be-deleted table file
+        //printf("remove table:%lu\n",f->fd.GetNumber());
+        vstorage->RemoveCurrentStats(f);
+      } else {
+        //printf("add table:%lu\n",f->fd.GetNumber());
+        vstorage->AddFile(level, f, info_log_);
+      }
+    }
+    else {
+      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0 && !f->is_level0 ) {  //nvm ,l0 is different
+        // f is to-be-deleted table file
+        //printf("remove table:%lu\n",f->fd.GetNumber());
+        vstorage->RemoveCurrentStats(f);
+      } else {
+        //printf("add table:%lu\n",f->fd.GetNumber());
+        vstorage->AddFile(level, f, info_log_);
+      }
     }
   }
 };
@@ -462,8 +495,8 @@ void VersionBuilder::LoadTableHandlers(InternalStats* internal_stats,
 }
 
 void VersionBuilder::MaybeAddFile(VersionStorageInfo* vstorage, int level,
-                                  FileMetaData* f) {
-  rep_->MaybeAddFile(vstorage, level, f);
+                                  FileMetaData* f, bool is_base_iter = false) {
+  rep_->MaybeAddFile(vstorage, level, f, is_base_iter);
 }
 
 }  // namespace rocksdb

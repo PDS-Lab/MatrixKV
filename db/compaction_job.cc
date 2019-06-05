@@ -717,6 +717,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
   RECORD_LOG("CompactionJob::Install start\n");
   if (status.ok()) {
     status = InstallCompactionResults(mutable_cf_options);
+    compact_->compaction->InstallColumnCompactionItem();
   }
   RECORD_LOG("CompactionJob::Install end\n");
   VersionStorageInfo::LevelSummaryStorage tmp;

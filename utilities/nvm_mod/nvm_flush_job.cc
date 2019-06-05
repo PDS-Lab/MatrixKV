@@ -186,14 +186,14 @@ void NvmFlushJob::PickMemTable() {
   edit_->SetColumnFamily(cfd_->GetID());
 
   // path 0 for level 0 file.
-  meta_.fd = FileDescriptor(versions_->NewFileNumber(), 0, 0); //file_meta暂时不加入cf
+  meta_.fd = FileDescriptor(versions_->NewFileNumber(), 0, 0); //file_meta加入cf
 
   base_ = cfd_->current();
   base_->Ref();  // it is likely that we do not need this reference
 }
 
 Status NvmFlushJob::Run(LogsWithPrepTracker* prep_tracker,
-                     FileMetaData* file_meta) { //file_meta暂时不加入cf
+                     FileMetaData* file_meta) { //file_meta加入cf
   //TEST_SYNC_POINT("FlushJob::Start");
   db_mutex_->AssertHeld();
   assert(pick_memtable_called);
@@ -399,10 +399,11 @@ Status NvmFlushJob::WriteLevel0Table() {
     // threads could be concurrently producing compacted files for
     // that key range.
     // Add file to L0
+
     edit_->AddFile(0 /* level */, meta_.fd.GetNumber(), meta_.fd.GetPathId(),
                    meta_.fd.GetFileSize(), meta_.smallest, meta_.largest,
                    meta_.fd.smallest_seqno, meta_.fd.largest_seqno,
-                   meta_.marked_for_compaction);
+                   meta_.marked_for_compaction, meta_.is_level0, meta_.first_key_index);
   }
 
   // Note that here we treat flush as level 0 compaction in internal stats
@@ -541,7 +542,8 @@ Status NvmFlushJob::BuildInsertNvm(InternalIterator *iter,
     if (s.ok() && !empty) {
       uint64_t file_size = L0builder->GetFileSize();
       meta_.fd.file_size = file_size;
-
+      meta_.is_level0 = true;
+      meta_.first_key_index = 0;
       /*uint64_t file_size = builder->FileSize();
       meta_->fd.file_size = file_size;
       meta_->marked_for_compaction = builder->NeedCompact();

@@ -9,7 +9,8 @@ using namespace pmem::obj;
 
 class KeysMergeIterator{
 public:
-    KeysMergeIterator(std::vector<persistent_ptr<FileEntry>> *files,const Comparator* user_comparator):files_(files),user_comparator_(user_comparator){
+    KeysMergeIterator(std::vector<persistent_ptr<FileEntry>> *files,std::vector<uint64_t> *first_key_indexs,const Comparator* user_comparator)
+    :files_(files),first_key_indexs_(first_key_indexs),user_comparator_(user_comparator){
         files_num = files_->size();
         child_current_ = new int[files_num];
         current_ = -1;
@@ -24,7 +25,7 @@ public:
 
     void SeekToFirst(){
         for(int i = 0;i < files_num; i++){
-            child_current_[i] = files_->at(i)->first_key_index;
+            child_current_[i] = first_key_indexs_->at(i);
         }
         FindSmallest();
 
@@ -90,6 +91,7 @@ private:
 
 
     std::vector<persistent_ptr<FileEntry>> *files_;  //
+    std::vector<uint64_t> *first_key_indexs_;
     const Comparator* user_comparator_;
     int files_num;
     int *child_current_; //各个文件的当前index

@@ -35,9 +35,8 @@ class NvmCfModule {
   void Delete();
   bool AddL0TableRoom(uint64_t filenum,char** raw,persistent_ptr<FileEntry> &file);
   uint64_t GetSstableEachSize() { return pinfo_->ptr_sst_->GetEachSize(); }
-  bool NeedsColumnCompaction() { return pinfo_->sst_meta_->immu_head != nullptr; }
   void UpdateKeyNext(persistent_ptr<FileEntry> &file) { pinfo_->sst_meta_->UpdateKeyNext(file); }
-  void UpdateCompactionState(int num) { pinfo_->sst_meta_->UpdateCompactionState(num); }
+  void UpdateCompactionState(std::vector<FileMetaData*>& L0files) { pinfo_->sst_meta_->UpdateCompactionState(L0files); }
 
   ColumnCompactionItem* PickColumnCompaction(VersionStorageInfo* vstorage);
   const InternalKeyComparator* GetInternalKeyComparator() { return vinfo_->icmp_; }
@@ -46,6 +45,7 @@ class NvmCfModule {
   char* GetIndexPtr(int index) { return pinfo_->ptr_sst_->GetIndexPtr(index); }
 
   void DeleteL0file(uint64_t filenumber);
+  void DeleteColumnCompactionFile(uint64_t filenumber) {  pinfo_->sst_meta_->DeleteCompactionFile(filenumber); }
 
   bool Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value);
   void AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder);
