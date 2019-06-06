@@ -388,14 +388,14 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
     }
     else{  //该文件还有数据
       out_edit->DeleteFile(0,file->filenum);
-      uint64_t file_size = filemeta.fd.GetFileSize() - ccitem_->keys_size.at(i);
-      uint64_t first_key_index = filemeta.first_key_index + ccitem_->keys_num.at(i);
-      InternalKey smallest = file->keys_meta[file->first_key_index].key;
+      uint64_t file_size = filemeta->fd.GetFileSize() - ccitem_->keys_size.at(i);
+      uint64_t first_key_index = filemeta->first_key_index + ccitem_->keys_num.at(i);
+      InternalKey smallest = file->keys_meta[first_key_index].key;
       //TODO:smallest_seqno and largest_seqno need update
-      out_edit->AddFile(0 /* level */, filemeta.fd.GetNumber(), filemeta.fd.GetPathId(),
-                   file_size, smallest, filemeta.largest,
-                   filemeta.fd.smallest_seqno, filemeta.fd.largest_seqno,
-                   filemeta.marked_for_compaction, filemeta.is_level0, first_key_index);
+      out_edit->AddFile(0 /* level */, filemeta->fd.GetNumber(), filemeta->fd.GetPathId(),
+                   file_size, smallest, filemeta->largest,
+                   filemeta->fd.smallest_seqno, filemeta->fd.largest_seqno,
+                   filemeta->marked_for_compaction, filemeta->is_level0, first_key_index);
     }
   }
 
@@ -406,7 +406,7 @@ void Compaction::InstallColumnCompactionItem(){
   cfd_->set_bg_column_compaction(false);
 
   RECORD_LOG("InstallColumnCompactionItem delete:[");
-  for(int i;i < column_compaction_delete_file_.size(); i++){
+  for(unsigned int i = 0;i < column_compaction_delete_file_.size(); i++){
     cfd_->nvmcfmodule->DeleteColumnCompactionFile(column_compaction_delete_file_[i]);
     RECORD_LOG("%ld ",column_compaction_delete_file_[i]);
   }

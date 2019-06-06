@@ -13,7 +13,7 @@ using std::vector;
 
 class ColumnCompactionItemIterator : public InternalIterator {
 public:
-    ColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t keys_num):
+    ColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t first_key_index,uint64_t keys_num):
                                    raw_data_(raw_data),file_(file){
         current_ = -1;
         vKey_.reserve(keys_num);
@@ -27,7 +27,7 @@ public:
         uint64_t offset = 0;
         for(size_t i = 0;i < keys_num; i++){  //注意：Slice结构只保留了char *指针和大小，并没有拷贝数据
             //key_value_size = file_->keys_meta[file_->first_key_index + i].size;
-            key_value_offset = file_->keys_meta[file_->first_key_index + i].offset;
+            key_value_offset = file_->keys_meta[first_key_index + i].offset;
 
             offset = key_value_offset;
             key_size = DecodeFixed64(data_addr + offset);
@@ -119,6 +119,6 @@ private:
 
 };
 
-InternalIterator* NewColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t keys_num);
+InternalIterator* NewColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t first_key_index,uint64_t keys_num);
    
 }

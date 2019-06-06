@@ -70,7 +70,7 @@ bool NvmCfModule::AddL0TableRoom(uint64_t filenum, char** raw,
   }
   *raw = tmp;
   persistent_ptr<FileEntry> filetmp = nullptr;
-  filetmp = pinfo_->sst_meta_->AddFile(filenum, index, 0);
+  filetmp = pinfo_->sst_meta_->AddFile(filenum, index);
   if (filetmp == nullptr) {
     printf("error:AddL0TableRoom AddFile error!\n");
     return false;
@@ -104,9 +104,9 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   first_key_indexs.reserve(comfiles_num);
 
   persistent_ptr<FileEntry> tmp = nullptr;
-  int j = 0;
+  unsigned int j = 0;
   bool find_file = false;
-  for(int i=0;i < comfiles_num; i++) {
+  for(unsigned int i=0;i < comfiles_num; i++) {
     tmp = FindFile(pinfo_->sst_meta_->compaction_files[i]);
     comfiles.push_back(tmp);
 
@@ -120,7 +120,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
       j++;
     }
     if(find_file){
-      first_key_indexs.push(L0files.at(j)->first_key_index);  //对应文件的first_key_index插入
+      first_key_indexs.push_back(L0files.at(j)->first_key_index);  //对应文件的first_key_index插入
     }
     else {
       RECORD_LOG("error:L0files no find_file:%ld",tmp->filenum);
@@ -129,7 +129,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   }
   
   RECORD_LOG("compaction L0table[");
-  for(int i = 0;i < comfiles.size(); i++){
+  for(unsigned int i = 0;i < comfiles.size(); i++){
     RECORD_LOG("%ld ",comfiles[i]->filenum);
   }
   RECORD_LOG("]\n");
@@ -143,7 +143,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   c = new ColumnCompactionItem();
   uint64_t all_comption_size = 0;
   auto user_comparator = vinfo_->icmp_->user_comparator(); //比较只根据user key比较
-  KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,user_comparator);
+  KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,&first_key_indexs,user_comparator);
   
   uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base;
   uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base;
@@ -314,8 +314,8 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
 }
 double NvmCfModule::GetCompactionScore(){
   double score = 0;
-  uint64_t immutablenum = pinfo_->sst_meta_->GetImmuFileEntryNum();
-  score = 1.0 + (double)immutablenum/4;
+  uint64_t compactionfilenum = pinfo_->sst_meta_->compaction_files.size();
+  score = 1.0 + (double)compactionfilenum/4;
   return score;
 
 }
@@ -330,11 +330,13 @@ void NvmCfModule::DeleteL0file(uint64_t filenumber){
 bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value){
   auto L0files = vstorage->LevelFiles(0);
   std::vector<persistent_ptr<FileEntry>> findfiles;
+  std::vector<uint64_t> first_key_indexs;
   
   persistent_ptr<FileEntry> tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
     tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
+    first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
   
   Slice user_key = lkey.user_key();
@@ -349,16 +351,16 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
       pre_left = -1;
       pre_right = -1;
     }
-    if(UserKeyInRange(&user_key,&(file->keys_meta[file->first_key_index].key),&(file->keys_meta[file->keys_num - 1].key))){
-        if(BinarySearchInFile(file,&user_key,&find_index,&pre_left,&pre_right)){
+    if(UserKeyInRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key))){
+        if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
           GetValueInFile(file,find_index,value);
           *s=Status::OK();
           return true;
         }
-        if(pre_left >= (int)file->first_key_index && pre_left < (int)file->keys_num){
+        if(pre_left >= (int)first_key_indexs[i] && pre_left < (int)file->keys_num){
           pre_left = (int)file->keys_meta[pre_left].next - 1;
         }
-        if(pre_right >= (int)file->first_key_index && pre_right < (int)file->keys_num){
+        if(pre_right >= (int)first_key_indexs[i] && pre_right < (int)file->keys_num){
           pre_right = (int)file->keys_meta[pre_right].next;
         }
         last_file_num = file->filenum;
@@ -375,9 +377,9 @@ bool NvmCfModule::UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey 
   return true;
 }
 
-bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file,Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
+bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
   auto user_comparator = vinfo_->icmp_->user_comparator();
-  int left = file->first_key_index;
+  int left = first_key_index;
   if(pre_left != nullptr && *pre_left > 0){
     left = *pre_left;
   }
@@ -419,18 +421,20 @@ bool NvmCfModule::GetValueInFile(persistent_ptr<FileEntry> &file,int find_index,
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){
   auto L0files = vstorage->LevelFiles(0);
   std::vector<persistent_ptr<FileEntry>> findfiles;
+  std::vector<uint64_t> first_key_indexs;
   
   persistent_ptr<FileEntry> tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
     tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
+    first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
   persistent_ptr<FileEntry> file = nullptr;
   uint64_t key_num = 0;
   for(unsigned int i = 0;i < findfiles.size();i++){
     file = findfiles.at(i);
-    key_num = file->keys_num - file->first_key_index;
-    merge_iter_builder->AddIterator(NewColumnCompactionItemIterator(GetIndexPtr(file->sstable_index),file,key_num));
+    key_num = file->keys_num - first_key_indexs[i];
+    merge_iter_builder->AddIterator(NewColumnCompactionItemIterator(GetIndexPtr(file->sstable_index),file,first_key_indexs[i],key_num));
   }
 
 

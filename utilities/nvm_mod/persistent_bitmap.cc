@@ -39,6 +39,7 @@ int PersistentBitMap::GetBit() {
   for (size_t i = 0; i < bytes_; i++) {
     unsigned char ruler = 0x01;
     for (size_t j = 1; j <= 8; j++) {
+      if((i*8 + j) >= len_) return -1;
       if (!((bitmap_[i] >> (8 - j)) & ruler)) {
         return static_cast<int>(i * 8 + (j - 1));
       }
@@ -48,7 +49,7 @@ int PersistentBitMap::GetBit() {
 }
 
 bool PersistentBitMap::SetBit(size_t pos, bool flag) {
-  if (pos > len_) {
+  if (pos >= len_) {
     return false;
   }
 

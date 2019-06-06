@@ -120,7 +120,9 @@ struct FileMetaData {
                                // file.
 
   FileMetaData()
-      : table_reader_handle(nullptr),
+      : is_level0(false),
+        first_key_index(0),
+        table_reader_handle(nullptr),
         compensated_file_size(0),
         num_entries(0),
         num_deletions(0),
@@ -129,9 +131,7 @@ struct FileMetaData {
         refs(0),
         being_compacted(false),
         init_stats_from_file(false),
-        marked_for_compaction(false),
-        is_level0(false),
-        first_key_index(0){}
+        marked_for_compaction(false) {}
 
   // REQUIRED: Keys must be given to the function in sorted order (it expects
   // the last key to be the largest).

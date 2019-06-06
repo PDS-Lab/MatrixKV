@@ -8,6 +8,7 @@
 #include <string>
 
 #include "db/dbformat.h"
+#include "db/version_edit.h"
 
 #include "common.h"
 #include "nvm_option.h"
@@ -41,10 +42,10 @@ struct KeysMetadata{
 struct FileEntry{
     p<uint64_t> filenum;
     p<int> sstable_index;
-    p<uint64_t> offset;
+    //p<uint64_t> offset;          /不需要也可，在keys_meta[first_key_index].offset就是
     struct KeysMetadata* keys_meta = nullptr; //指向多个（keys_num个）连续内存的KeysMetadata
     p<uint64_t> keys_num;
-    p<uint64_t> first_key_index;          //index 从0开始
+   // p<uint64_t> first_key_index;          //index 从0开始,在FileMetaData中保存
     p<uint64_t> key_point_filenum;       //key 指向下一个文件的filenum，防止中间删除了文件
     //persistent_ptr<KeysMetadata> keys_meta = nullptr;  //先不存AEP
     //InternalKey smallest;           
@@ -52,9 +53,8 @@ struct FileEntry{
 
     persistent_ptr<FileEntry> next = nullptr;
     persistent_ptr<FileEntry> prev = nullptr;
-    FileEntry(uint64_t a,int b,uint64_t c):filenum(a),sstable_index(b),offset(c){
+    FileEntry(uint64_t a,int b):filenum(a),sstable_index(b){
       keys_num = 0;
-      first_key_index = 0;
       key_point_filenum = 0;
     }
     ~FileEntry(){
@@ -69,7 +69,7 @@ class SstableMetadata {
  public:
   SstableMetadata(pool_base& pop,const InternalKeyComparator* icmp,int level0_stop_writes_trigger);
   ~SstableMetadata();
-  persistent_ptr<FileEntry> AddFile(uint64_t filenumber,int index,uint64_t oft);
+  persistent_ptr<FileEntry> AddFile(uint64_t filenumber,int index);
   persistent_ptr<FileEntry> FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true);
   bool DeteleFile(uint64_t filenumber);
 

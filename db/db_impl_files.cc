@@ -332,6 +332,20 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
   // We may ignore the dbname when generating the file names.
   const char* kDumbDbName = "";
   for (auto& file : state.sst_delete_files) {
+    if ( file.nvmcf != nullptr) {
+      std::vector<NvmCfModule*>::iterator it = state.nvmcfs.begin();
+      bool find_nvmcf = false;
+      for (; it != state.nvmcfs.end(); it++){
+        if((*it) == file.nvmcf) {
+          find_nvmcf = true;
+          break;
+        }
+      }
+      if(!find_nvmcf){
+        state.nvmcfs.push_back(file.nvmcf);
+        printf("nvmcfs push:%ld \n",file.metadata->fd.GetNumber());
+      }
+    }
     candidate_files.emplace_back(
         MakeTableFileName(kDumbDbName, file.metadata->fd.GetNumber()), file.path);
     if (file.metadata->table_reader_handle) {
@@ -422,6 +436,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
         keep = (sst_live_map.find(number) != sst_live_map.end()) ||
                number >= state.min_pending_output;
         if (!keep) {
+          printf("real delete:%ld\n",number);
           files_to_del.insert(number);
         }
         break;

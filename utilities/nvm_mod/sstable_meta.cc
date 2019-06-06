@@ -17,10 +17,10 @@ SstableMetadata::~SstableMetadata(){
 
 }
 
-persistent_ptr<FileEntry> SstableMetadata::AddFile(uint64_t filenumber,int index,uint64_t oft){
+persistent_ptr<FileEntry> SstableMetadata::AddFile(uint64_t filenumber,int index){
     persistent_ptr<FileEntry> tmp;
     transaction::run(pop_, [&] {
-			tmp= make_persistent<FileEntry>(filenumber,index,oft);
+			tmp= make_persistent<FileEntry>(filenumber,index);
 
 			if (head == nullptr && tail == nullptr) {
 				head = tail = tmp;
@@ -160,12 +160,12 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
         }
         else {  //不一致，清空compaction_files，重选
             RECORD_LOG("UpdateCompactionState warn:L0:[");
-            for(L0file = 0; L0file < L0files.size(); L0file++){
+            for(unsigned int i = 0; i < L0files.size(); i++){
                 RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
             }
             RECORD_LOG("] compaction_files:[");
-            for(comfile=0; comfile < compaction_files.size(); comfile++){
-                RECORD_LOG("%ld ",compaction_files[comfile]);
+            for(unsigned int i = 0; i < compaction_files.size(); i++){
+                RECORD_LOG("%ld ",compaction_files[i]);
             }
             RECORD_LOG("]\n");
 
@@ -176,12 +176,12 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     if (L0files.size() < Level0_column_compaction_trigger) {
         RECORD_LOG("warn:L0 size:%d < Level0_column_compaction_trigger:%ld\n",L0files.size(), Level0_column_compaction_trigger);
     }
-    int i = L0files.size() - 1;
-    for(;i >= 0; i--){  //目前所有table加入compaction_files，后面可设置数量
-        compaction_files.insert(compaction_files.begin(),L0files[i]->fd.GetNumber());
+    int file_num = L0files.size() - 1;
+    for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
+        compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
     }
     RECORD_LOG("UpdateCompactionState:[");
-    for(i=0; i < compaction_files.size(); i++){
+    for(unsigned int i=0; i < compaction_files.size(); i++){
         RECORD_LOG("%ld ",compaction_files[i]);
     }
     RECORD_LOG("]\n");

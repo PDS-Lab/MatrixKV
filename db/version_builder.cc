@@ -317,15 +317,15 @@ class VersionBuilder::Rep {
       }
     }
 
-    for (int i = 0; i < num_levels_; i++) {
+    for (int i = 0; i < 2; i++) {
       printf("add:[%d:",i);
       const auto& added = levels_[i].added_files;
       for (auto& pair : added) {
-        printf("%ld ",pair.second->fd.GetNumber());
+        printf("%ld-%d-%ld ",pair.second->fd.GetNumber(),pair.second->is_level0,pair.second->first_key_index);
       }
       printf("]\n");
     }
-    for (int i = 0; i < num_levels_; i++) {
+    for (int i = 0; i < 2; i++) {
       printf("delete:[%d:",i);
       const auto& dele = levels_[i].deleted_files;
       for (auto& d : dele) {

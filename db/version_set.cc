@@ -367,9 +367,17 @@ Version::~Version() {
         assert(cfd_ != nullptr);
         uint32_t path_id = f->fd.GetPathId();
         assert(path_id < cfd_->ioptions()->cf_paths.size());
-        printf("obsolete_files_:%ld\n",f->fd.GetNumber());
-        vset_->obsolete_files_.push_back(
+        printf("obsolete_files_:%ld is_level0:%d key:%ld nvmcf:%p\n",f->fd.GetNumber(),f->is_level0,f->first_key_index,cfd_->nvmcfmodule);
+        if( f->is_level0 && (cfd_->nvmcfmodule != nullptr)) {
+          printf("push:%ld\n",f->fd.GetNumber());
+          vset_->obsolete_files_.push_back(
+            ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path, cfd_->nvmcfmodule));
+        }
+        else {
+          vset_->obsolete_files_.push_back(
             ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path));
+        }
+        
       }
     }
   }
@@ -4426,7 +4434,7 @@ InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
         for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
           file = c->GetColumnCompactionItem()->files.at(i);
 
-          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->keys_num.at(i));
+          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i));
         }
       } else {
         // Create concatenating iterator for the files from this level
@@ -4567,7 +4575,7 @@ void VersionSet::GetObsoleteFiles(std::vector<ObsoleteFileInfo>* files,
   std::vector<ObsoleteFileInfo> pending_files;
   for (auto& f : obsolete_files_) {
     if (f.metadata->fd.GetNumber() < min_pending_output) {
-      printf("add ctx:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);
+      printf("add ctx:%ld min_pending_output:%ld %p\n",f.metadata->fd.GetNumber(),min_pending_output,f.nvmcf);
       files->push_back(std::move(f));
     } else {
       printf("add pending_files:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);

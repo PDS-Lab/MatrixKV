@@ -358,9 +358,9 @@ Status DBImpl::FlushMemTablesToNvm(const autovector<BGFlushArg>& bg_flush_args, 
     SuperVersionContext* superversion_context = arg.superversion_context_;
     s = FlushMemTableToNvm(cfd, mutable_cf_options, made_progress,
                                 job_context, superversion_context, log_buffer);
-    if(s.ok()){
+    /*if(s.ok()){
       job_context->nvmcfs.push_back(cfd->nvmcfmodule);
-    }
+    }*/
     if (!s.ok()) {
       break;
     }
@@ -2485,7 +2485,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       // compact.
       return Status::OK();
     }
-    job_context->nvmcfs.push_back(cfd->nvmcfmodule);
+    //job_context->nvmcfs.push_back(cfd->nvmcfmodule);
     is_column_compaction = cfd->NeedsColumnCompaction();
     if(is_column_compaction){
       RECORD_LOG("do column compaction\n");
