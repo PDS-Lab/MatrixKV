@@ -180,7 +180,7 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     int file_num = L0files.size() - 1;
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
         compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
-        if (compaction_files.size() >= (uint64_t)(level0_stop_writes_trigger / 2)) { //最大加入的compaction为限制的一半，可调整
+        if (compaction_files.size() >= (uint64_t)Max_Level0_column_compaction_file ) { //最大加入的column compaction的文件，可调整
             break;
         }
     }
