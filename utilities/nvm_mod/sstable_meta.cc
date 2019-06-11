@@ -176,7 +176,7 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     if (L0files.size() < Level0_column_compaction_trigger) {
         RECORD_LOG("warn:L0 size:%d < Level0_column_compaction_trigger:%ld\n",L0files.size(), Level0_column_compaction_trigger);
     }
-    int level0_stop_writes_trigger = level0_stop_writes_trigger_;
+    //int level0_stop_writes_trigger = level0_stop_writes_trigger_;
     int file_num = L0files.size() - 1;
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
         compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
