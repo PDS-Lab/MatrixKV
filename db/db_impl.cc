@@ -2670,7 +2670,7 @@ Status DestroyDB(const std::string& dbname, const Options& options,
             RECORD_LOG("DestroyDB delete file:%s\n",nvm_path_to_delete.c_str());
           }
         }
-        env->DeleteDir(soptions.nvm_setup->pmem_path);
+        //env->DeleteDir(soptions.nvm_setup->pmem_path);
       }
     }
     else{

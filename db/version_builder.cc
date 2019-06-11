@@ -317,7 +317,7 @@ class VersionBuilder::Rep {
       }
     }
 
-    for (int i = 0; i < 2; i++) {
+    /*for (int i = 0; i < 2; i++) {
       printf("add:[%d:",i);
       const auto& added = levels_[i].added_files;
       for (auto& pair : added) {
@@ -332,7 +332,7 @@ class VersionBuilder::Rep {
         printf("%ld ",d);
       }
       printf("]\n");
-    }
+    }*/
   }
 
   // Save the current state in *v.

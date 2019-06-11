@@ -176,11 +176,22 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     if (L0files.size() < Level0_column_compaction_trigger) {
         RECORD_LOG("warn:L0 size:%d < Level0_column_compaction_trigger:%ld\n",L0files.size(), Level0_column_compaction_trigger);
     }
+    int level0_stop_writes_trigger = level0_stop_writes_trigger_;
     int file_num = L0files.size() - 1;
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
         compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
+        if (compaction_files.size() >= (uint64_t)(level0_stop_writes_trigger / 2)) { //最大加入的compaction为限制的一半，可调整
+            break;
+        }
     }
-    RECORD_LOG("UpdateCompactionState:[");
+
+    RECORD_LOG("UpdateCompactionState:L0:%ld[",L0files.size());
+    for(unsigned int i=0; i < L0files.size(); i++){
+        RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
+    }
+    RECORD_LOG("]\n");
+    
+    RECORD_LOG("UpdateCompactionState:select:%ld[",compaction_files.size());
     for(unsigned int i=0; i < compaction_files.size(); i++){
         RECORD_LOG("%ld ",compaction_files[i]);
     }

@@ -343,7 +343,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
       }
       if(!find_nvmcf){
         state.nvmcfs.push_back(file.nvmcf);
-        printf("nvmcfs push:%ld \n",file.metadata->fd.GetNumber());
+        //printf("nvmcfs push:%ld \n",file.metadata->fd.GetNumber());
       }
     }
     candidate_files.emplace_back(
@@ -436,7 +436,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
         keep = (sst_live_map.find(number) != sst_live_map.end()) ||
                number >= state.min_pending_output;
         if (!keep) {
-          printf("real delete:%ld\n",number);
+          //printf("real delete:%ld\n",number);
           files_to_del.insert(number);
         }
         break;

@@ -2615,10 +2615,10 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
             "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
             c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
             c->output_level(), f->fd.GetFileSize());
-          printf(
+          /*printf(
           "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
           c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
-          c->output_level(), f->fd.GetFileSize());
+          c->output_level(), f->fd.GetFileSize());*/
         ++moved_files;
         moved_bytes += f->fd.GetFileSize();
       }

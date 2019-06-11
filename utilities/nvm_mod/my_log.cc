@@ -10,6 +10,12 @@ void init_log_file() {
   fp = fopen(log_file2.c_str(), "w");
   if (fp == nullptr) printf("log failed\n");
   fclose(fp);
+
+  fp = fopen(log_file3.c_str(), "w");
+  if(fp == nullptr) printf("log failed\n");
+  fclose(fp);
+  RECORD_INFO(3,"compaction,read(MB),write(MB),time(s),is_level0\n");
+
 #endif
 
 #ifdef LZW_DEBUG
@@ -39,6 +45,9 @@ void LZW_LOG(int file_num, const char* format, ...) {
       break;
     case 2:
       log_file = &log_file2;
+      break;
+    case 3:
+      log_file = &log_file3;
       break;
     default:
       return;

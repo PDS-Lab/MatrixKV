@@ -128,7 +128,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     }
   }
   
-  RECORD_LOG("compaction L0table[");
+  RECORD_LOG("compaction comfiles:[");
   for(unsigned int i = 0;i < comfiles.size(); i++){
     RECORD_LOG("%ld ",comfiles[i]->filenum);
   }
@@ -145,7 +145,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   auto user_comparator = vinfo_->icmp_->user_comparator(); //比较只根据user key比较
   KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,&first_key_indexs,user_comparator);
   
-  uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base;
+  uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 2ul*1024*1024 * Column_compaction_no_L1_select_L0;  //每个文件减去2MB是为了防止小文件的产生
   uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base;
   int files_index = -1;
   int keys_index = -1;
