@@ -185,6 +185,19 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     }
     while(k_iter->Valid()){
       if(all_comption_size >= L1NoneCompactionSizeStop) {
+        int next_files_index,next_keys_index;
+        k_iter->GetCurret(next_files_index,next_keys_index);
+
+        if(user_comparator->Compare(ExtractUserKey(comfiles[files_index]->keys_meta[keys_index].key.Encode()),ExtractUserKey(comfiles[next_files_index]->keys_meta[next_keys_index].key.Encode())) == 0){
+          //如果与下一个key相等，则继续加入compaction，不论超过大小与否
+          k_iter->GetCurret(files_index,keys_index);
+          itemsize = comfiles.at(files_index)->keys_meta[keys_index].size;
+          keys_num[files_index]++;
+          keys_size[files_index] += itemsize;
+          all_comption_size += itemsize;
+          k_iter->Next();
+          continue;
+        }
         c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
         break;
       }

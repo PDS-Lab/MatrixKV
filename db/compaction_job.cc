@@ -1657,12 +1657,11 @@ void CompactionJob::UpdateCompactionInputStatsHelper(int* num_files,
   *num_files += static_cast<int>(num_input_files);
 
   if(compaction->GetColumnCompactionItem() != nullptr && input_level == 0) {
-    printf("he\n");
     *bytes_read += compaction->GetColumnCompactionItem()->L0select_size;
     for(unsigned int i = 0;i < compaction->GetColumnCompactionItem()->keys_num.size();i++){
       compaction_stats_.num_input_records += compaction->GetColumnCompactionItem()->keys_num[i];
     }
-    
+    return;
   }
 
   for (size_t i = 0; i < num_input_files; ++i) {
