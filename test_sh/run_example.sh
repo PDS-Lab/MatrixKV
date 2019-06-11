@@ -1,7 +1,7 @@
 #! /bin/sh
 
 
-bench_db_path="/home/lzw/ceshi"
+bench_db_path="/mnt/ssd/ceshi"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
