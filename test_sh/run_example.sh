@@ -1,7 +1,7 @@
 #! /bin/sh
 
 
-bench_db_path="/home/hm/ceshi"
+bench_db_path="/home/lzw/ceshi"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
@@ -15,7 +15,7 @@ bench_direct="0"
 bench_statistics="0"
 bench_max_open_files="1000"
 
-pmem_path="/pmem/nvm"
+pmem_path="/home/czl/pmem0/nvm"
 
 
 const_params="
