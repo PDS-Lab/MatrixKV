@@ -27,6 +27,8 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/global_statistic.h"
+
 namespace rocksdb {
 
 namespace {
@@ -1357,14 +1359,17 @@ bool LevelCompactionBuilder::SetupColumnCompactionInputs(NvmCfModule* nvmcf){
     output_level_ = vstorage_->base_level();
     output_level_inputs_.level = output_level_;
     compaction_reason_ = CompactionReason::kLevelMaxLevelSize;
-    
+#ifdef STATISTIC_OPEN
+    RECORD_LOG("%ld nvm cf pick column compaction\n",global_stats.compaction_num + 1);
+#else
     RECORD_LOG("nvm cf pick column compaction\n");
+#endif
     ccitem = nvmcf->PickColumnCompaction(vstorage_);
     start_level_score_ = nvmcf->GetCompactionScore();
     RECORD_LOG("L0 select num:%lu L0 select size:%.2f MB\n",ccitem->files.size(),1.0 * ccitem->L0select_size/1048576);
     RECORD_LOG("L0smallest:%s L0largest:%s\n",ccitem->L0smallest.DebugString(true).c_str(),ccitem->L0largest.DebugString(true).c_str());
     for(unsigned int i = 0;i < ccitem->files.size();i++){
-      RECORD_LOG("select L0:%lu keynum:%lu size:%lu\n",ccitem->files.at(i)->filenum,ccitem->keys_num.at(i),ccitem->keys_size.at(i));
+      RECORD_LOG("select L0:%lu keynum:%lu size:%.2f MB\n",ccitem->files.at(i)->filenum,ccitem->keys_num.at(i),1.0*ccitem->keys_size.at(i)/1048576.0);
     }
     
     for(unsigned int i = 0;i < ccitem->L0compactionfiles.size();i++){
