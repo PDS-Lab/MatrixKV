@@ -269,6 +269,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
           break;
         }
         L1Range_index++;
+        continue;
       }
       itemsize = comfiles.at(files_index)->keys_meta[keys_index].size;
       keys_num[files_index]++;
