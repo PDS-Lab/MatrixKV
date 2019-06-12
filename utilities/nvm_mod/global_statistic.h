@@ -1,6 +1,7 @@
 
 #include <stdint.h>
 #include <sys/time.h>
+#include <stdlib.h>
 #pragma once
 
 #define STATISTIC_OPEN
