@@ -1361,10 +1361,16 @@ bool LevelCompactionBuilder::SetupColumnCompactionInputs(NvmCfModule* nvmcf){
     compaction_reason_ = CompactionReason::kLevelMaxLevelSize;
 #ifdef STATISTIC_OPEN
     RECORD_LOG("%ld nvm cf pick column compaction\n",global_stats.compaction_num + 1);
+    uint64_t start_time = get_now_micros();
 #else
     RECORD_LOG("nvm cf pick column compaction\n");
 #endif
     ccitem = nvmcf->PickColumnCompaction(vstorage_);
+
+#ifdef STATISTIC_OPEN
+    uint64_t end_time = get_now_micros();
+    pick_compaction_time += (end_time - start_time);
+#endif
     start_level_score_ = nvmcf->GetCompactionScore();
     RECORD_LOG("L0 select num:%lu L0 select size:%.2f MB\n",ccitem->files.size(),1.0 * ccitem->L0select_size/1048576);
     RECORD_LOG("L0smallest:%s L0largest:%s\n",ccitem->L0smallest.DebugString(true).c_str(),ccitem->L0largest.DebugString(true).c_str());
