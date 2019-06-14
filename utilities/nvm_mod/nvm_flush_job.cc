@@ -586,6 +586,7 @@ Status NvmFlushJob::BuildInsertNvm(InternalIterator *iter,
         s = it->status();
       }
     }*/
+  delete L0builder;
   }
 
   // Check for input iterator errors

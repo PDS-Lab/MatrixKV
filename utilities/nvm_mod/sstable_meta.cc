@@ -32,12 +32,18 @@ FileEntry* SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_
     mu_->Lock();
     if(forward) {
         for(unsigned int i=0;i < files_.size();i++){
-            if(files_[i]->filenum == filenumber ) return files_[i];
+            if(files_[i]->filenum == filenumber ) {
+                mu_->Unlock();
+                return files_[i];
+            }
         }
     }
     else {
         for(int i = files_.size() - 1;i >= 0;i--){
-            if(files_[i]->filenum == filenumber ) return files_[i];
+            if(files_[i]->filenum == filenumber ) {
+                mu_->Unlock();
+                return files_[i];
+            }
         }
     }
     mu_->Unlock();
@@ -52,6 +58,7 @@ bool SstableMetadata::DeteleFile(uint64_t filenumber){
         if((*it)->filenum == filenumber) {
             delete (*it);
             files_.erase(it);
+            mu_->Unlock();
             return true;
         }
     }
@@ -72,9 +79,12 @@ void SstableMetadata::UpdateKeyNext(FileEntry* file){
             break;
         }
     }
-    if(it == files_.end()) return;
-    FileEntry* next_file = (*it);
+    if(it == files_.end()) {
+        mu_->Unlock();
+        return;
+    }
     mu_->Unlock();
+    FileEntry* next_file = (*it);
     struct KeysMetadata* new_keys = file->keys_meta;
     struct KeysMetadata* old_keys = next_file->keys_meta;
     uint64_t new_key_num = file->keys_num;
