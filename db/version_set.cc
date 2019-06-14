@@ -4427,7 +4427,7 @@ InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
                                         : c->num_input_levels());
   InternalIterator** list = new InternalIterator* [space];
   size_t num = 0;
-  persistent_ptr<FileEntry> file = nullptr;
+  FileEntry* file = nullptr;
   for (size_t which = 0; which < c->num_input_levels(); which++) {
     if (c->input_levels(which)->num_files != 0) {
       if (c->level(which) == 0) {

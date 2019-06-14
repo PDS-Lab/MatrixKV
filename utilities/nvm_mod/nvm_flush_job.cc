@@ -472,9 +472,9 @@ Status NvmFlushJob::BuildInsertNvm(InternalIterator *iter,
           level, nullptr * compression_dict *, false * skip_filters ,
           //creation_time, oldest_key_time);
     //}*/
-    persistent_ptr<FileEntry> file = nullptr;
+    FileEntry* file = nullptr;
     char* raw = nullptr;
-    nvm_cf_->AddL0TableRoom(meta_.fd.GetNumber(),&raw,file);
+    nvm_cf_->AddL0TableRoom(meta_.fd.GetNumber(),&raw,&file);
     L0TableBuilder* L0builder = new L0TableBuilder(nvm_cf_,file,raw);
 
     MergeHelper merge(env, internal_comparator.user_comparator(),

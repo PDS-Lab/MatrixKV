@@ -8,8 +8,6 @@
 #include "db/dbformat.h"
 
 namespace rocksdb {
-using namespace pmem;
-using namespace pmem::obj;
 struct FileMetaData;
 class InternalKey;
 
@@ -18,7 +16,7 @@ public:
     ColumnCompactionItem(){};
     ~ColumnCompactionItem(){};
 
-    std::vector<persistent_ptr<FileEntry>> files;  //新的先插入，旧的在后面
+    std::vector<FileEntry*> files;  //新的先插入，旧的在后面
     std::vector<uint64_t> keys_num; //对应files的需要compaction的key个数
     std::vector<uint64_t> keys_size; //对应的key-value的总大小
     uint64_t L0select_size;

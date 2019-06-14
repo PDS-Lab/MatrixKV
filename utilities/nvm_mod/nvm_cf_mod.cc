@@ -7,75 +7,44 @@ namespace rocksdb {
 
 NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
                          uint32_t cf_id, const InternalKeyComparator* icmp)
-    : nvmcfoption_(nvmcfoption) {
-  vinfo_ = new VolatileInfo(icmp);
+    : nvmcfoption_(nvmcfoption),icmp_(icmp) {
+  
   nvm_dir_no_exists_and_creat(nvmcfoption_->pmem_path);
   char buf[100];
-  snprintf(buf, sizeof(buf), "%s/cf_%u_%s.pool",
+  snprintf(buf, sizeof(buf), "%s/cf_%u_%s_sstable.pool",
            nvmcfoption_->pmem_path.c_str(), cf_id, cf_name.c_str());
   std::string pol_path(buf, strlen(buf));
   
-
+  ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size*nvmcfoption_->max_write_buffer_number + 1 * 1024 * 1024,
+            nvmcfoption_->level0_stop_writes_trigger);
   
-  if (nvm_file_exists(pol_path.c_str()) != 0) {
-    RECORD_LOG("creat %s\n",pol_path.c_str());
-    pop_ = pmem::obj::pool<PersistentCfInfo>::create(
-        pol_path.c_str(), "NvmCfModule", nvmcfoption_->cf_pmem_size,
-        CREATE_MODE_RW);
-
-  } else {
-    RECORD_LOG("open %s\n",pol_path.c_str());
-    pop_ = pmem::obj::pool<PersistentCfInfo>::open(pol_path.c_str(),
-                                                   "NvmCfModule");
-  }
-
-  pinfo_ = pop_.root();
-  if (!pinfo_->inited_) {
-    snprintf(buf, sizeof(buf), "%s/cf_%u_%s_sstable.pool",
-             nvmcfoption_->pmem_path.c_str(), cf_id, cf_name.c_str());
-    std::string pol_path2(buf, strlen(buf));
-    RECORD_LOG("pol_path2:%s\n", pol_path2.c_str());
-    transaction::run(pop_, [&] {
-      pinfo_->sst_bitmap_ = make_persistent<PersistentBitMap>(
-          pop_, nvmcfoption_->level0_stop_writes_trigger);
-      pinfo_->ptr_sst_ = make_persistent<PersistentSstable>(
-          pol_path2, nvmcfoption_->write_buffer_size*nvmcfoption_->max_write_buffer_number + 1 * 1024 * 1024,
-          nvmcfoption_->level0_stop_writes_trigger, pinfo_->sst_bitmap_);
-      pinfo_->sst_meta_ = make_persistent<SstableMetadata>(pop_,icmp,nvmcfoption_->level0_stop_writes_trigger);
-      pinfo_->inited_ = true;
-    });
-  } else if (nvmcfoption_->reset_nvm_storage) {
-    // reset
-    //pinfo_->ptr_sst_->Reset();
-
-  } else {
-    // rebuild cache
-  }
+  sst_meta_ = new SstableMetadata(icmp_,nvmcfoption_->level0_stop_writes_trigger);
+  
 }
 NvmCfModule::~NvmCfModule() {
   RECORD_LOG("NvmCfModule:close\n");
-  delete vinfo_;
-  pop_.close();
+  delete ptr_sst_;
+  delete sst_meta_;
 }
 void NvmCfModule::Delete() {}
 
 bool NvmCfModule::AddL0TableRoom(uint64_t filenum, char** raw,
-                    persistent_ptr<FileEntry>& file) {
+                    FileEntry** file) {
   int index = -1;
   char* tmp = nullptr;
-  tmp = pinfo_->ptr_sst_->AllocSstable(index);
+  tmp = ptr_sst_->AllocSstable(index);
   if (index == -1 || tmp == nullptr) {
     printf("error:AddL0TableRoom AllocSstable error!\n");
     return false;
   }
   *raw = tmp;
-  persistent_ptr<FileEntry> filetmp = nullptr;
-  filetmp = pinfo_->sst_meta_->AddFile(filenum, index);
+  FileEntry* filetmp = nullptr;
+  filetmp = sst_meta_->AddFile(filenum, index);
   if (filetmp == nullptr) {
     printf("error:AddL0TableRoom AddFile error!\n");
     return false;
   } else {
-    file = filetmp;
+    *file = filetmp;
   }
   RECORD_LOG("add L0 table:%lu index:%d\n",filenum,index);
   return true;
@@ -89,25 +58,25 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
 
 
 
-  uint64_t comfiles_num = pinfo_->sst_meta_->compaction_files.size();   //compaction files number
+  uint64_t comfiles_num = sst_meta_->compaction_files.size();   //compaction files number
   if(comfiles_num == 0){
     RECORD_LOG("error:comfiles_num == 0, l0:%ld\n",L0files.size());
     return nullptr;
   }
   
   
-  std::vector<persistent_ptr<FileEntry>> comfiles;   //compaction files
+  std::vector<FileEntry*> comfiles;   //compaction files
   std::vector<uint64_t> first_key_indexs;       //file <-> first_key_indexs
   uint64_t *keys_num = new uint64_t[comfiles_num];   //file对应加入compaction的keys num
   uint64_t *keys_size = new uint64_t[comfiles_num];
   comfiles.reserve(comfiles_num);
   first_key_indexs.reserve(comfiles_num);
 
-  persistent_ptr<FileEntry> tmp = nullptr;
+  FileEntry* tmp = nullptr;
   unsigned int j = 0;
   bool find_file = false;
   for(unsigned int i=0;i < comfiles_num; i++) {
-    tmp = FindFile(pinfo_->sst_meta_->compaction_files[i]);
+    tmp = FindFile(sst_meta_->compaction_files[i]);
     comfiles.push_back(tmp);
 
     j = 0;
@@ -142,7 +111,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
 
   c = new ColumnCompactionItem();
   uint64_t all_comption_size = 0;
-  auto user_comparator = vinfo_->icmp_->user_comparator(); //比较只根据user key比较
+  auto user_comparator = icmp_->user_comparator(); //比较只根据user key比较
   KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,&first_key_indexs,user_comparator);
   
   uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 2ul*1024*1024 * Column_compaction_no_L1_select_L0;  //每个文件减去2MB是为了防止小文件的产生
@@ -328,33 +297,33 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
 }
 double NvmCfModule::GetCompactionScore(){
   double score = 0;
-  uint64_t compactionfilenum = pinfo_->sst_meta_->compaction_files.size();
+  uint64_t compactionfilenum = sst_meta_->GetFilesNumber();
   score = 1.0 + (double)compactionfilenum/4;
   return score;
 
 }
 void NvmCfModule::DeleteL0file(uint64_t filenumber){
-  persistent_ptr<FileEntry> tmp = pinfo_->sst_meta_->FindFile(filenumber);
+  FileEntry* tmp = sst_meta_->FindFile(filenumber);
   if(tmp == nullptr) return;
   RECORD_LOG("delete l0 table:%lu\n",filenumber);
-  pinfo_->ptr_sst_->DeleteSstable(tmp->sstable_index);
-  pinfo_->sst_meta_->DeteleFile(filenumber);
+  ptr_sst_->DeleteSstable(tmp->sstable_index);
+  sst_meta_->DeteleFile(filenumber);
 }
 
 bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lkey,std::string *value){
   auto L0files = vstorage->LevelFiles(0);
-  std::vector<persistent_ptr<FileEntry>> findfiles;
+  std::vector<FileEntry*> findfiles;
   std::vector<uint64_t> first_key_indexs;
   
-  persistent_ptr<FileEntry> tmp = nullptr;
+  FileEntry* tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
-    tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
+    tmp = sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
   
   Slice user_key = lkey.user_key();
-  persistent_ptr<FileEntry> file = nullptr;
+  FileEntry* file = nullptr;
   int find_index = -1;
   int pre_left = -1;
   int pre_right = -1;
@@ -384,15 +353,15 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
 
 }
 bool NvmCfModule::UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end){
-  auto user_comparator = vinfo_->icmp_->user_comparator();
+  auto user_comparator = icmp_->user_comparator();
   if(user_comparator->Compare(*user_key,start->user_key()) < 0 || user_comparator->Compare(*user_key,end->user_key()) > 0 ){
     return false;
   }
   return true;
 }
 
-bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
-  auto user_comparator = vinfo_->icmp_->user_comparator();
+bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
+  auto user_comparator = icmp_->user_comparator();
   int left = first_key_index;
   if(pre_left != nullptr && *pre_left > 0){
     left = *pre_left;
@@ -421,7 +390,7 @@ bool NvmCfModule::BinarySearchInFile(persistent_ptr<FileEntry> &file, int first_
   return false;
 
 }
-bool NvmCfModule::GetValueInFile(persistent_ptr<FileEntry> &file,int find_index,std::string *value){
+bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *value){
   char* data_addr = GetIndexPtr(file->sstable_index);
   uint64_t key_value_offset = file->keys_meta[find_index].offset;
   uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
@@ -434,16 +403,16 @@ bool NvmCfModule::GetValueInFile(persistent_ptr<FileEntry> &file,int find_index,
 }
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){
   auto L0files = vstorage->LevelFiles(0);
-  std::vector<persistent_ptr<FileEntry>> findfiles;
+  std::vector<FileEntry*> findfiles;
   std::vector<uint64_t> first_key_indexs;
   
-  persistent_ptr<FileEntry> tmp = nullptr;
+  FileEntry* tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
-    tmp = pinfo_->sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
+    tmp = sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
-  persistent_ptr<FileEntry> file = nullptr;
+  FileEntry* file = nullptr;
   uint64_t key_num = 0;
   for(unsigned int i = 0;i < findfiles.size();i++){
     file = findfiles.at(i);

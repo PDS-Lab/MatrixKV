@@ -5,127 +5,80 @@
 namespace rocksdb {
 
 
-SstableMetadata::SstableMetadata(pool_base& pop,const InternalKeyComparator* icmp,int level0_stop_writes_trigger)
-    :pop_(pop),level0_stop_writes_trigger_(level0_stop_writes_trigger),icmp_(icmp){
-    new_file_num = 0;
-
+SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp,int level0_stop_writes_trigger)
+    :level0_stop_writes_trigger_(level0_stop_writes_trigger),icmp_(icmp){
+    mu_ = new MyMutex();
     RECORD_LOG("creat SstableMetadata level0_stop_writes_trigger:%d\n",level0_stop_writes_trigger);
 
 }
 
 SstableMetadata::~SstableMetadata(){
-
+    delete mu_;
+    std::vector<FileEntry*>::iterator it=files_.begin();
+    while(it != files_.end()){
+        delete (*it);
+        it=files_.erase(it);
+    }
 }
 
-persistent_ptr<FileEntry> SstableMetadata::AddFile(uint64_t filenumber,int index){
-    persistent_ptr<FileEntry> tmp;
-    transaction::run(pop_, [&] {
-			tmp= make_persistent<FileEntry>(filenumber,index);
-
-			if (head == nullptr && tail == nullptr) {
-				head = tail = tmp;
-			} else {
-                tmp->next = head;
-				head->prev = tmp;
-				head = tmp;
-			}
-	});
-    new_file_num = new_file_num + 1;
+FileEntry* SstableMetadata::AddFile(uint64_t filenumber,int index) {
+    FileEntry* tmp = new FileEntry(filenumber,index);
+    mu_->Lock();
+    files_.insert(files_.begin(),tmp);
+    mu_->Unlock();
     return tmp;
 }
-persistent_ptr<FileEntry> SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_error_print){
-    persistent_ptr<FileEntry> tmp=nullptr;
-    if(forward){
-        for(tmp = head;tmp != nullptr;tmp = tmp->next){
-            if(tmp->filenum == filenumber) return tmp;
+FileEntry* SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_error_print){
+    mu_->Lock();
+    if(forward) {
+        for(unsigned int i=0;i < files_.size();i++){
+            if(files_[i]->filenum == filenumber ) return files_[i];
         }
     }
-    else{
-        for(tmp = tail;tmp != nullptr;tmp = tmp->prev){
-            if(tmp->filenum == filenumber) return tmp;
+    else {
+        for(int i = files_.size() - 1;i >= 0;i--){
+            if(files_[i]->filenum == filenumber ) return files_[i];
         }
-
     }
+    mu_->Unlock();
     if(have_error_print) printf("no find FileEntry:%lu\n",filenumber);
-    return tmp;
+    return nullptr;
     
 }
 bool SstableMetadata::DeteleFile(uint64_t filenumber){
-
-    persistent_ptr<FileEntry> tmp = FindFile(filenumber,false);
-    if(tmp == nullptr){
-        return false;
-    }
-    if(tmp == head && tmp == tail){
-        head = nullptr;
-        tail = nullptr;
-    }
-    else if(tmp == head){
-        head = tmp->next;
-        head->prev = nullptr;
-    }
-    else if(tmp == tail){
-        tail = tmp->prev;
-        tail->next = nullptr;
-    }
-    else{
-        tmp->prev->next = tmp->next;
-        tmp->next->prev = tmp->prev; 
-    }
-    transaction::run(pop_, [&] {
-        delete_persistent<FileEntry>(tmp);
-    });
-    new_file_num = new_file_num - 1;
-    return true;
-}
-/*persistent_ptr<FileEntry> SstableMetadata::ImmuFindFile(uint64_t filenumber,bool forward){
-    persistent_ptr<FileEntry> tmp=nullptr;
-    if(forward){
-        for(tmp = immu_head;tmp != nullptr;tmp = tmp->next){
-            if(tmp->filenum == filenumber) return tmp;
+    mu_->Lock();
+    std::vector<FileEntry*>::iterator it = files_.begin();
+    for(;it != files_.end();it++){
+        if((*it)->filenum == filenumber) {
+            delete (*it);
+            files_.erase(it);
+            return true;
         }
     }
-    else{
-        for(tmp = immu_tail;tmp != nullptr;tmp = tmp->prev){
-            if(tmp->filenum == filenumber) return tmp;
-        }
-
-    }
-    return tmp;
-}
-bool SstableMetadata::ImmuDeteleFile(uint64_t filenumber){
-    persistent_ptr<FileEntry> tmp = ImmuFindFile(filenumber,0);
-    if(tmp == nullptr){
-        return false;
-    }
-    if(tmp == immu_head && tmp == immu_tail){
-        immu_head = nullptr;
-        immu_tail = nullptr;
-    }
-    else if(tmp == immu_head){
-        immu_head = tmp->next;
-        immu_head->prev = nullptr;
-    }
-    else if(tmp == immu_tail){
-        immu_tail = tmp->prev;
-        immu_tail->next = nullptr;
-    }
-    else{
-        tmp->prev->next = tmp->next;
-        tmp->next->prev = tmp->prev; 
-    }
-    
+    mu_->Unlock();
+    RECORD_LOG("warn:delete no file:%ld\n",filenumber);
     return true;
+}
 
-}*/
-void SstableMetadata::UpdateKeyNext(persistent_ptr<FileEntry> &file){
-    if(file->next == nullptr || file->keys_num == 0){
+void SstableMetadata::UpdateKeyNext(FileEntry* file){
+    if(file == nullptr || file->keys_num == 0){
         return ;
     }
+    mu_->Lock();
+    std::vector<FileEntry*>::iterator it = files_.begin();
+    for(;it != files_.end(); it++){
+        if((*it)->filenum == file->filenum){
+            it++;
+            break;
+        }
+    }
+    if(it == files_.end()) return;
+    FileEntry* next_file = (*it);
+    mu_->Unlock();
     struct KeysMetadata* new_keys = file->keys_meta;
-    struct KeysMetadata* old_keys = file->next->keys_meta;
+    struct KeysMetadata* old_keys = next_file->keys_meta;
     uint64_t new_key_num = file->keys_num;
-    uint64_t old_key_num = file->next->keys_num;
+    uint64_t old_key_num = next_file->keys_num;
     int32_t new_index = 0;
     int32_t old_index = 0;
     while((uint64_t)new_index < new_key_num && (uint64_t)old_index < old_key_num){
@@ -138,7 +91,7 @@ void SstableMetadata::UpdateKeyNext(persistent_ptr<FileEntry> &file){
             old_index++;
         }
     }
-    file->key_point_filenum = file->next->filenum;
+    file->key_point_filenum = next_file->filenum;
 }
 void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files){
     if (!compaction_files.empty()){   //不为空,则检测是否一致
@@ -206,6 +159,12 @@ void SstableMetadata::DeleteCompactionFile(uint64_t filenumber){
         }
     }
     RECORD_LOG("warn: no delete compaction file:%ld\n",filenumber);
+}
+uint64_t SstableMetadata::GetFilesNumber(){
+    mu_->Lock();
+    uint64_t num = files_.size();
+    mu_->Unlock();
+    return num;
 }
 
 }

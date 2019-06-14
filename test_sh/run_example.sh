@@ -1,7 +1,7 @@
 #! /bin/sh
 
 
-bench_db_path="/home/lzw/ceshi"
+bench_db_path="/home/hm/ceshi"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
@@ -32,7 +32,6 @@ const_params="
     --use_nvm_module=true \
     --reset_nvm_storage=true \
     --pmem_path=$pmem_path \
-    --pmem_size=`expr 2 \* 1024 \* 1024 \* 1024`
     "
 
 bench_file_path="$(dirname $PWD )/db_bench"

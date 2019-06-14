@@ -3,7 +3,7 @@
 namespace rocksdb {
 
 L0TableBuilder::L0TableBuilder(NvmCfModule* nvm_cf,
-                   persistent_ptr<FileEntry> &file,
+                   FileEntry* file,
                    char* raw):nvm_cf_(nvm_cf),file_(file),raw_(raw){
     offset_ = 0;
     keys_num_ = 0;

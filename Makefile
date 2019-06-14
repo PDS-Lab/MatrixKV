@@ -13,7 +13,7 @@ CLEAN_FILES = # deliberately empty, so we can append below.
 CFLAGS += ${EXTRA_CFLAGS}
 CXXFLAGS += ${EXTRA_CXXFLAGS}
 LDFLAGS += $(EXTRA_LDFLAGS)
-LDFLAGS += -lpmemobj -lpmem -pthread -std=c++11
+LDFLAGS += -lpmem -pthread -std=c++11
 MACHINE ?= $(shell uname -m)
 ARFLAGS = ${EXTRA_ARFLAGS} rs
 STRIPFLAGS = -S -x

@@ -222,9 +222,10 @@ LIB_SOURCES =                                                   \
   utilities/write_batch_with_index/write_batch_with_index.cc    \
   utilities/write_batch_with_index/write_batch_with_index_internal.cc    \
   utilities/nvm_mod/my_log.cc   \
+  utilities/nvm_mod/my_mutex.cc   \
   utilities/nvm_mod/common.cc   \
   utilities/nvm_mod/nvm_option.cc    \
-  utilities/nvm_mod/persistent_bitmap.cc  \
+  utilities/nvm_mod/bitmap.cc  \
   utilities/nvm_mod/nvm_cf_mod.cc   \
   utilities/nvm_mod/sstable_meta.cc   \
   utilities/nvm_mod/nvm_flush_job.cc  \

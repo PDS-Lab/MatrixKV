@@ -15,13 +15,11 @@
 
 
 namespace rocksdb {
-using namespace pmem;
-using namespace pmem::obj;
 
 class L0TableBuilder{
 public:
     L0TableBuilder(NvmCfModule* nvm_cf,
-                   persistent_ptr<FileEntry> &file,
+                   FileEntry* file,
                    char* raw);
     ~L0TableBuilder();
     void Add(const Slice& key, const Slice& value);
@@ -36,7 +34,7 @@ public:
 
 private:
     NvmCfModule * nvm_cf_;
-    persistent_ptr<FileEntry> file_;
+    FileEntry* file_;
     char* raw_;
     std::vector<KeysMetadata *> keys_;
     uint64_t keys_num_;

@@ -377,7 +377,7 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
     }
   }
   if(ccitem_ == nullptr) return;
-  persistent_ptr<FileEntry> file = nullptr;
+  FileEntry* file = nullptr;
   FileMetaData* filemeta = nullptr;
   for(unsigned int i = 0;i < ccitem_->files.size();i++){
     file = ccitem_->files.at(i);

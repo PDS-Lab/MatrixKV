@@ -199,7 +199,7 @@ DEFINE_string(
 DEFINE_bool(use_nvm_module, false,"");
 DEFINE_bool(reset_nvm_storage, false,"");
 DEFINE_string(pmem_path,"","");
-DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
+//DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
@@ -3576,7 +3576,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       nvm_setup->use_nvm_module = FLAGS_use_nvm_module;
       nvm_setup->reset_nvm_storage = FLAGS_reset_nvm_storage;
       nvm_setup->pmem_path = FLAGS_pmem_path;
-      nvm_setup->pmem_size = FLAGS_pmem_size;
+      //nvm_setup->pmem_size = FLAGS_pmem_size;
       options.nvm_setup.reset(nvm_setup);
     }
 

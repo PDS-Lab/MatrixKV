@@ -6,14 +6,12 @@
 #include "sstable_meta.h"
 
 namespace rocksdb {
-using namespace pmem;
-using namespace pmem::obj;
 using std::vector;
 
 
 class ColumnCompactionItemIterator : public InternalIterator {
 public:
-    ColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t first_key_index,uint64_t keys_num):
+    ColumnCompactionItemIterator(char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
                                    raw_data_(raw_data),file_(file){
         current_ = -1;
         vKey_.reserve(keys_num);
@@ -108,7 +106,7 @@ public:
 
 private:
     char *raw_data_;
-    persistent_ptr<FileEntry> file_;
+    FileEntry* file_;
     vector<Slice> vKey_;
     vector<Slice> vValue_;
     int current_;
@@ -119,6 +117,6 @@ private:
 
 };
 
-InternalIterator* NewColumnCompactionItemIterator(char *raw_data,persistent_ptr<FileEntry> &file,uint64_t first_key_index,uint64_t keys_num);
+InternalIterator* NewColumnCompactionItemIterator(char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num);
    
 }

@@ -24,7 +24,7 @@ struct NvmSetup {
 
   std::string pmem_path;  //目录
 
-  uint64_t pmem_size = 0;  //主管理模块大小
+  //uint64_t pmem_size = 0;  //主管理模块大小
 
   NvmSetup& operator=(const NvmSetup& setup) = default;
   NvmSetup() = default;
@@ -40,7 +40,7 @@ struct NvmOptions {
   bool use_nvm_module;
   bool reset_nvm_storage;
   std::string pmem_path;
-  uint64_t pmem_size;
+  //uint64_t pmem_size;
   uint64_t write_buffer_size;
 
 
@@ -55,7 +55,7 @@ struct NvmCfOptions {
   bool use_nvm_module;
   bool reset_nvm_storage;
   std::string pmem_path;
-  uint64_t cf_pmem_size;
+  //uint64_t cf_pmem_size;
   uint64_t write_buffer_size;
   int max_write_buffer_number;
   int level0_stop_writes_trigger;

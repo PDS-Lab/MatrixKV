@@ -4,12 +4,10 @@
 #include "common.h"
 
 namespace rocksdb {
-using namespace pmem;
-using namespace pmem::obj;
 
 class KeysMergeIterator{
 public:
-    KeysMergeIterator(std::vector<persistent_ptr<FileEntry>> *files,std::vector<uint64_t> *first_key_indexs,const Comparator* user_comparator)
+    KeysMergeIterator(std::vector<FileEntry*> *files,std::vector<uint64_t> *first_key_indexs,const Comparator* user_comparator)
     :files_(files),first_key_indexs_(first_key_indexs),user_comparator_(user_comparator){
         files_num = files_->size();
         child_current_ = new int[files_num];
@@ -90,7 +88,7 @@ private:
     }
 
 
-    std::vector<persistent_ptr<FileEntry>> *files_;  //
+    std::vector<FileEntry*> *files_;  //
     std::vector<uint64_t> *first_key_indexs_;
     const Comparator* user_comparator_;
     int files_num;
