@@ -4434,7 +4434,7 @@ InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
         for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
           file = c->GetColumnCompactionItem()->files.at(i);
 
-          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i));
+          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
         }
       } else {
         // Create concatenating iterator for the files from this level

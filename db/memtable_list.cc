@@ -290,6 +290,7 @@ void MemTableList::PickMemtablesToFlush(const uint64_t* max_memtable_id,
       }
       m->flush_in_progress_ = true;  // flushing will start very soon
       ret->push_back(m);
+      break;   //一次最多一个immutable加入flush
     }
   }
   flush_requested_ = false;  // start-flush request is complete

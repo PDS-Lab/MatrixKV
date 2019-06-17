@@ -15,8 +15,8 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
            nvmcfoption_->pmem_path.c_str(), cf_id, cf_name.c_str());
   std::string pol_path(buf, strlen(buf));
   
-  ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size*nvmcfoption_->max_write_buffer_number + 1 * 1024 * 1024,
-            nvmcfoption_->level0_stop_writes_trigger);
+  ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size + 1 * 1024 * 1024,
+            nvmcfoption_->level0_stop_writes_trigger*2);
   
   sst_meta_ = new SstableMetadata(icmp_,nvmcfoption_->level0_stop_writes_trigger);
   
@@ -114,8 +114,8 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   auto user_comparator = icmp_->user_comparator(); //比较只根据user key比较
   KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,&first_key_indexs,user_comparator);
   
-  uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 2ul*1024*1024 * Column_compaction_no_L1_select_L0;  //每个文件减去2MB是为了防止小文件的产生
-  uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base;
+  uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * Column_compaction_no_L1_select_L0;  //每个文件减去6MB是为了防止小文件的产生
+  uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * Column_compaction_have_L1_select_L0;
   int files_index = -1;
   int keys_index = -1;
   uint64_t itemsize = 0;
@@ -233,17 +233,22 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
       key_current = comfiles.at(files_index)->keys_meta[keys_index].key;
       if( ((L1Range_index != L1Ranges.size()) && (L1Range_index % 2 == 0) && (user_comparator->Compare(ExtractUserKey(key_current.Encode()),ExtractUserKey(L1Ranges.at(L1Range_index).Encode())) >= 0)) || \
             ((L1Range_index % 2 == 1) && (user_comparator->Compare(ExtractUserKey(key_current.Encode()),ExtractUserKey(L1Ranges.at(L1Range_index).Encode())) > 0)) ){
-        if(all_comption_size >= L1HaveCompactionSizeStop){
+        if((L1Range_index % 2 == 1) && all_comption_size >= L1HaveCompactionSizeStop){  //在文件范围内时，超过边界满足大小即可
           c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
           break;
         }
         L1Range_index++;
         continue;
       }
+
       itemsize = comfiles.at(files_index)->keys_meta[keys_index].size;
       keys_num[files_index]++;
       keys_size[files_index] += itemsize;
       all_comption_size += itemsize;
+      if((L1Range_index % 2 == 0) && all_comption_size >= L1HaveCompactionSizeStop){  //不在文件范围内时，满足数据量即可
+          c->L0largest = comfiles.at(files_index)->keys_meta[keys_index].key;
+          break;
+      }
       k_iter->Next();
     }
     if(all_comption_size > 0 && !k_iter->Valid()){

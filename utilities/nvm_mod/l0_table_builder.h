@@ -38,15 +38,37 @@ private:
     char* raw_;
     std::vector<KeysMetadata *> keys_;
     uint64_t keys_num_;
-
     uint64_t offset_;
-
-
-
 
 };
 
+class L0TableBuilderWithBuffer{
+public:
+    L0TableBuilderWithBuffer(NvmCfModule* nvm_cf,
+                   FileEntry* file,
+                   char* raw);
+    ~L0TableBuilderWithBuffer();
+    void Add(const Slice& key, const Slice& value);
+    Status Finish();
 
+    uint64_t GetFileSize(){
+        return offset_;
+    }
+
+
+
+
+private:
+    NvmCfModule * nvm_cf_;
+    FileEntry* file_;
+    char* raw_;
+    std::vector<KeysMetadata *> keys_;
+    uint64_t keys_num_;
+    uint64_t offset_;
+    char* buf_;
+    uint64_t max_size_;  //buf的最大值
+
+};
 
 
 
