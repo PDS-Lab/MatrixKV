@@ -2505,7 +2505,10 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       TEST_SYNC_POINT("DBImpl::BackgroundCompaction():BeforePickCompaction");
       c.reset(cfd->PickCompaction(*mutable_cf_options, log_buffer,is_column_compaction,cfd->nvmcfmodule));
       TEST_SYNC_POINT("DBImpl::BackgroundCompaction():AfterPickCompaction");
-
+      if(is_column_compaction && c == nullptr) {  //column comapction pick failed!
+        cfd->set_bg_column_compaction(false);
+        c.reset(cfd->PickCompaction(*mutable_cf_options, log_buffer)); //挑选正常的compaction
+      }
       if (c != nullptr) {
         bool enough_room = EnoughRoomForCompaction(
             cfd, *(c->inputs()), &sfm_reserved_compact_space, log_buffer);

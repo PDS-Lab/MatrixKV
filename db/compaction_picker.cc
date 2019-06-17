@@ -1366,6 +1366,9 @@ bool LevelCompactionBuilder::SetupColumnCompactionInputs(NvmCfModule* nvmcf){
     RECORD_LOG("nvm cf pick column compaction\n");
 #endif
     ccitem = nvmcf->PickColumnCompaction(vstorage_);
+    if(ccitem == nullptr) {
+      return false;
+    }
 
 #ifdef STATISTIC_OPEN
     uint64_t end_time = get_now_micros();
@@ -1384,6 +1387,15 @@ bool LevelCompactionBuilder::SetupColumnCompactionInputs(NvmCfModule* nvmcf){
     for(unsigned int i = 0;i < ccitem->L1compactionfiles.size();i++){
       RECORD_LOG("select L1:%lu [%s-%s]\n",ccitem->L1compactionfiles.at(i)->fd.GetNumber(),ccitem->L1compactionfiles.at(i)->smallest.DebugString(true).c_str(),ccitem->L1compactionfiles.at(i)->largest.DebugString(true).c_str());
       output_level_inputs_.files.push_back(ccitem->L1compactionfiles.at(i));
+    }
+    for(unsigned int i = 0;i < ccitem->L1compactionfiles.size();i++){
+      if(ccitem->L1compactionfiles.at(i)->being_compacted) {  //挑选的L1 files 有正在compacted，失败
+          start_level_inputs_.clear();
+          output_level_inputs_.clear();
+          RECORD_LOG("warn:select L1:%ld being compacted!\n",ccitem->L1compactionfiles.at(i)->fd.GetNumber());
+          delete ccitem;
+          return false;
+      }
     }
     compaction_inputs_.push_back(start_level_inputs_);
     if (!output_level_inputs_.empty()) {
@@ -1415,7 +1427,10 @@ Compaction* LevelCompactionBuilder::PickCompaction(bool for_column_compaction,Nv
   // to a clean cut.
   if(for_column_compaction){
     RECORD_LOG("pick column compaction\n");
-    SetupColumnCompactionInputs(nvmcf);
+    if(!SetupColumnCompactionInputs(nvmcf)) {  //选择 column Compaction 失败
+      RECORD_LOG("warn:pick column compaction failed!\n");
+      return nullptr;
+    }
   }
   else{
     SetupInitialFiles();

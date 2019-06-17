@@ -8,12 +8,13 @@ bench_compression="snappy" #"snappy,none"
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
-bench_num="2000000"
+bench_num="20000000"
 bench_readnum="100000"
 bench_sync="0"
 bench_direct="0"
 bench_statistics="0"
 bench_max_open_files="1000"
+max_background_jobs="3" 
 
 pmem_path="/home/czl/pmem0/nvm"
 
@@ -29,6 +30,7 @@ const_params="
     --compression_type=$bench_compression \
     --statistics=$bench_statistics \
     --open_files=$bench_max_open_files \
+    --max_background_jobs=$max_background_jobs \
     --use_nvm_module=true \
     --reset_nvm_storage=true \
     --pmem_path=$pmem_path \
