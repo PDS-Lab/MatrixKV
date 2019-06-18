@@ -5,10 +5,10 @@
 namespace rocksdb {
 
 
-SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp,int level0_stop_writes_trigger)
-    :level0_stop_writes_trigger_(level0_stop_writes_trigger),icmp_(icmp){
+SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp)
+    :icmp_(icmp){
     mu_ = new MyMutex();
-    RECORD_LOG("creat SstableMetadata level0_stop_writes_trigger:%d\n",level0_stop_writes_trigger);
+    RECORD_LOG("creat SstableMetadata\n");
 
 }
 
@@ -136,25 +136,31 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
         }
         
     }
-    if (L0files.size() < Level0_column_compaction_trigger) {
-        RECORD_LOG("warn:L0 size:%d < Level0_column_compaction_trigger:%ld\n",L0files.size(), Level0_column_compaction_trigger);
+    uint64_t l0_files_size = 0;
+    for(unsigned int i = 0; i < L0files.size(); i++){
+        l0_files_size += L0files[i]->fd.GetFileSize();
+    }
+    if (l0_files_size < Level0_column_compaction_trigger_size) {
+        RECORD_LOG("warn:L0 l0_files_size:%f MB < Level0_column_compaction_trigger_size:%f MB\n",l0_files_size/1048576.0, Level0_column_compaction_trigger_size/1048576.0);
     }
     //int level0_stop_writes_trigger = level0_stop_writes_trigger_;
     int file_num = L0files.size() - 1;
+    uint64_t compaction_files_size = 0;
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
         compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
-        if (compaction_files.size() >= (uint64_t)Max_Level0_column_compaction_file ) { //最大加入的column compaction的文件，可调整
+        compaction_files_size += L0files[file_num]->fd.GetFileSize();
+        if (compaction_files_size >= Level0_column_compaction_slowdown_size ) { //最大加入的column compaction的数据，可调整，或者全加入
             break;
         }
     }
 
-    RECORD_LOG("UpdateCompactionState:L0:%ld[",L0files.size());
+    RECORD_LOG("UpdateCompactionState:L0:%.2f MB num:%ld[",l0_files_size/1048576.0,L0files.size());
     for(unsigned int i=0; i < L0files.size(); i++){
         RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
     }
     RECORD_LOG("]\n");
     
-    RECORD_LOG("UpdateCompactionState:select:%ld[",compaction_files.size());
+    RECORD_LOG("UpdateCompactionState:select:%.2f MB num:%ld[",compaction_files_size/1048576.0,compaction_files.size());
     for(unsigned int i=0; i < compaction_files.size(); i++){
         RECORD_LOG("%ld ",compaction_files[i]);
     }

@@ -22,6 +22,8 @@ NvmCfOptions::NvmCfOptions(const std::shared_ptr<NvmSetup> setup,uint64_t s_writ
   level0_stop_writes_trigger = s_level0_stop_writes_trigger;
   //cf_pmem_size = 1ul * 1024 * 1024 * 1024;
   target_file_size_base = s_target_file_size_base;
+  RECORD_LOG("use_nvm_module:%d reset_nvm_storage:%d pmem_path:%s write_buffer_size:%f MB level0_stop_writes_trigger:%d target_file_size_base:%f MB\n",
+    use_nvm_module,reset_nvm_storage,pmem_path.c_str(),write_buffer_size/1048576.0,level0_stop_writes_trigger,target_file_size_base/1048576.0);
 }
 
 }  // namespace rocksdb

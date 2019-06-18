@@ -15,10 +15,11 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
            nvmcfoption_->pmem_path.c_str(), cf_id, cf_name.c_str());
   std::string pol_path(buf, strlen(buf));
   
+  uint64_t level0_table_num = (Level0_column_compaction_stop_size/nvmcfoption_->write_buffer_size + 1)*2;
   ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size + 1 * 1024 * 1024,
-            nvmcfoption_->level0_stop_writes_trigger*2);
+            level0_table_num);
   
-  sst_meta_ = new SstableMetadata(icmp_,nvmcfoption_->level0_stop_writes_trigger);
+  sst_meta_ = new SstableMetadata(icmp_);
   
 }
 NvmCfModule::~NvmCfModule() {

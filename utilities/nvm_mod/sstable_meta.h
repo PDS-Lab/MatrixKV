@@ -59,7 +59,7 @@ struct FileEntry{
 
 class SstableMetadata {
  public:
-  SstableMetadata(const InternalKeyComparator* icmp,int level0_stop_writes_trigger);
+  SstableMetadata(const InternalKeyComparator* icmp);
   ~SstableMetadata();
   FileEntry* AddFile(uint64_t filenumber,int index);
   FileEntry* FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true);
@@ -75,8 +75,6 @@ class SstableMetadata {
   std::vector<uint64_t> compaction_files;    //L0 commpaction file,只有单个线程会用到
 private:
   std::vector<FileEntry*> files_;   ////vector，新的插入头，旧的在尾，保持所有L0的sstable
- 
-  int level0_stop_writes_trigger_;
 
 ///
   const InternalKeyComparator* icmp_;

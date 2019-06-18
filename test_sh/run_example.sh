@@ -2,6 +2,7 @@
 
 
 bench_db_path="/home/hm/ceshi"
+wal_dir="/home/hm/ceshi2"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
@@ -10,29 +11,26 @@ bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="20000000"
 bench_readnum="100000"
-bench_sync="0"
-bench_direct="0"
-bench_statistics="0"
 bench_max_open_files="1000"
-max_background_jobs="3" 
+max_background_jobs="3"
+max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 
 pmem_path="/home/czl/pmem0/nvm"
-
+use_nvm="true"
 
 const_params="
     --db=$bench_db_path \
+    --wal_dir=$wal_dir \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \
     --reads=$bench_readnum \
-    --sync=$bench_sync \
-    --use_direct_io_for_flush_and_compaction=$bench_direct \
     --compression_type=$bench_compression \
-    --statistics=$bench_statistics \
     --open_files=$bench_max_open_files \
     --max_background_jobs=$max_background_jobs \
-    --use_nvm_module=true \
-    --reset_nvm_storage=true \
+    --max_bytes_for_level_base=$max_bytes_for_level_base \
+    --use_nvm_module=$use_nvm \
+    --reset_nvm_storage=$use_nvm \
     --pmem_path=$pmem_path \
     "
 

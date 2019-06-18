@@ -411,7 +411,9 @@ class VersionStorageInfo {
   bool RangeMightExistAfterSortedRun(const Slice& smallest_user_key,
                                      const Slice& largest_user_key,
                                      int last_level, int last_l0_idx);
-
+///
+  bool is_nvmcf;
+///
  private:
   const InternalKeyComparator* internal_comparator_;
   const Comparator* user_comparator_;

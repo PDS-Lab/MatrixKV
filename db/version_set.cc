@@ -1154,6 +1154,7 @@ VersionStorageInfo::VersionStorageInfo(
       estimated_compaction_needed_bytes_(0),
       finalized_(false),
       force_consistency_checks_(_force_consistency_checks) {
+  is_nvmcf = false;
   if (ref_vstorage != nullptr) {
     accumulated_file_size_ = ref_vstorage->accumulated_file_size_;
     accumulated_raw_key_size_ = ref_vstorage->accumulated_raw_key_size_;
@@ -1196,7 +1197,11 @@ Version::Version(ColumnFamilyData* column_family_data, VersionSet* vset,
       refs_(0),
       env_options_(env_opt),
       mutable_cf_options_(mutable_cf_options),
-      version_number_(version_number) {}
+      version_number_(version_number) {
+        if(cfd_ != nullptr && cfd_->nvmcfmodule != nullptr){   //标识storage_info_是nvmcf
+          storage_info_.is_nvmcf = true;
+        }
+      }
 
 void Version::Get(const ReadOptions& read_options, const LookupKey& k,
                   PinnableSlice* value, Status* status,
@@ -1532,15 +1537,27 @@ void VersionStorageInfo::EstimateCompactionBytesNeeded(
   }
   // Level 0
   bool level0_compact_triggered = false;
-  if (static_cast<int>(files_[0].size()) >=
-          mutable_cf_options.level0_file_num_compaction_trigger ||
-      level_size >= mutable_cf_options.max_bytes_for_level_base) {
-    level0_compact_triggered = true;
-    estimated_compaction_needed_bytes_ = level_size;
-    bytes_compact_to_next_level = level_size;
-  } else {
-    estimated_compaction_needed_bytes_ = 0;
+  if(!is_nvmcf){
+    if (static_cast<int>(files_[0].size()) >=
+            mutable_cf_options.level0_file_num_compaction_trigger ||
+        level_size >= mutable_cf_options.max_bytes_for_level_base) {
+      level0_compact_triggered = true;
+      estimated_compaction_needed_bytes_ = level_size;
+      bytes_compact_to_next_level = level_size;
+    } else {
+      estimated_compaction_needed_bytes_ = 0;
+    }
   }
+  else{
+    if (level_size >= Level0_column_compaction_trigger_size) {
+      level0_compact_triggered = true;
+      estimated_compaction_needed_bytes_ = level_size;
+      bytes_compact_to_next_level = level_size;
+    } else {
+      estimated_compaction_needed_bytes_ = 0;
+    }
+  }
+  
 
   // Level 1 and up.
   uint64_t bytes_next_level = 0;
