@@ -4,7 +4,7 @@
 bench_db_path="/mnt/ssd/ceshi"
 wal_dir="/home/czl/pmem0/log"
 bench_value="4096"
-bench_compression="snappy" #"snappy,none"
+bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
