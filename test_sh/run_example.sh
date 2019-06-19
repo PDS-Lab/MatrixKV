@@ -1,8 +1,8 @@
 #! /bin/sh
 
 
-bench_db_path="/home/hm/ceshi"
-wal_dir="/home/hm/ceshi2"
+bench_db_path="/mnt/ssd/ceshi"
+wal_dir="/home/czl/pmem0/log"
 bench_value="4096"
 bench_compression="snappy" #"snappy,none"
 
