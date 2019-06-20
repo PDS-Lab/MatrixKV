@@ -1,8 +1,6 @@
 #! /bin/sh
 
-
-bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/home/czl/pmem0/log"
+bench_db_path="/home/hm/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -16,12 +14,9 @@ max_background_jobs="3"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/home/czl/pmem0/nvm"
-use_nvm="true"
 
 const_params="
     --db=$bench_db_path \
-    --wal_dir=$wal_dir \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \
@@ -30,9 +25,6 @@ const_params="
     --open_files=$bench_max_open_files \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
-    --use_nvm_module=$use_nvm \
-    --reset_nvm_storage=$use_nvm \
-    --pmem_path=$pmem_path \
     "
 
 bench_file_path="$(dirname $PWD )/db_bench"

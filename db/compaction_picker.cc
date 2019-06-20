@@ -1085,7 +1085,7 @@ bool LevelCompactionPicker::NeedsCompaction(
     return true;
   }
   for (int i = 0; i <= vstorage->MaxInputLevel(); i++) {
-    if (vstorage->CompactionScoreLevel(i) == 0) continue;
+    if (vstorage->is_nvmcf && vstorage->CompactionScoreLevel(i) == 0) continue;
     if (vstorage->CompactionScore(i) >= 1) {
       return true;
     }
@@ -1222,7 +1222,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) {
     start_level_score_ = vstorage_->CompactionScore(i);
     start_level_ = vstorage_->CompactionScoreLevel(i);
-    if(start_level_ == 0) continue;
+    if(vstorage_->is_nvmcf && start_level_ == 0) continue;
     assert(i == 0 || start_level_score_ <= vstorage_->CompactionScore(i - 1));
     if (start_level_score_ >= 1) {
       if (skipped_l0_to_base && start_level_ == vstorage_->base_level()) {
@@ -1308,13 +1308,13 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   }
 }
 
-/*bool LevelCompactionBuilder::SetupOtherL0FilesIfNeeded() {
+bool LevelCompactionBuilder::SetupOtherL0FilesIfNeeded() {
   if (start_level_ == 0 && output_level_ != 0) {
     return compaction_picker_->GetOverlappingL0Files(
         vstorage_, &start_level_inputs_, output_level_, &parent_index_);
   }
   return true;
-}*/
+}
 
 bool LevelCompactionBuilder::SetupOtherInputsIfNeeded() {
   // Setup input files from output level. For output to L0, we only compact
@@ -1433,29 +1433,30 @@ Compaction* LevelCompactionBuilder::PickCompaction(bool for_column_compaction,Nv
     }
   }
   else{
-    SetupInitialFiles();
-    if (start_level_inputs_.empty()) {
-      return nullptr;
-    }
-    assert(start_level_ >= 0 && output_level_ >= 0);
+  SetupInitialFiles();
+  if (start_level_inputs_.empty()) {
+    return nullptr;
+  }
+  assert(start_level_ >= 0 && output_level_ >= 0);
 
-    // If it is a L0 -> base level compaction, we need to set up other L0
-    // files if needed.
-    /*if (!SetupOtherL0FilesIfNeeded()) {
-      return nullptr;
-    }*/
+  // If it is a L0 -> base level compaction, we need to set up other L0
+  // files if needed.
+  if (!SetupOtherL0FilesIfNeeded()) {
+    return nullptr;
+  }
 
-    // Pick files in the output level and expand more files in the start level
-    // if needed.
-    if (!SetupOtherInputsIfNeeded()) {
-      return nullptr;
-    }
+  // Pick files in the output level and expand more files in the start level
+  // if needed.
+  if (!SetupOtherInputsIfNeeded()) {
+    return nullptr;
+  }
   }
 
   // Form a compaction object containing the files we picked.
   Compaction* c = GetCompaction();
 
   TEST_SYNC_POINT_CALLBACK("LevelCompactionPicker::PickCompaction:Return", c);
+
   return c;
 }
 

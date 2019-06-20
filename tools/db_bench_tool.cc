@@ -4512,9 +4512,13 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
 
     char msg[100];
+#ifdef STATISTIC_OPEN
+    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%f s \n",
+             found, read, 1.0*global_stats.l0_get_time*1e-6);
+#else
     snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found)\n",
              found, read);
-
+#endif
     thread->stats.AddBytes(bytes);
     thread->stats.AddMessage(msg);
 

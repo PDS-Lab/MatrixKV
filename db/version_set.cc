@@ -114,7 +114,7 @@ class FilePicker {
              const Comparator* user_comparator,
              const InternalKeyComparator* internal_comparator)
       : num_levels_(num_levels),
-        curr_level_(static_cast<unsigned int>(0)),
+        curr_level_(static_cast<unsigned int>(-1)),
         returned_file_level_(static_cast<unsigned int>(-1)),
         hit_file_level_(static_cast<unsigned int>(-1)),
         search_left_bound_(0),
@@ -133,9 +133,14 @@ class FilePicker {
 #ifdef NDEBUG
     (void)files;
 #endif
+    bool is_nvmcf = false; 
+    if(files_[0].size() > 0 && files_[0][0]->is_level0) {
+      curr_level_ = 1; //nvmcf 不加L0层
+      is_nvmcf = true;
+    }
     // Setup member variables to search first level.
     search_ended_ = !PrepareNextLevel();
-    /*if (!search_ended_) {
+    if (!search_ended_ && !is_nvmcf) {
       // Prefetch Level 0 table data to avoid cache miss if possible.
       for (unsigned int i = 0; i < (*level_files_brief_)[0].num_files; ++i) {
         auto* r = (*level_files_brief_)[0].files[i].fd.table_reader;
@@ -143,7 +148,7 @@ class FilePicker {
           r->Prepare(ikey);
         }
       }
-    }*/
+    }
   }
 
   int GetCurrentLevel() const { return curr_level_; }
@@ -1010,7 +1015,8 @@ void Version::AddIterators(const ReadOptions& read_options,
                            RangeDelAggregator* range_del_agg) {
   assert(storage_info_.finalized_);
 
-  for (int level = 1; level < storage_info_.num_non_empty_levels(); level++) {
+  for (int level = 0; level < storage_info_.num_non_empty_levels(); level++) {
+    if(storage_info_.is_nvmcf && level == 0 ) continue;
     AddIteratorsForLevel(read_options, soptions, merge_iter_builder, level,
                          range_del_agg);
   }
@@ -1426,9 +1432,10 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     // compensated_file_size, making lower-level to higher-level compaction
     // will be triggered, which creates higher-level files whose num_deletions
     // will be updated here.
-    for (int level = 1;
+    for (int level = 0;
          level < storage_info_.num_levels_ && init_count < kMaxInitCount;
          ++level) {
+      if(storage_info_.is_nvmcf && level == 0) continue;
       for (auto* file_meta : storage_info_.files_[level]) {
         if (MaybeInitializeFileMetaData(file_meta)) {
           // each FileMeta will be initialized only once.
@@ -1452,8 +1459,9 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     // load the table-property of a file in higher-level to initialize
     // that value.
     for (int level = storage_info_.num_levels_ - 1;
-         storage_info_.accumulated_raw_value_size_ == 0 && level >= 1;
+         storage_info_.accumulated_raw_value_size_ == 0 && level >= 0;
          --level) {
+      if(storage_info_.is_nvmcf && level ==0) continue;
       for (int i = static_cast<int>(storage_info_.files_[level].size()) - 1;
            storage_info_.accumulated_raw_value_size_ == 0 && i >= 0; --i) {
         if (MaybeInitializeFileMetaData(storage_info_.files_[level][i])) {
@@ -4598,9 +4606,6 @@ void VersionSet::GetObsoleteFiles(std::vector<ObsoleteFileInfo>* files,
       //printf("add pending_files:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);
       pending_files.push_back(std::move(f));
     }
-  }
-  if (!files->empty()) {
-    
   }
   obsolete_files_.swap(pending_files);
 }

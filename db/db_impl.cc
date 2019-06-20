@@ -1190,7 +1190,9 @@ InternalIterator* DBImpl::NewInternalIterator(const ReadOptions& read_options,
   if (s.ok()) {
     // Collect iterators for files in L0 - Ln
     if (read_options.read_tier != kMemtableTier) {
-      cfd->nvmcfmodule->AddIterators(super_version->current->storage_info(),&merge_iter_builder);
+      if(cfd->nvmcfmodule != nullptr) {
+        cfd->nvmcfmodule->AddIterators(super_version->current->storage_info(),&merge_iter_builder);
+      }
       super_version->current->AddIterators(read_options, env_options_,
                                            &merge_iter_builder, range_del_agg);
     }
@@ -1313,11 +1315,22 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
 
+#ifdef STATISTIC_OPEN
+  uint64_t get_start_time = get_now_micros();
+#endif
     if(cfd->nvmcfmodule !=nullptr && cfd->nvmcfmodule->Get(sv->current->storage_info(),&s,lkey, pinnable_val->GetSelf())){
       done = true;
       pinnable_val->PinSelf();
+#ifdef STATISTIC_OPEN
+  uint64_t get_end_time = get_now_micros();   //查找成功
+  global_stats.l0_get_time += (get_end_time - get_start_time);
+#endif
     }
     else{
+#ifdef STATISTIC_OPEN
+  uint64_t get_end_time = get_now_micros();   //查找失败
+  global_stats.l0_get_time += (get_end_time - get_start_time);
+#endif
       sv->current->Get(read_options, lkey, pinnable_val, &s, &merge_context,
                      &max_covering_tombstone_seq, value_found, nullptr, nullptr,
                      callback, is_blob_index);

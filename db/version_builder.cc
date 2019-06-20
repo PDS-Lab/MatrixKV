@@ -151,7 +151,8 @@ class VersionBuilder::Rep {
     }
 #endif
     // make sure the files are sorted correctly
-    for (int level = 1; level < num_levels_; level++) {
+    for (int level = 0; level < num_levels_; level++) {
+      if(vstorage->is_nvmcf && level==0) continue;
       auto& level_files = vstorage->LevelFiles(level);
       for (size_t i = 1; i < level_files.size(); i++) {
         auto f1 = level_files[i - 1];
@@ -376,10 +377,14 @@ class VersionBuilder::Rep {
       while (added_iter != added_end || base_iter != base_end) {
         if (base_iter == base_end ||
                 (added_iter != added_end && cmp(*added_iter, *base_iter))) {
-          MaybeAddFile(vstorage, level, *added_iter++);
-        } else {
-
-          MaybeAddFile(vstorage, level, *base_iter++, true);
+          if(vstorage->is_nvmcf) {
+            MaybeAddFile(vstorage, level, *added_iter++, true);
+          }
+          else{
+            MaybeAddFile(vstorage, level, *added_iter++);
+          }
+        } else {   
+          MaybeAddFile(vstorage, level, *base_iter++);
         }
       }
     }
@@ -435,8 +440,8 @@ class VersionBuilder::Rep {
     }
   }
 
-  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f, bool is_base_iter = false) {
-    if (is_base_iter) {
+  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f, bool is_nvmcf_added_iter = false) {
+    if (!is_nvmcf_added_iter) {
       if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
         // f is to-be-deleted table file
         //printf("remove table:%lu\n",f->fd.GetNumber());
@@ -495,8 +500,8 @@ void VersionBuilder::LoadTableHandlers(InternalStats* internal_stats,
 }
 
 void VersionBuilder::MaybeAddFile(VersionStorageInfo* vstorage, int level,
-                                  FileMetaData* f, bool is_base_iter = false) {
-  rep_->MaybeAddFile(vstorage, level, f, is_base_iter);
+                                  FileMetaData* f, bool is_nvmcf_added_iter = false) {
+  rep_->MaybeAddFile(vstorage, level, f, is_nvmcf_added_iter);
 }
 
 }  // namespace rocksdb

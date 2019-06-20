@@ -2156,7 +2156,7 @@ Status DBImpl::BackgroundFlush(bool* made_progress, JobContext* job_context,
           bg_job_limits.max_compactions, bg_flush_scheduled_,
           bg_compaction_scheduled_);
     }
-    if (immutable_db_options_.nvm_setup->use_nvm_module) {
+    if (immutable_db_options_.nvm_setup != nullptr && immutable_db_options_.nvm_setup->use_nvm_module) {
       status = FlushMemTablesToNvm(bg_flush_args, made_progress,
                                         job_context, log_buffer);
     } else {

@@ -373,7 +373,7 @@ struct AdvancedColumnFamilyOptions {
   // Default: 20
   //
   // Dynamically changeable through SetOptions() API
-  int level0_slowdown_writes_trigger = 30;
+  int level0_slowdown_writes_trigger = 20;
 
   // Maximum number of level-0 files.  We stop writes at this point.
   //

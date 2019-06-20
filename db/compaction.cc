@@ -320,14 +320,14 @@ bool Compaction::IsTrivialMove() const {
   // a very expensive merge later on.
   // If start_level_== output_level_, the purpose is to force compaction
   // filter to be applied to that level, and thus cannot be a trivial move.
-  if (start_level_ == 0){
+  if (ccitem_ !=nullptr && start_level_ == 0){
     return false;
   }
   // Check if start level have files with overlapping ranges
-  /*if (start_level_ == 0 && input_vstorage_->level0_non_overlapping() == false) {
+  if (start_level_ == 0 && input_vstorage_->level0_non_overlapping() == false) {
     // We cannot move files from L0 to L1 if the files are overlapping
     return false;
-  }*/
+  }
 
   if (is_manual_compaction_ &&
       (immutable_cf_options_.compaction_filter != nullptr ||
@@ -371,7 +371,7 @@ bool Compaction::IsTrivialMove() const {
 
 void Compaction::AddInputDeletions(VersionEdit* out_edit) {
   for (size_t which = 0; which < num_input_levels(); which++) {
-    if(level(which) == 0) continue;
+    if(ccitem_ != nullptr && level(which) == 0) continue;
     for (size_t i = 0; i < inputs_[which].size(); i++) {
       out_edit->DeleteFile(level(which), inputs_[which][i]->fd.GetNumber());
     }
