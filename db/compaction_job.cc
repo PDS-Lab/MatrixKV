@@ -63,6 +63,9 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "log/my_log.h"
+#include "log/global_statistic.h"
+
 namespace rocksdb {
 
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
@@ -741,7 +744,10 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
     bytes_written_per_sec =
         stats.bytes_written / static_cast<double>(stats.micros);
   }
-
+#ifdef STATISTIC_OPEN
+    uint64_t read_all = stats.bytes_read_non_output_levels + stats.bytes_read_output_level;
+    RECORD_INFO(3,"%ld,%.2f,%.2f,%.5f\n",++global_stats.compaction_num, 1.0*read_all/1048576.0,1.0*stats.bytes_written/1048576.0,1.0*stats.micros*1e-6);
+#endif
   ROCKS_LOG_BUFFER(
       log_buffer_,
       "[%s] compacted to: %s, MB/sec: %.1f rd, %.1f wr, level %d, "

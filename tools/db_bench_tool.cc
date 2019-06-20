@@ -75,6 +75,9 @@
 #include "utilities/merge_operators/bytesxor.h"
 #include "utilities/persistent_cache/block_cache_tier.h"
 
+#include "log/my_log.h"
+#include "log/global_statistic.h"
+
 #ifdef OS_WIN
 #include <io.h>  // open/close
 #endif
@@ -1781,12 +1784,12 @@ class Stats {
     double elapsed = (finish_ - start_) * 1e-6;
     double throughput = (double)done_/elapsed;
 
-    fprintf(stdout, "%-12s : %11.3f micros/op %ld ops/sec;%s%s\n",
+    fprintf(stdout, "%-12s : %11.3f micros/op %ld ops/sec;%s%s %.2f s\n",
             name.ToString().c_str(),
             elapsed * 1e6 / done_,
             (long)throughput,
             (extra.empty() ? "" : " "),
-            extra.c_str());
+            extra.c_str(),elapsed);
     if (FLAGS_histogram) {
       for (auto it = hist_.begin(); it != hist_.end(); ++it) {
         fprintf(stdout, "Microseconds per %s:\n%s\n",
@@ -3842,6 +3845,12 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     int64_t stage = 0;
     int64_t num_written = 0;
+    int64_t t_last_num = 0;
+    int64_t t_last_bytes = 0;
+    double t_start_time = Env::Default()->NowMicros();
+    double t_last_time = t_start_time;
+    double t_cur_time;
+
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
         stage = duration.GetStage();
@@ -3969,6 +3978,28 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         fprintf(stderr, "put error: %s\n", s.ToString().c_str());
         exit(1);
       }
+#ifdef STATISTIC_OPEN
+      t_cur_time = Env::Default()->NowMicros();
+      if (t_cur_time - t_last_time > 10*1e6) {
+        double use_time = (t_cur_time - t_last_time)*1e-6;
+        int64_t ebytes = bytes - t_last_bytes;
+        double now = (t_cur_time - t_start_time)*1e-6;
+        int64_t written_num = num_written - t_last_num;
+
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops compaction:,%ld\n",
+          now,(1.0*ebytes/1048576.0)/use_time,1.0*written_num/use_time,1.0*bytes/1048576.0,(1.0*bytes/1048576.0)/now,1.0*num_written/now,global_stats.compaction_num);
+
+        t_last_time = t_cur_time;
+        t_last_bytes = bytes;
+        t_last_num = num_written;
+
+        std::string stats;
+        //db_with_cfh->db->GetProperty("rocksdb.levelstats", &stats);
+        db_with_cfh->db->GetProperty("rocksdb.stats", &stats);
+        RECORD_INFO(2,"now= %.2f s\n%s\n",now,stats.c_str());
+      }
+
+#endif
     }
     thread->stats.AddBytes(bytes);
   }
