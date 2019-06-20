@@ -1,6 +1,6 @@
 #! /bin/sh
 
-bench_db_path="/home/hm/ceshi"
+bench_db_path="/home/czl/pmem0/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
