@@ -5866,6 +5866,7 @@ int db_bench_tool(int argc, char** argv) {
   }
 
   rocksdb::Benchmark benchmark;
+  init_log_file();
   benchmark.Run();
 
 #ifndef ROCKSDB_LITE
