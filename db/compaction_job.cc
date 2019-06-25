@@ -751,11 +751,13 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 #ifdef STATISTIC_OPEN
   if (compact_->compaction->GetColumnCompactionItem() == nullptr) {  //正常
     uint64_t read_all = stats.bytes_read_non_output_levels + stats.bytes_read_output_level;
-    RECORD_INFO(3,"%ld,%.2f,%.2f,%.5f\n",++global_stats.compaction_num, 1.0*read_all/1048576.0,1.0*stats.bytes_written/1048576.0,1.0*stats.micros*1e-6);
+    uint64_t start_time = get_now_micros() - stats.micros - global_stats.start_time;
+    RECORD_INFO(3,"%ld,%.2f,%.2f,%.5f,%.3f\n",++global_stats.compaction_num, 1.0*read_all/1048576.0,1.0*stats.bytes_written/1048576.0,1.0*stats.micros*1e-6,1.0*start_time*1e-6);
   }
   else{  //column compaction
     uint64_t read_all = compact_->compaction->GetColumnCompactionItem()->L0select_size + stats.bytes_read_output_level;
-    RECORD_INFO(3,"%ld,%.2f,%.2f,%.5f,%d\n",++global_stats.compaction_num, 1.0*read_all/1048576.0,1.0*stats.bytes_written/1048576.0,1.0*stats.micros*1e-6,true);
+        uint64_t start_time = get_now_micros() - stats.micros - global_stats.start_time;
+    RECORD_INFO(3,"%ld,%.2f,%.2f,%.5f,%.3f,%d\n",++global_stats.compaction_num, 1.0*read_all/1048576.0,1.0*stats.bytes_written/1048576.0,1.0*stats.micros*1e-6,1.0*start_time*1e-6,true);
   }
 #endif
 
@@ -1395,9 +1397,9 @@ Status CompactionJob::FinishCompactionOutputFile(
         std::make_shared<TableProperties>(tp);
     ROCKS_LOG_INFO(db_options_.info_log,
                    "[%s] [JOB %d] Generated table #%" PRIu64 ": %" PRIu64
-                   " keys, %" PRIu64 " bytes%s",
+                   " keys, %" PRIu64 " bytes [%s-%s] %s",
                    cfd->GetName().c_str(), job_id_, output_number,
-                   current_entries, current_bytes,
+                   current_entries, current_bytes, meta->smallest.DebugString(true).c_str(), meta->largest.DebugString(true).c_str(),
                    meta->marked_for_compaction ? " (need compaction)" : "");
   }
   std::string fname;

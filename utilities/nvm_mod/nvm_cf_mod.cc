@@ -380,7 +380,18 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
   int mid = 0;
   while(left <= right){  //有等号可确定跳出循环时 right < left
     mid = (left + right)/2;
-    if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) == 0){
+    int compare_result = user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key);  //优化后字符串只比较一次
+    if(compare_result > 0){
+      right = mid - 1;
+    }
+    else if(compare_result < 0){
+      left = mid + 1;
+    }
+    else{   //找到的情况次数最少，放在最后，减少比较次数
+      *find_index = mid;
+      return true;
+    }
+    /* if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) == 0){   //代码优化
       *find_index = mid;
       return true;
     }
@@ -389,7 +400,7 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
     }
     else{
       left = mid + 1;
-    }
+    }*/
   }
   *pre_right = left;
   *pre_left = right;

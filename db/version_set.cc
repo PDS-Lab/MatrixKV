@@ -135,7 +135,7 @@ class FilePicker {
 #endif
     bool is_nvmcf = false; 
     if(files_[0].size() > 0 && files_[0][0]->is_level0) {
-      curr_level_ = 1; //nvmcf 不加L0层
+      curr_level_ = 0; //nvmcf 不加L0层
       is_nvmcf = true;
     }
     // Setup member variables to search first level.

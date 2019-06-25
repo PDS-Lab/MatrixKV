@@ -3864,6 +3864,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     double t_start_time = Env::Default()->NowMicros();
     double t_last_time = t_start_time;
     double t_cur_time;
+#ifdef STATISTIC_OPEN
+    global_stats.start_time = t_start_time;
+#endif
 
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
@@ -3913,6 +3916,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         }
         bytes += value_size_ + key_size_;
         ++num_written;
+        //printf("put:%s\n",key.ToString(true).c_str());
         if (writes_per_range_tombstone_ > 0 &&
             num_written > writes_before_delete_range_ &&
             (num_written - writes_before_delete_range_) /
@@ -4467,6 +4471,10 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   }
 
   void ReadRandom(ThreadState* thread) {
+#ifdef STATISTIC_OPEN
+    global_stats.l0_get_time = 0;
+    global_stats.l0_find_num = 0;
+#endif
     int64_t read = 0;
     int64_t found = 0;
     int64_t bytes = 0;
@@ -4501,6 +4509,10 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         fprintf(stderr, "Get returned an error: %s\n", s.ToString().c_str());
         abort();
       }
+      /* printf("get:%s\n",key.ToString(true).c_str());
+      if(!s.ok()){
+        printf("no find:%s (%s)\n",key.ToString(true).c_str(),s.ToString().c_str());
+      }*/
 
       if (thread->shared->read_rate_limiter.get() != nullptr &&
           read % 256 == 255) {
@@ -4513,8 +4525,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     char msg[100];
 #ifdef STATISTIC_OPEN
-    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%f s \n",
-             found, read, 1.0*global_stats.l0_get_time*1e-6);
+    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%f s l0_find_num:%lu \n",
+             found, read, 1.0*global_stats.l0_get_time*1e-6,global_stats.l0_find_num);
 #else
     snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found)\n",
              found, read);

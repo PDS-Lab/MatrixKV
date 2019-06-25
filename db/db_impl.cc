@@ -1324,6 +1324,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
 #ifdef STATISTIC_OPEN
   uint64_t get_end_time = get_now_micros();   //查找成功
   global_stats.l0_get_time += (get_end_time - get_start_time);
+  global_stats.l0_find_num ++;
 #endif
     }
     else{
