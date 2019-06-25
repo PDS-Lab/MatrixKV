@@ -52,6 +52,7 @@ class NvmCfModule {
 
  private:
   bool UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end);
+  int UserKeyCompareRange(Slice *user_key,InternalKey *start,InternalKey *end);
   bool BinarySearchInFile(FileEntry* file,int first_key_index,Slice *user_key,int *find_index,int *pre_left = nullptr,int *pre_right = nullptr);
   bool GetValueInFile(FileEntry* file,int find_index,std::string *value);
 

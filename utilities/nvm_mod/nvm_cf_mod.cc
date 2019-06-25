@@ -2,6 +2,7 @@
 
 #include "db/version_set.h"
 #include "column_compaction_iterator.h"
+#include "global_statistic.h"
 
 namespace rocksdb {
 
@@ -327,20 +328,59 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
     findfiles.push_back(tmp);
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
+
+  /*RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
+  for(unsigned int i = 0;i < L0files.size();i++){
+    RECORD_LOG("L0 file:%lu first:%lu [%s-%s][%s-%s]\n",L0files[i]->fd.GetNumber(),first_key_indexs[i],findfiles[i]->keys_meta[first_key_indexs[i]].key.DebugString(true).c_str(),
+      findfiles[i]->keys_meta[findfiles[i]->keys_num -1].key.DebugString(true).c_str(),L0files[i]->smallest.DebugString(true).c_str(),L0files[i]->largest.DebugString(true).c_str());
+  }*/
   
   Slice user_key = lkey.user_key();
   FileEntry* file = nullptr;
   int find_index = -1;
   int pre_left = -1;
   int pre_right = -1;
-  uint64_t last_file_num = 0;
+  uint64_t next_file_num = 0;
   for(unsigned int i = 0;i < findfiles.size();i++){
     file = findfiles.at(i);
-    if(last_file_num != file->filenum){
+    if(next_file_num != file->filenum){
       pre_left = -1;
       pre_right = -1;
     }
-    if(UserKeyInRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key))){
+    int com_result = UserKeyCompareRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key));
+    /*RECORD_LOG("search:%lu point:%lu pre_left:%d pre_right:%d com_result:%d\n",file->filenum,next_file_num,pre_left,pre_right,com_result);
+    if(pre_left > 0 && pre_right > 0){
+      RECORD_LOG("[%s-%s]\n",file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
+    }*/
+    if( com_result == 0) { //在范围内
+      if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
+        //RECORD_LOG("find!%d\n",find_index);
+        GetValueInFile(file,find_index,value);
+        *s=Status::OK();
+        return true;
+      }
+      /*if(pre_left > 0 && pre_right > 0){
+        RECORD_LOG("left:%d right:%d [%s-%s]\n",pre_left,pre_right,file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
+      }*/
+      if(pre_left >= (int)first_key_indexs[i] && pre_left < (int)file->keys_num){
+        pre_left = (int)file->keys_meta[pre_left].next - 1;  //在BinarySearchInFile中会有检测范围，无需担心-1带来越界
+      }
+      if(pre_right >= (int)first_key_indexs[i] && pre_right < (int)file->keys_num){
+        pre_right = (int)file->keys_meta[pre_right].next;
+      }
+      next_file_num = file->key_point_filenum;
+    }
+    else if(com_result < 0) {  //小于该范围
+      pre_left = -1;
+      pre_right = (int)file->keys_meta[first_key_indexs[i]].next;  
+      next_file_num = file->key_point_filenum;
+    }
+    else{  //大于该范围
+      pre_left = (int)file->keys_meta[file->keys_num - 1].next - 1;  //在BinarySearchInFile中会有检测范围，无需担心-1带来越界
+      pre_right = -1;  
+      next_file_num = file->key_point_filenum;
+    }
+    /* if(UserKeyInRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key))){
         if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
           GetValueInFile(file,find_index,value);
           *s=Status::OK();
@@ -352,8 +392,8 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
         if(pre_right >= (int)first_key_indexs[i] && pre_right < (int)file->keys_num){
           pre_right = (int)file->keys_meta[pre_right].next;
         }
-        last_file_num = file->filenum;
-    }
+        next_file_num = file->key_point_filenum;
+    }*/
   }
   return false;
 
@@ -365,21 +405,38 @@ bool NvmCfModule::UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey 
   }
   return true;
 }
+int NvmCfModule::UserKeyCompareRange(Slice *user_key,InternalKey *start,InternalKey *end){   // user_key < start,return -1; user_key > end, return 1; start < user_key < end, return 0;
+  auto user_comparator = icmp_->user_comparator();
+  if(user_comparator->Compare(*user_key,start->user_key()) < 0 ) {
+    return -1;
+  }
+  else if(user_comparator->Compare(*user_key,end->user_key()) > 0) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+
+}
 
 bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
+/*#ifdef STATISTIC_OPEN
+  uint64_t start_time = get_now_micros();
+#endif*/
   auto user_comparator = icmp_->user_comparator();
   int left = first_key_index;
-  if(pre_left != nullptr && *pre_left > 0){
+  if(pre_left != nullptr && *pre_left >= first_key_index && *pre_left < (int)file->keys_num){
     left = *pre_left;
   }
   int right = file->keys_num - 1;
-  if(pre_right != nullptr && *pre_right > 0){
-    left = *pre_right;
+  if(pre_right != nullptr && *pre_right >= first_key_index && *pre_right < (int)file->keys_num){
+    right = *pre_right;
   }
 
   int mid = 0;
   while(left <= right){  //有等号可确定跳出循环时 right < left
     mid = (left + right)/2;
+    //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
     int compare_result = user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key);  //优化后字符串只比较一次
     if(compare_result > 0){
       right = mid - 1;
@@ -389,8 +446,13 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
     }
     else{   //找到的情况次数最少，放在最后，减少比较次数
       *find_index = mid;
+/*#ifdef STATISTIC_OPEN
+  uint64_t end_time = get_now_micros();
+  global_stats.l0_search_time += (end_time - start_time);
+#endif*/
       return true;
     }
+    //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
     /* if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) == 0){   //代码优化
       *find_index = mid;
       return true;
@@ -404,10 +466,17 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
   }
   *pre_right = left;
   *pre_left = right;
+/*#ifdef STATISTIC_OPEN
+  uint64_t end_time = get_now_micros();
+  global_stats.l0_search_time += (end_time - start_time);
+#endif*/
   return false;
 
 }
 bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *value){
+/* #ifdef STATISTIC_OPEN
+  uint64_t start_time = get_now_micros();
+#endif */
   char* data_addr = GetIndexPtr(file->sstable_index);
   uint64_t key_value_offset = file->keys_meta[find_index].offset;
   uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
@@ -416,6 +485,10 @@ bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *val
   uint64_t value_size = DecodeFixed64(data_addr + key_value_offset);
   key_value_offset += 8;
   value->assign(data_addr + key_value_offset,value_size);
+/* #ifdef STATISTIC_OPEN
+  uint64_t end_time = get_now_micros();
+  global_stats.l0_read_time += (end_time - start_time);
+#endif */
   return true;
 }
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){

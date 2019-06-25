@@ -13,6 +13,8 @@ namespace rocksdb{
         uint64_t pick_compaction_time;
         uint64_t l0_get_time;
         uint64_t l0_find_num;
+        uint64_t l0_read_time;
+        uint64_t l0_search_time;
         uint64_t start_time;
 
         GLOBAL_STATS(){
@@ -21,6 +23,8 @@ namespace rocksdb{
             l0_get_time = 0;
             l0_find_num = 0;
             start_time = 0;
+            l0_read_time = 0;
+            l0_search_time = 0;
         }
     };
     extern struct GLOBAL_STATS global_stats;
