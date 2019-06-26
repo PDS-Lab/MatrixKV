@@ -420,9 +420,9 @@ int NvmCfModule::UserKeyCompareRange(Slice *user_key,InternalKey *start,Internal
 }
 
 bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
-/*#ifdef STATISTIC_OPEN
+#ifdef STATISTIC_OPEN
   uint64_t start_time = get_now_micros();
-#endif*/
+#endif
   auto user_comparator = icmp_->user_comparator();
   int left = first_key_index;
   if(pre_left != nullptr && *pre_left >= first_key_index && *pre_left < (int)file->keys_num){
@@ -446,10 +446,10 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
     }
     else{   //找到的情况次数最少，放在最后，减少比较次数
       *find_index = mid;
-/*#ifdef STATISTIC_OPEN
+#ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_search_time += (end_time - start_time);
-#endif*/
+#endif
       return true;
     }
     //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
@@ -466,17 +466,17 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
   }
   *pre_right = left;
   *pre_left = right;
-/*#ifdef STATISTIC_OPEN
+#ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_search_time += (end_time - start_time);
-#endif*/
+#endif
   return false;
 
 }
 bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *value){
-/* #ifdef STATISTIC_OPEN
+#ifdef STATISTIC_OPEN
   uint64_t start_time = get_now_micros();
-#endif */
+#endif
   char* data_addr = GetIndexPtr(file->sstable_index);
   uint64_t key_value_offset = file->keys_meta[find_index].offset;
   uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
@@ -485,10 +485,10 @@ bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *val
   uint64_t value_size = DecodeFixed64(data_addr + key_value_offset);
   key_value_offset += 8;
   value->assign(data_addr + key_value_offset,value_size);
-/* #ifdef STATISTIC_OPEN
+#ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_read_time += (end_time - start_time);
-#endif */
+#endif
   return true;
 }
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){
