@@ -81,7 +81,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     tmp = FindFile(sst_meta_->compaction_files[i]);
     comfiles.push_back(tmp);
 
-    j = 0;
+    //j = 0;
     find_file = false;
     while(j < L0files.size()){
       if(L0files.at(j)->fd.GetNumber() == tmp->filenum){
@@ -92,6 +92,7 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     }
     if(find_file){
       first_key_indexs.push_back(L0files.at(j)->first_key_index);  //对应文件的first_key_index插入
+      j++;
     }
     else {
       RECORD_LOG("error:L0files no find_file:%ld",tmp->filenum);
@@ -322,19 +323,23 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
   std::vector<FileEntry*> findfiles;
   std::vector<uint64_t> first_key_indexs;
   
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t start_time = get_now_micros();
-#endif
-  FileEntry* tmp = nullptr;
+#endif */
+  sst_meta_->GetL0Files(L0files,findfiles);
+  for(unsigned int i = 0;i < L0files.size();i++){
+    first_key_indexs.push_back(L0files.at(i)->first_key_index);
+  }
+  /* FileEntry* tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
     tmp = sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
-  }
-#ifdef STATISTIC_OPEN
+  } */
+/* #ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_find_files_time += (end_time - start_time);
-#endif
+#endif */
   /*RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
   for(unsigned int i = 0;i < L0files.size();i++){
     RECORD_LOG("L0 file:%lu first:%lu [%s-%s][%s-%s]\n",L0files[i]->fd.GetNumber(),first_key_indexs[i],findfiles[i]->keys_meta[first_key_indexs[i]].key.DebugString(true).c_str(),
@@ -426,9 +431,9 @@ int NvmCfModule::UserKeyCompareRange(Slice *user_key,InternalKey *start,Internal
 }
 
 bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t start_time = get_now_micros();
-#endif
+#endif */
   auto user_comparator = icmp_->user_comparator();
   int left = first_key_index;
   if(pre_left != nullptr && *pre_left >= first_key_index && *pre_left < (int)file->keys_num){
@@ -452,10 +457,10 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
     }
     else{   //找到的情况次数最少，放在最后，减少比较次数
       *find_index = mid;
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_search_time += (end_time - start_time);
-#endif
+#endif */
       return true;
     }
     //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
@@ -472,17 +477,17 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
   }
   *pre_right = left;
   *pre_left = right;
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_search_time += (end_time - start_time);
-#endif
+#endif */
   return false;
 
 }
 bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *value){
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t start_time = get_now_micros();
-#endif
+#endif */
   char* data_addr = GetIndexPtr(file->sstable_index);
   uint64_t key_value_offset = file->keys_meta[find_index].offset;
   uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
@@ -491,10 +496,10 @@ bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *val
   uint64_t value_size = DecodeFixed64(data_addr + key_value_offset);
   key_value_offset += 8;
   value->assign(data_addr + key_value_offset,value_size);
-#ifdef STATISTIC_OPEN
+/* #ifdef STATISTIC_OPEN
   uint64_t end_time = get_now_micros();
   global_stats.l0_read_time += (end_time - start_time);
-#endif
+#endif */
   return true;
 }
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){

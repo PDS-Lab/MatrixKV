@@ -69,6 +69,7 @@ class SstableMetadata {
 
   void UpdateKeyNext(FileEntry* file = nullptr);
   void UpdateCompactionState(std::vector<FileMetaData*>& L0files);
+  void GetL0Files(std::vector<FileMetaData*>& L0files,std::vector<FileEntry*> &findfiles);
   uint64_t GetFilesNumber();
 
   //uint64_t GetImmuFileEntryNum();
