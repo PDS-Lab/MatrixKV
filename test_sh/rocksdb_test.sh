@@ -10,7 +10,7 @@ bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 bench_num="2000000"
 bench_readnum="100000"
 #bench_max_open_files="1000"
-max_background_jobs="3"
+max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 

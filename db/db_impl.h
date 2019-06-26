@@ -78,7 +78,10 @@ class DBImpl : public DB {
   DBImpl(const DBOptions& options, const std::string& dbname,
          const bool seq_per_batch = false, const bool batch_per_txn = true);
   virtual ~DBImpl();
-
+////
+  using DB::HaveBalancedDistribution;
+ virtual bool HaveBalancedDistribution(ColumnFamilyHandle* column_family) override;
+////
   using DB::Resume;
   virtual Status Resume() override;
 

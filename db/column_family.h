@@ -388,6 +388,7 @@ class ColumnFamilyData {
 ///
   bool NeedsColumnCompaction() const;
   void set_bg_column_compaction(bool value) { bg_column_compaction_ = value; }
+  bool HaveBalancedDistribution() const;
 ///
 ///
   NvmCfModule* nvmcfmodule = nullptr;

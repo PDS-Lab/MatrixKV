@@ -118,6 +118,15 @@ typedef std::unordered_map<std::string, std::shared_ptr<const TableProperties>>
 // any external synchronization.
 class DB {
  public:
+////
+  virtual bool HaveBalancedDistribution(ColumnFamilyHandle* ) {
+    printf("if run here, not complete HaveBalancedDistribution\n");
+    return false;
+  };
+  virtual bool HaveBalancedDistribution() {
+    return HaveBalancedDistribution(DefaultColumnFamily());
+  }
+////
   // Open the database with the specified "name".
   // Stores a pointer to a heap-allocated database in *dbptr and returns
   // OK on success.

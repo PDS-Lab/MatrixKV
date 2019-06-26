@@ -992,6 +992,13 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
 
 }
 ///
+////
+bool ColumnFamilyData::HaveBalancedDistribution() const{
+  if (nvmcfmodule != nullptr && current_->storage_info()->NumLevelBytes(0) >= Level0_column_compaction_trigger_size) return false;
+  return !compaction_picker_->NeedsCompaction(current_->storage_info());
+}
+
+////
 Compaction* ColumnFamilyData::PickCompaction(
     const MutableCFOptions& mutable_options, LogBuffer* log_buffer,bool for_column_compaction,NvmCfModule* nvmcf) {
   auto* result = compaction_picker_->PickCompaction(

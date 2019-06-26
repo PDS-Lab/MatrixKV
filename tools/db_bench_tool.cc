@@ -2723,6 +2723,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         }
         fresh_db = true;
         method = &Benchmark::TimeSeries;
+      } else if(name == "wait") {
+        WaitBalanceLevel();
       } else if (name == "stats") {
         PrintStats("rocksdb.stats");
       } else if (name == "resetstats") {
@@ -5742,6 +5744,15 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     for (const auto& db_with_cfh : multi_dbs_) {
       db_with_cfh.db->ResetStats();
     }
+  }
+  void WaitBalanceLevel() {
+    if(db_.db == nullptr) return;
+    uint64_t sleep_time = 0;
+    while(!db_.db->HaveBalancedDistribution()){
+      sleep(10);
+      sleep_time += 10;
+    }
+    printf("Wait balance:%lu s\n",sleep_time);
   }
 
   void PrintStats(const char* key) {
