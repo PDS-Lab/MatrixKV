@@ -322,13 +322,19 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
   std::vector<FileEntry*> findfiles;
   std::vector<uint64_t> first_key_indexs;
   
+#ifdef STATISTIC_OPEN
+  uint64_t start_time = get_now_micros();
+#endif
   FileEntry* tmp = nullptr;
   for(unsigned int i = 0;i < L0files.size();i++){
     tmp = sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
     findfiles.push_back(tmp);
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
-
+#ifdef STATISTIC_OPEN
+  uint64_t end_time = get_now_micros();
+  global_stats.l0_find_files_time += (end_time - start_time);
+#endif
   /*RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
   for(unsigned int i = 0;i < L0files.size();i++){
     RECORD_LOG("L0 file:%lu first:%lu [%s-%s][%s-%s]\n",L0files[i]->fd.GetNumber(),first_key_indexs[i],findfiles[i]->keys_meta[first_key_indexs[i]].key.DebugString(true).c_str(),

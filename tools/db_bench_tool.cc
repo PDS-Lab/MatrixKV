@@ -4478,6 +4478,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     global_stats.l0_find_num = 0;
     global_stats.l0_read_time = 0;
     global_stats.l0_search_time = 0;
+    global_stats.l0_find_files_time = 0;
 #endif
     int64_t read = 0;
     int64_t found = 0;
@@ -4529,8 +4530,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     char msg[200];
 #ifdef STATISTIC_OPEN
-    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%.3f s l0_find_num:%lu l0_read_time:%.3f s l0_search_time:%.3f s;\n",
-             found, read, 1.0*global_stats.l0_get_time*1e-6,global_stats.l0_find_num,1.0*global_stats.l0_read_time*1e-6,1.0*global_stats.l0_search_time*1e-6);
+    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%.3f s l0_find_num:%lu l0_read_time:%.3f s l0_search_time:%.3f s l0_find_files_time:%.3f s;\n",
+             found, read, 1.0*global_stats.l0_get_time*1e-6,global_stats.l0_find_num,1.0*global_stats.l0_read_time*1e-6,1.0*global_stats.l0_search_time*1e-6,
+             1.0*global_stats.l0_find_files_time*1e-6);
 #else
     snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found)\n",
              found, read);
