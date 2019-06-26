@@ -268,6 +268,9 @@ class ColumnFamilyData {
   // See documentation in compaction_picker.h
   // REQUIRES: DB mutex held
   bool NeedsCompaction() const;
+////
+  bool HaveBalancedDistribution() const;
+////
   // REQUIRES: DB mutex held
   Compaction* PickCompaction(const MutableCFOptions& mutable_options,
                              LogBuffer* log_buffer);

@@ -911,7 +911,11 @@ void ColumnFamilyData::CreateNewMemtable(
 bool ColumnFamilyData::NeedsCompaction() const {
   return compaction_picker_->NeedsCompaction(current_->storage_info());
 }
-
+////
+bool ColumnFamilyData::HaveBalancedDistribution() const {
+  return !compaction_picker_->NeedsCompaction(current_->storage_info());
+}
+////
 Compaction* ColumnFamilyData::PickCompaction(
     const MutableCFOptions& mutable_options, LogBuffer* log_buffer) {
   auto* result = compaction_picker_->PickCompaction(

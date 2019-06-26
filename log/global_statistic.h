@@ -10,10 +10,11 @@ namespace rocksdb{
 #ifdef STATISTIC_OPEN
     struct GLOBAL_STATS {
         uint64_t compaction_num;
-        
+        uint64_t start_time;
 
         GLOBAL_STATS(){
             compaction_num = 0;
+            start_time = 0;
             
         }
     };

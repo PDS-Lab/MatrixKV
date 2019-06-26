@@ -272,6 +272,12 @@ Status DBImpl::Resume() {
   mutex_.Lock();
   return s;
 }
+////
+bool DBImpl::HaveBalancedDistribution(ColumnFamilyHandle* column_family){
+  auto* cfd = reinterpret_cast<ColumnFamilyHandleImpl*>(column_family)->cfd();
+  return cfd->HaveBalancedDistribution();
+}
+////
 
 // This function implements the guts of recovery from a background error. It
 // is eventually called for both manual as well as automatic recovery. It does
