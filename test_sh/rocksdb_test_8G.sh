@@ -42,7 +42,8 @@ fi
 cmd="$bench_file_path $const_params "
 
 if [ -n "$1" ];then
-cmd="nohup $bench_file_path $const_params >out.out 2>&1 &"
+cmd="nohup $bench_file_path $const_params >>out.out 2>&1 &"
+echo $cmd >out.out
 fi
 
 echo $cmd
