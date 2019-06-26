@@ -14,7 +14,7 @@ void init_log_file() {
   fp = fopen(log_file3.c_str(), "w");
   if(fp == nullptr) printf("log failed\n");
   fclose(fp);
-  RECORD_INFO(3,"compaction,read(MB),write(MB),time(s),start(s)\n");
+  RECORD_INFO(3,"compaction,read(MB),write(MB),time(s),start(s),is_level0\n");
 
 #endif
 
