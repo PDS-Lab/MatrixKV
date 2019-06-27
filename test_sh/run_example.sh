@@ -2,7 +2,7 @@
 
 
 bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/home/czl/pmem0/log"
+wal_dir="/pmem/log"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -16,7 +16,7 @@ max_background_jobs="3"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/home/czl/pmem0/nvm"
+pmem_path="/pmem/nvm"
 use_nvm="true"
 
 const_params="
