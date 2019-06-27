@@ -174,9 +174,10 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量
         compaction_files.insert(compaction_files.begin(),L0files[file_num]->fd.GetNumber());
         compaction_files_size += L0files[file_num]->fd.GetFileSize();
-        if (compaction_files_size >= Level0_column_compaction_slowdown_size ) { //最大加入的column compaction的数据，可调整，或者全加入
+        //可将所有L0加入column compaction
+        /* if (compaction_files_size >= Level0_column_compaction_slowdown_size ) { //最大加入的column compaction的数据，可调整，或者全加入
             break;
-        }
+        } */
     }
 
     RECORD_LOG("UpdateCompactionState:L0:%.2f MB num:%ld[",l0_files_size/1048576.0,L0files.size());
