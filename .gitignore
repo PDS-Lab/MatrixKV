@@ -78,3 +78,4 @@ buckifier/*.pyc
 OP_DATA
 OP_TIME.csv
 compaction.csv
+result
