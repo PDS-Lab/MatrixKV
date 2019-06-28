@@ -79,3 +79,4 @@ NVM_LOG
 OP_DATA
 OP_TIME.csv
 compaction.csv
+result
