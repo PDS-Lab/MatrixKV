@@ -5730,6 +5730,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     system("sync");
     system("echo 3 > /proc/sys/vm/drop_caches");
     sleep(5);
+    system("free -h");
     printf("clean cache ok!\n");
   }
   void PrintStats(const char* key) {
