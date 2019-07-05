@@ -11,7 +11,8 @@ bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="20000000"
 bench_readnum="1000000"
@@ -59,7 +60,9 @@ RUN_ONE_TEST() {
 }
 
 CLEAN_CACHE() {
-    rm -f $bench_db_path/*
+    if [ -n "$bench_db_path" ];then
+        rm -f $bench_db_path/*
+    fi
     sleep 2
     sync
     echo 3 > /proc/sys/vm/drop_caches

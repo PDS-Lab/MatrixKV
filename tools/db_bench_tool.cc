@@ -2725,7 +2725,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         method = &Benchmark::TimeSeries;
       } else if(name == "wait") {
         WaitBalanceLevel();
-      } else if (name == "stats") {
+      } else if(name == "clean_cache") {
+        CleanCache();
+      }  else if (name == "stats") {
         PrintStats("rocksdb.stats");
       } else if (name == "resetstats") {
         ResetStats();
@@ -5756,7 +5758,12 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
     printf("Wait balance:%lu s\n",sleep_time);
   }
-
+  void CleanCache() {
+    system("sync");
+    system("echo 3 > /proc/sys/vm/drop_caches");
+    sleep(5);
+    printf("clean cache ok!\n");
+  }
   void PrintStats(const char* key) {
     if (db_.db != nullptr) {
       PrintStats(db_.db, key, false);

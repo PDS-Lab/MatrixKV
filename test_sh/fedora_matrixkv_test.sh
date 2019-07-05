@@ -1,14 +1,15 @@
 #! /bin/sh
 
 
-bench_db_path="/home/hm/ceshi"
-wal_dir="/home/hm/ceshi"
+bench_db_path="/home/lzw/ceshi"
+wal_dir="/home/lzw/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="2000000"
 bench_readnum="100000"
@@ -17,7 +18,7 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/home/czl/pmem0/nvm"
+pmem_path="/pmem/nvm"
 use_nvm="true"
 
 const_params="
