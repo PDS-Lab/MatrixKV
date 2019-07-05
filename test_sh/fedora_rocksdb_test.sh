@@ -1,12 +1,13 @@
 #! /bin/sh
 
-bench_db_path="/home/hm/ceshi"
+bench_db_path="/home/lzw/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="2000000"
 bench_readnum="100000"

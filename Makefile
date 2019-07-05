@@ -11,7 +11,7 @@ SHELL := $(shell which bash)
 
 CLEAN_FILES = # deliberately empty, so we can append below.
 CFLAGS += ${EXTRA_CFLAGS}
-CXXFLAGS += ${EXTRA_CXXFLAGS}
+CXXFLAGS += ${EXTRA_CXXFLAGS} -Wno-deprecated-copy -Wno-pessimizing-move
 LDFLAGS += $(EXTRA_LDFLAGS)
 MACHINE ?= $(shell uname -m)
 ARFLAGS = ${EXTRA_ARFLAGS} rs
