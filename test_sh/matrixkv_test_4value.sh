@@ -1,6 +1,7 @@
 #! /bin/sh
 
-value_array=(1024 4096 16384 65536)
+#value_array=(1024 4096 16384 65536)
+value_array=(4096)
 test_all_size=81920000000   #80G
 
 
