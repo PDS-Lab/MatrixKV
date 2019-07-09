@@ -15,9 +15,9 @@ bench_readnum="1000000"
 max_background_jobs="2"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
-#level0_file_num_compaction_trigger="112"   #7G
-#level0_slowdown_writes_trigger="120"       #7.5G
-#level0_stop_writes_trigger="128"           #8G
+level0_file_num_compaction_trigger="112"   #7G
+level0_slowdown_writes_trigger="120"       #7.5G
+level0_stop_writes_trigger="128"           #8G
 
 const_params="
     --db=$bench_db_path \

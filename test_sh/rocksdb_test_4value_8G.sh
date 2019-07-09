@@ -19,8 +19,11 @@ bench_num="20000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
 max_background_jobs="2"
-#max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
-max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
+max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
+#max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
+level0_file_num_compaction_trigger="4"   #
+level0_slowdown_writes_trigger="112"       #7G
+level0_stop_writes_trigger="128"           #8G
 
 
 bench_file_path="$(dirname $PWD )/db_bench"
@@ -48,6 +51,9 @@ RUN_ONE_TEST() {
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
+    --level0_file_num_compaction_trigger=$level0_file_num_compaction_trigger \
+    --level0_slowdown_writes_trigger=$level0_slowdown_writes_trigger \
+    --level0_stop_writes_trigger=$level0_stop_writes_trigger \
     "
     cmd="$bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
