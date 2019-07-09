@@ -38,6 +38,9 @@
 #include "util/compression.h"
 #include "util/sst_file_manager_impl.h"
 
+#include "log/my_log.h"
+#include "log/global_statistic.h"
+
 namespace rocksdb {
 
 ColumnFamilyHandleImpl::ColumnFamilyHandleImpl(
@@ -1085,7 +1088,18 @@ void ColumnFamilyData::InstallSuperVersion(
   db_mutex->AssertHeld();
   return InstallSuperVersion(sv_context, db_mutex, mutable_cf_options_);
 }
-
+uint64_t ColumnFamilyData::GetPathSize(const std::string& path) {
+  std::vector<std::string> files;
+  ioptions_.env->GetChildren(path, &files);
+  uint64_t all_size = 0;
+  for(unsigned int i=0;i < files.size();i++){
+    std::string file = path + "/" + files[i];
+    uint64_t file_size = 0;
+    ioptions_.env->GetFileSize(file,&file_size);
+    all_size += file_size;
+  }
+  return all_size;
+}
 void ColumnFamilyData::InstallSuperVersion(
     SuperVersionContext* sv_context, InstrumentedMutex* db_mutex,
     const MutableCFOptions& mutable_cf_options) {
@@ -1099,6 +1113,22 @@ void ColumnFamilyData::InstallSuperVersion(
   super_version_->version_number = super_version_number_;
   super_version_->write_stall_condition =
       RecalculateWriteStallConditions(mutable_cf_options);
+////
+#ifdef STATISTIC_OPEN
+  if(current_ != nullptr && !ioptions_.level0_file_path.empty()){
+    if(current_->storage_info()->NumLevelBytes(0) > global_stats.max_level0_file_size){
+      global_stats.max_level0_file_size = current_->storage_info()->NumLevelBytes(0);
+      //std::string get_path_size = "du -sh " + ioptions_.level0_file_path;
+      //system(get_path_size.c_str());
+    }
+    uint64_t l0_real_size = GetPathSize(ioptions_.level0_file_path);
+    if( l0_real_size > global_stats.real_max_level0_file_size){
+      global_stats.real_max_level0_file_size = l0_real_size;
+    }
+  }
+
+#endif
+////
 
   if (old_superversion != nullptr) {
     // Reset SuperVersions cached in thread local storage.

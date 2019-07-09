@@ -1,6 +1,7 @@
 #! /bin/sh
 
-bench_db_path="/mnt/ssd/ceshi/"
+bench_db_path="/mnt/ssd/ceshi"
+bench_level0_file_path="/pmem/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -20,6 +21,7 @@ max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
 
 const_params="
     --db=$bench_db_path \
+    --level0_file_path=$bench_level0_file_path \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \

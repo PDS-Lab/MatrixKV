@@ -104,6 +104,9 @@ DBOptions SanitizeOptions(const std::string& dbname, const DBOptions& src) {
   if (result.db_paths.size() == 0) {
     result.db_paths.emplace_back(dbname, std::numeric_limits<uint64_t>::max());
   }
+  if(!result.level0_file_path.empty()) {
+    result.db_paths.emplace_back(result.level0_file_path, 9ul*1024*1024*1024); //set 9GB
+  }
 
   if (result.use_direct_reads && result.compaction_readahead_size == 0) {
     TEST_SYNC_POINT_CALLBACK("SanitizeOptions:direct_io", nullptr);

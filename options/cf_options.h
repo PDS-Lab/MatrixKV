@@ -67,6 +67,7 @@ struct ImmutableCFOptions {
   bool allow_mmap_writes;
 
   std::vector<DbPath> db_paths;
+  std::string level0_file_path = "";
 
   MemTableRepFactory* memtable_factory;
 

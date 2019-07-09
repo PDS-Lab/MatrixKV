@@ -186,7 +186,12 @@ void FlushJob::PickMemTable() {
   edit_->SetColumnFamily(cfd_->GetID());
 
   // path 0 for level 0 file.
-  meta_.fd = FileDescriptor(versions_->NewFileNumber(), 0, 0);
+  if(cfd_->ioptions()->level0_file_path.empty()){
+    meta_.fd = FileDescriptor(versions_->NewFileNumber(), 0, 0);
+  }
+  else{
+    meta_.fd = FileDescriptor(versions_->NewFileNumber(), 1, 0);
+  }
 
   base_ = cfd_->current();
   base_->Ref();  // it is likely that we do not need this reference

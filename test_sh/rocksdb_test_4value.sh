@@ -6,6 +6,7 @@ test_all_size=81920000000   #80G
 
 
 bench_db_path="/mnt/ssd/ceshi"
+bench_level0_file_path="/pmem/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -39,6 +40,7 @@ fi
 RUN_ONE_TEST() {
     const_params="
     --db=$bench_db_path \
+    --level0_file_path=$bench_level0_file_path \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \

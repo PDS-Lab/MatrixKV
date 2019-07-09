@@ -270,6 +270,7 @@ class ColumnFamilyData {
   bool NeedsCompaction() const;
 ////
   bool HaveBalancedDistribution() const;
+  uint64_t GetPathSize(const std::string& path);
 ////
   // REQUIRES: DB mutex held
   Compaction* PickCompaction(const MutableCFOptions& mutable_options,

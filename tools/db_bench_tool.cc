@@ -86,6 +86,10 @@ using GFLAGS_NAMESPACE::ParseCommandLineFlags;
 using GFLAGS_NAMESPACE::RegisterFlagValidator;
 using GFLAGS_NAMESPACE::SetUsageMessage;
 
+////
+
+DEFINE_string(level0_file_path, "", "If not empty, set it for store L0 file");
+////
 DEFINE_string(
     benchmarks,
     "fillseq,"
@@ -3507,6 +3511,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   void InitializeOptionsGeneral(Options* opts) {
     Options& options = *opts;
 
+    if(!FLAGS_level0_file_path.empty()){
+      options.level0_file_path = FLAGS_level0_file_path;
+    }
     options.create_missing_column_families = FLAGS_num_column_families > 1;
     options.statistics = dbstats;
     options.wal_dir = FLAGS_wal_dir;
@@ -3993,8 +4000,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         double now = (t_cur_time - t_start_time)*1e-6;
         int64_t written_num = num_written - t_last_num;
 
-        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops compaction:,%ld\n",
-          now,(1.0*ebytes/1048576.0)/use_time,1.0*written_num/use_time,1.0*bytes/1048576.0,(1.0*bytes/1048576.0)/now,1.0*num_written/now,global_stats.compaction_num);
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops compaction:,%ld,max_l0_file_size:%.2f MB real_l0_path_size:%.2f MB\n",
+          now,(1.0*ebytes/1048576.0)/use_time,1.0*written_num/use_time,1.0*bytes/1048576.0,(1.0*bytes/1048576.0)/now,1.0*num_written/now,global_stats.compaction_num,
+          global_stats.max_level0_file_size/1048576.0,global_stats.real_max_level0_file_size/1048576.0);
 
         t_last_time = t_cur_time;
         t_last_bytes = bytes;
