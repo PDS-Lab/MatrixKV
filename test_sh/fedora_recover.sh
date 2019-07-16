@@ -10,18 +10,18 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
-bench_benchmarks="fillrandom,stats,readrandom,stats"
-bench_num="300000"
+bench_benchmarks="stats"
+bench_num="2000000"
 bench_readnum="100000"
 #bench_max_open_files="1000"
 max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
-
-perf_level="4"
+use_existing_db="true"
 
 const_params="
     --db=$bench_db_path \
+    --use_existing_db=$use_existing_db \
     --level0_file_path=$bench_level0_file_path \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
@@ -30,7 +30,6 @@ const_params="
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
-    --perf_level=$perf_level \
     "
 
 bench_file_path="$(dirname $PWD )/db_bench"
