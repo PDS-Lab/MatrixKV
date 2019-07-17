@@ -81,6 +81,7 @@ L0TableBuilderWithBuffer::L0TableBuilderWithBuffer(NvmCfModule* nvm_cf,
                    char* raw):nvm_cf_(nvm_cf),file_(file),raw_(raw){
     offset_ = 0;
     keys_num_ = 0;
+    keys_meta_size_ = 0;
     keys_.clear();
     max_size_ = nvm_cf_->GetSstableEachSize();
     buf_ = new char[max_size_];
@@ -142,7 +143,8 @@ Status L0TableBuilderWithBuffer::Finish(){
         file_->keys_meta[index].size = key_->size;
         index++;
     }
-    memcpy(raw_, buf_, offset_);
+    //memcpy(raw_, buf_, offset_);
+    //pmem_memcpy_persist(raw_, buf_, offset_);  //libpmem api
 ///key元数据是否加入sstable
 ///更新keys的next
     nvm_cf_->UpdateKeyNext(file_);
@@ -162,7 +164,13 @@ Status L0TableBuilderWithBuffer::Finish(){
         printf("error:write l0 sstable's metadata size over!size:%lu max:%lu\n",offset_ + metadatas.size(),max_size_);
         return Status::IOError();
     }
-    memcpy(raw_ + offset_,metadatas.c_str(),metadatas.size());
+
+    keys_meta_size_ = metadatas.size();
+
+    memcpy(buf_ + offset_, metadatas.c_str(), metadatas.size());
+
+    //memcpy(raw_ + offset_,metadatas.c_str(),metadatas.size());
+    pmem_memcpy_persist(raw_ , buf_, offset_ + keys_meta_size_);  //libpmem api
     RECORD_LOG("finish L0 table:%lu keynum:%lu size:%.2f MB metadata:%.2f MB\n",file_->filenum,file_->keys_num,1.0*offset_/1048576,metadatas.size()/1048576.0);
     /* std::string buf;
     int32_t a = -1;

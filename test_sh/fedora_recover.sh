@@ -10,19 +10,21 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
-bench_benchmarks="fillrandom,stats"
+bench_benchmarks="stats,readrandom,stats"
 bench_num="2000000"
 bench_readnum="100000"
 #bench_max_open_files="1000"
-max_background_jobs="3"
+max_background_jobs="2"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
+use_existing_db="true"
 
 pmem_path="/pmem/nvm"
 use_nvm="true"
 
 const_params="
     --db=$bench_db_path \
+    --use_existing_db=$use_existing_db \
     --wal_dir=$wal_dir \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \

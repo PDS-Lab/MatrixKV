@@ -50,7 +50,6 @@ RUN_ONE_TEST() {
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
     --use_nvm_module=$use_nvm \
-    --reset_nvm_storage=$use_nvm \
     --pmem_path=$pmem_path \
     "
     cmd="$bench_file_path $const_params >>out.out 2>&1"

@@ -395,7 +395,8 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
       out_edit->AddFile(0 /* level */, filemeta->fd.GetNumber(), filemeta->fd.GetPathId(),
                    file_size, smallest, filemeta->largest,
                    filemeta->fd.smallest_seqno, filemeta->fd.largest_seqno,
-                   filemeta->marked_for_compaction, filemeta->is_level0, first_key_index);
+                   filemeta->marked_for_compaction, filemeta->is_nvm_level0, first_key_index,filemeta->nvm_sstable_index,
+                   filemeta->keys_num, filemeta->key_point_filenum, filemeta->raw_file_size, filemeta->nvm_meta_size);
     }
   }
 

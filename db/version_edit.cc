@@ -36,6 +36,7 @@ enum Tag : uint32_t {
   kNewFile2 = 100,
   kNewFile3 = 102,
   kNewFile4 = 103,      // 4th (the latest) format version of adding files
+  kNewFile5 = 104,    //nvm cf adding files
   kColumnFamily = 200,  // specify column family for version edit
   kColumnFamilyAdd = 201,
   kColumnFamilyDrop = 202,
@@ -121,7 +122,20 @@ bool VersionEdit::EncodeTo(std::string* dst) const {
       return false;
     }
     bool has_customized_fields = false;
-    if (f.marked_for_compaction || has_min_log_number_to_keep_) {
+    if(f.is_nvm_level0){   //is_nvm_level0可以不存，kNewFile5代表is_nvm_level0；
+      PutVarint32(dst, kNewFile5);
+      PutVarint64(dst, f.first_key_index);
+      PutVarint32(dst, f.nvm_sstable_index);
+      PutVarint64Varint64(dst, f.keys_num, f.key_point_filenum);
+      PutVarint64(dst, f.raw_file_size);
+      PutVarint64(dst, f.nvm_meta_size);
+      PutVarint32(dst, f.fd.GetPathId()); //kNewFile5直接存f.fd.GetPathId()
+      if(f.marked_for_compaction || has_min_log_number_to_keep_) {
+        has_customized_fields = true;
+      }
+      PutVarint32(dst, has_customized_fields); //区分是否有has_customized_fields
+    }
+    else if (f.marked_for_compaction || has_min_log_number_to_keep_) {
       PutVarint32(dst, kNewFile4);
       has_customized_fields = true;
     } else if (f.fd.GetPathId() == 0) {
@@ -132,7 +146,7 @@ bool VersionEdit::EncodeTo(std::string* dst) const {
       PutVarint32(dst, kNewFile3);
     }
     PutVarint32Varint64(dst, new_files_[i].first /* level */, f.fd.GetNumber());
-    if (f.fd.GetPathId() != 0 && !has_customized_fields) {
+    if (f.fd.GetPathId() != 0 && !has_customized_fields && !f.is_nvm_level0) {
       // kNewFile3
       PutVarint32(dst, f.fd.GetPathId());
     }
@@ -167,7 +181,7 @@ bool VersionEdit::EncodeTo(std::string* dst) const {
       //   tag kNeedCompaction:
       //        now only can take one char value 1 indicating need-compaction
       //
-      if (f.fd.GetPathId() != 0) {
+      if (f.fd.GetPathId() != 0 && !f.is_nvm_level0) {
         PutVarint32(dst, CustomTag::kPathId);
         char p = static_cast<char>(f.fd.GetPathId());
         PutLengthPrefixedSlice(dst, Slice(&p, 1));
@@ -299,6 +313,97 @@ const char* VersionEdit::DecodeNewFile4From(Slice* input) {
     }
   } else {
     return "new-file4 entry";
+  }
+  f.fd =
+      FileDescriptor(number, path_id, file_size, smallest_seqno, largest_seqno);
+  new_files_.push_back(std::make_pair(level, f));
+  return nullptr;
+}
+const char* VersionEdit::DecodeNewFile5From(Slice* input) {
+const char* msg = nullptr;
+  int level;
+  FileMetaData f;
+  uint64_t number;
+  uint32_t path_id = 0;
+  uint64_t file_size;
+  SequenceNumber smallest_seqno;
+  SequenceNumber largest_seqno;
+
+  uint64_t first_key_index;   
+  int nvm_sstable_index;
+  uint64_t keys_num;
+  uint64_t key_point_filenum;
+  uint64_t raw_file_size;
+  uint64_t nvm_meta_size;
+
+  bool has_customized_fields = false;
+
+  // Since this is the only forward-compatible part of the code, we hack new
+  // extension into this record. When we do, we set this boolean to distinguish
+  // the record from the normal NewFile records.
+  if (GetVarint64(input, &first_key_index) && GetVarint32(input, (uint32_t*)&nvm_sstable_index) &&
+      GetVarint64(input, &keys_num) && GetVarint64(input, &key_point_filenum) && 
+      GetVarint64(input, &raw_file_size) && GetVarint64(input, &nvm_meta_size) &&
+      GetVarint32(input, &path_id) && GetVarint32(input, (uint32_t*)&has_customized_fields) &&
+      GetLevel(input, &level, &msg) && GetVarint64(input, &number) &&
+      GetVarint64(input, &file_size) && GetInternalKey(input, &f.smallest) &&
+      GetInternalKey(input, &f.largest) &&
+      GetVarint64(input, &smallest_seqno) &&
+      GetVarint64(input, &largest_seqno)) {
+    //// nvm cf l0 file
+    f.is_nvm_level0 = true;
+    f.first_key_index = first_key_index;
+    f.nvm_sstable_index = nvm_sstable_index;
+    f.keys_num = keys_num;
+    f.key_point_filenum = key_point_filenum;
+    f.raw_file_size = raw_file_size;
+    f.nvm_meta_size = nvm_meta_size;
+    ////
+    // See comments in VersionEdit::EncodeTo() for format of customized fields
+    if(has_customized_fields) {
+      while (true) {
+        uint32_t custom_tag;
+        Slice field;
+        if (!GetVarint32(input, &custom_tag)) {
+          return "new-file4 custom field";
+        }
+        if (custom_tag == kTerminate) {
+          break;
+        }
+        if (!GetLengthPrefixedSlice(input, &field)) {
+          return "new-file4 custom field lenth prefixed slice error";
+        }
+        switch (custom_tag) {
+          case kPathId:
+            
+            return "path_id field wrong ";
+            
+            break;
+          case kNeedCompaction:
+            if (field.size() != 1) {
+              return "need_compaction field wrong size";
+            }
+            f.marked_for_compaction = (field[0] == 1);
+            break;
+          case kMinLogNumberToKeepHack:
+            // This is a hack to encode kMinLogNumberToKeep in a
+            // forward-compatible fashion.
+            if (!GetFixed64(&field, &min_log_number_to_keep_)) {
+              return "deleted log number malformatted";
+            }
+            has_min_log_number_to_keep_ = true;
+            break;
+          default:
+            if ((custom_tag & kCustomTagNonSafeIgnoreMask) != 0) {
+              // Should not proceed if cannot understand it
+              return "new-file4 custom field not supported";
+            }
+            break;
+        }
+      }
+    }
+  } else {
+    return "new-file5 entry";
   }
   f.fd =
       FileDescriptor(number, path_id, file_size, smallest_seqno, largest_seqno);
@@ -468,6 +573,10 @@ Status VersionEdit::DecodeFrom(const Slice& src) {
         break;
       }
 
+      case kNewFile5: {
+        msg = DecodeNewFile5From(&input);
+        break;
+      }
       case kColumnFamily:
         if (!GetVarint32(&input, &column_family_)) {
           if (!msg) {

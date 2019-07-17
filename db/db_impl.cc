@@ -2551,7 +2551,7 @@ Status DBImpl::CheckConsistency() {
     // md.name has a leading "/".
     std::string file_path = md.db_path + md.name;
 
-    uint64_t fsize = 0;
+    /* //uint64_t fsize = 0;
     Status s = env_->GetFileSize(file_path, &fsize);
     if (!s.ok() &&
         env_->GetFileSize(Rocks2LevelTableFileName(file_path), &fsize).ok()) {
@@ -2565,7 +2565,7 @@ Status DBImpl::CheckConsistency() {
                              ". Size recorded in manifest " +
                              ToString(md.size) + ", actual size " +
                              ToString(fsize) + "\n";
-    }
+    }  */
   }
   if (corruption_messages.size() == 0) {
     return Status::OK();

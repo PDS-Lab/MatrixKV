@@ -23,7 +23,7 @@ namespace rocksdb {
 struct NvmSetup {
   bool use_nvm_module = false;
 
-  bool reset_nvm_storage = false;
+  //bool reset_nvm_storage = false;
 
   std::string pmem_path;  //目录
 
@@ -41,7 +41,7 @@ struct NvmOptions {
   ~NvmOptions() {}
 
   bool use_nvm_module;
-  bool reset_nvm_storage;
+  //bool reset_nvm_storage;
   std::string pmem_path;
   //uint64_t pmem_size;
   uint64_t write_buffer_size;
@@ -56,7 +56,7 @@ struct NvmCfOptions {
   ~NvmCfOptions() {}
 
   bool use_nvm_module;
-  bool reset_nvm_storage;
+  //bool reset_nvm_storage;
   std::string pmem_path;
   //uint64_t cf_pmem_size;
   uint64_t write_buffer_size;

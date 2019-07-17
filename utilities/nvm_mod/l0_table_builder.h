@@ -55,6 +55,9 @@ public:
         return offset_;
     }
 
+    uint64_t GetKeysMetaSize() {
+        return keys_meta_size_;
+    }
 
 
 
@@ -66,6 +69,7 @@ private:
     uint64_t keys_num_;
     uint64_t offset_;
     char* buf_;
+    uint64_t keys_meta_size_;
     uint64_t max_size_;  //buf的最大值
 
 };

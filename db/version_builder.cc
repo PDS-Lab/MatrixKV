@@ -303,7 +303,7 @@ class VersionBuilder::Rep {
         assert(levels_[level].added_files.find(f->fd.GetNumber()) ==
                   levels_[level].added_files.end());
 
-        if(!f->is_level0){  //L0可能删除和插入相同filenum
+        if(!f->is_nvm_level0){  //L0可能删除和插入相同filenum
           levels_[level].deleted_files.erase(f->fd.GetNumber());
         }
         levels_[level].added_files[f->fd.GetNumber()] = f;
@@ -322,7 +322,7 @@ class VersionBuilder::Rep {
       printf("add:[%d:",i);
       const auto& added = levels_[i].added_files;
       for (auto& pair : added) {
-        printf("%ld-%d-%ld ",pair.second->fd.GetNumber(),pair.second->is_level0,pair.second->first_key_index);
+        printf("%ld-%d-%ld ",pair.second->fd.GetNumber(),pair.second->is_nvm_level0,pair.second->first_key_index);
       }
       printf("]\n");
     }
@@ -452,7 +452,7 @@ class VersionBuilder::Rep {
       }
     }
     else {
-      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0 && !f->is_level0 ) {  //nvm ,l0 is different
+      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0 && !f->is_nvm_level0 ) {  //nvm ,l0 is different
         // f is to-be-deleted table file
         //printf("remove table:%lu\n",f->fd.GetNumber());
         vstorage->RemoveCurrentStats(f);

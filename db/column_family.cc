@@ -984,7 +984,7 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
     return vstorage->NumLevelBytes(0) >= Level0_column_compaction_trigger_size;
   }
   else{  //可及时将L0往下刷
-    return vstorage->NumLevelFiles(0) >= initial_cf_options_.level0_file_num_compaction_trigger;
+    return vstorage->NumLevelFiles(0) >= mutable_cf_options_.level0_file_num_compaction_trigger;
   }
   /* for (int i = 0; i <= vstorage->MaxInputLevel(); i++) {
     if (vstorage->CompactionScoreLevel(i) == 0) continue;  //L0层只能column compaction
@@ -1000,7 +1000,8 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
 ///
 ////
 bool ColumnFamilyData::HaveBalancedDistribution() const{
-  if (nvmcfmodule != nullptr && current_->storage_info()->NumLevelFiles(0) >= initial_cf_options_.level0_file_num_compaction_trigger) return false;
+  if (nvmcfmodule != nullptr && (current_->storage_info()->NumLevelFiles(0) >= mutable_cf_options_.level0_file_num_compaction_trigger || 
+    current_->storage_info()->NumLevelBytes(1) >= mutable_cf_options_.max_bytes_for_level_base )) return false;
   return !compaction_picker_->NeedsCompaction(current_->storage_info());
 }
 

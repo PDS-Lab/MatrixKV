@@ -8,14 +8,17 @@ namespace rocksdb {
 
 NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
                          uint32_t cf_id, const InternalKeyComparator* icmp)
-    : nvmcfoption_(nvmcfoption),icmp_(icmp) {
+    : nvmcfoption_(nvmcfoption),open_by_creat_(true),icmp_(icmp) {
   
   nvm_dir_no_exists_and_creat(nvmcfoption_->pmem_path);
   char buf[100];
   snprintf(buf, sizeof(buf), "%s/cf_%u_%s_sstable.pool",
            nvmcfoption_->pmem_path.c_str(), cf_id, cf_name.c_str());
   std::string pol_path(buf, strlen(buf));
-  
+
+  if(nvm_file_exists(pol_path.c_str()) == 0) { //文件存在
+    open_by_creat_ = false;
+  }
   uint64_t level0_table_num = (Level0_column_compaction_stop_size/nvmcfoption_->write_buffer_size + 1)*2;
   ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size + 8ul * 1024 * 1024,
             level0_table_num);
@@ -24,6 +27,8 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
   
 }
 NvmCfModule::~NvmCfModule() {
+  RECORD_LOG("compaction_num:%lu pick_compaction_time:%lu l0_get_time:%lu l0_find_num:%lu\n",global_stats.compaction_num, global_stats.pick_compaction_time,
+      global_stats.l0_get_time, global_stats.l0_find_num);
   RECORD_LOG("NvmCfModule:close\n");
   delete ptr_sst_;
   delete sst_meta_;
@@ -340,11 +345,11 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
   uint64_t end_time = get_now_micros();
   global_stats.l0_find_files_time += (end_time - start_time);
 #endif */
-  /*RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
+  /* RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
   for(unsigned int i = 0;i < L0files.size();i++){
     RECORD_LOG("L0 file:%lu first:%lu [%s-%s][%s-%s]\n",L0files[i]->fd.GetNumber(),first_key_indexs[i],findfiles[i]->keys_meta[first_key_indexs[i]].key.DebugString(true).c_str(),
       findfiles[i]->keys_meta[findfiles[i]->keys_num -1].key.DebugString(true).c_str(),L0files[i]->smallest.DebugString(true).c_str(),L0files[i]->largest.DebugString(true).c_str());
-  }*/
+  } */
   
   Slice user_key = lkey.user_key();
   FileEntry* file = nullptr;
@@ -359,10 +364,10 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
       pre_right = -1;
     }
     int com_result = UserKeyCompareRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key));
-    /*RECORD_LOG("search:%lu point:%lu pre_left:%d pre_right:%d com_result:%d\n",file->filenum,next_file_num,pre_left,pre_right,com_result);
+    /* RECORD_LOG("search:%lu point:%lu pre_left:%d pre_right:%d com_result:%d\n",file->filenum,next_file_num,pre_left,pre_right,com_result);
     if(pre_left > 0 && pre_right > 0){
       RECORD_LOG("[%s-%s]\n",file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
-    }*/
+    } */
     if( com_result == 0) { //在范围内
       if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
         //RECORD_LOG("find!%d\n",find_index);
@@ -370,9 +375,9 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
         *s=Status::OK();
         return true;
       }
-      /*if(pre_left > 0 && pre_right > 0){
+      /* if(pre_left > 0 && pre_right > 0){
         RECORD_LOG("left:%d right:%d [%s-%s]\n",pre_left,pre_right,file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
-      }*/
+      } */
       if(pre_left >= (int)first_key_indexs[i] && pre_left < (int)file->keys_num){
         pre_left = (int)file->keys_meta[pre_left].next - 1;  //在BinarySearchInFile中会有检测范围，无需担心-1带来越界
       }
@@ -522,6 +527,66 @@ void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder
   }
 
 
+}
+
+void NvmCfModule::RecoverFromStorageInfo(VersionStorageInfo* vstorage){
+  auto L0files = vstorage->LevelFiles(0);
+  if( L0files.size() == 0) return;
+  if( open_by_creat_ ) {
+    printf("error:open nvm cf file by creat, can't recover!\n");
+    return;
+  }
+  for(int i = L0files.size() - 1; i >= 0; i--){ //保证顺序
+    FileEntry* tmp = sst_meta_->FindFile(L0files[i]->fd.GetNumber(),true,false);
+    if( tmp != nullptr) {  //find, how to do ?
+      printf("warn:recover file:%lu , but it exist!\n",L0files[i]->fd.GetNumber());
+      continue;
+    }
+    //add to nvm cf
+    ptr_sst_->RecoverAddSstable(L0files[i]->nvm_sstable_index);
+    FileEntry* file = sst_meta_->AddFile(L0files[i]->fd.GetNumber(), L0files[i]->nvm_sstable_index);
+    file->keys_num = L0files[i]->keys_num;
+    file->key_point_filenum = L0files[i]->key_point_filenum;
+
+    //恢复keys元数据
+    char * file_ptr = ptr_sst_->GetIndexPtr(file->sstable_index);
+    uint64_t offset = L0files[i]->raw_file_size;
+    uint64_t keys_meta_size = L0files[i]->nvm_meta_size;
+
+    char buf[keys_meta_size];
+    memcpy(buf, file_ptr + offset, keys_meta_size);   //读取keys元数据
+
+    file->keys_meta = new KeysMetadata[file->keys_num];
+    offset = 0;
+    uint64_t key_size = 0;
+
+    for(unsigned int j = 0;j < file->keys_num;j++) {
+      Slice ptr_key_size(buf + offset, 8);
+      GetFixed64(&ptr_key_size, &key_size);
+      offset += 8;
+
+      Slice key(buf + offset, key_size);
+      offset += key_size;
+      file->keys_meta[j].key.DecodeFrom(key);
+
+      Slice ptr_next(buf + offset, 4);
+      GetFixed32(&ptr_next, (uint32_t*)&file->keys_meta[j].next);
+      offset += 4;
+
+      Slice ptr_offset(buf + offset, 8);
+      GetFixed64(&ptr_offset, &file->keys_meta[j].offset);
+      offset += 8;
+
+      Slice ptr_size(buf + offset, 8);
+      GetFixed64(&ptr_size, &file->keys_meta[j].size);
+      offset += 8;
+    }
+    RECORD_LOG("recover file:%lu key_point_filenum:%lu keys_num:%lu sstable_index:%lu\n",file->filenum, file->key_point_filenum, file->keys_num, file->sstable_index);
+    /* for(unsigned int j = 0;j < file->keys_num;j++){
+      RECORD_LOG("file:%lu %u %d %lu %lu [%s]-\n", file->filenum, j, file->keys_meta[j].next, file->keys_meta[j].offset, 
+        file->keys_meta[j].size, file->keys_meta[j].key.DebugString(true).c_str());
+    } */
+  }
 }
 
 NvmCfModule* NewNvmCfModule(NvmCfOptions* nvmcfoption,const std::string &cf_name,uint32_t cf_id,const InternalKeyComparator* icmp){

@@ -88,9 +88,18 @@ struct FileMetaData {
   InternalKey smallest;            // Smallest internal key served by table
   InternalKey largest;             // Largest internal key served by table
 
-
-  bool is_level0 ;         //nvm need
+////
+  bool is_nvm_level0 ;         //nvm need
   uint64_t first_key_index;   //nvm need
+
+  //for nvm recover
+  int nvm_sstable_index;
+  uint64_t keys_num;
+  uint64_t key_point_filenum;
+  uint64_t raw_file_size;
+  uint64_t nvm_meta_size;
+  //
+////
 
   // Needs to be disposed when refs becomes 0.
   Cache::Handle* table_reader_handle;
@@ -120,8 +129,13 @@ struct FileMetaData {
                                // file.
 
   FileMetaData()
-      : is_level0(false),
+      : is_nvm_level0(false),
         first_key_index(0),
+        nvm_sstable_index(-1),
+        keys_num(0),
+        key_point_filenum(0),
+        raw_file_size(0),
+        nvm_meta_size(0),
         table_reader_handle(nullptr),
         compensated_file_size(0),
         num_entries(0),
@@ -242,7 +256,9 @@ class VersionEdit {
                uint64_t file_size, const InternalKey& smallest,
                const InternalKey& largest, const SequenceNumber& smallest_seqno,
                const SequenceNumber& largest_seqno,
-               bool marked_for_compaction, bool is_level0 = false, uint64_t first_key_index = 0) {
+               bool marked_for_compaction, bool is_nvm_level0 = false, uint64_t first_key_index = 0,
+               int nvm_sstable_index = -1,uint64_t keys_num = 0,uint64_t key_point_filenum = 0, 
+               uint64_t raw_file_size = 0, uint64_t nvm_meta_size = 0) {
     assert(smallest_seqno <= largest_seqno);
     FileMetaData f;
     f.fd = FileDescriptor(file, file_path_id, file_size, smallest_seqno,
@@ -252,8 +268,13 @@ class VersionEdit {
     f.fd.smallest_seqno = smallest_seqno;
     f.fd.largest_seqno = largest_seqno;
     f.marked_for_compaction = marked_for_compaction;
-    f.is_level0 = is_level0;
+    f.is_nvm_level0 = is_nvm_level0;
     f.first_key_index = first_key_index;
+    f.nvm_sstable_index = nvm_sstable_index;
+    f.keys_num = keys_num;
+    f.key_point_filenum = key_point_filenum;
+    f.raw_file_size = raw_file_size;
+    f.nvm_meta_size = nvm_meta_size;
     new_files_.emplace_back(level, std::move(f));
   }
 
@@ -300,7 +321,9 @@ class VersionEdit {
   Status DecodeFrom(const Slice& src);
 
   const char* DecodeNewFile4From(Slice* input);
-
+////
+  const char* DecodeNewFile5From(Slice* input);
+////
   typedef std::set<std::pair<int, uint64_t>> DeletedFileSet;
 
   const DeletedFileSet& GetDeletedFiles() { return deleted_files_; }

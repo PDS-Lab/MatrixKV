@@ -54,7 +54,17 @@ FileEntry* SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_
 void SstableMetadata::GetL0Files(std::vector<FileMetaData*>& L0files,std::vector<FileEntry*> &findfiles){ //有先后顺序的L0
     bool find_file = false;
     unsigned int j = 0;
+    /* RECORD_LOG("L0 [");
+    for(unsigned int i = 0; i < L0files.size(); i++){
+        RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
+    }
+    RECORD_LOG("]\n"); */
     mu_->Lock();
+    /* RECORD_LOG("nvm L0 [");
+    for(unsigned int i = 0; i < files_.size(); i++){
+        RECORD_LOG("%ld ",files_[i]->filenum);
+    }
+    RECORD_LOG("]\n"); */
     for(unsigned int i = 0;i < L0files.size();i++){
         find_file = false;
         while(j < files_.size()){

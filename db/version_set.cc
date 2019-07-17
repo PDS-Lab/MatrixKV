@@ -134,7 +134,7 @@ class FilePicker {
     (void)files;
 #endif
     bool is_nvmcf = false; 
-    if(files_[0].size() > 0 && files_[0][0]->is_level0) {
+    if(files_[0].size() > 0 && files_[0][0]->is_nvm_level0) {
       curr_level_ = 0; //nvmcf 不加L0层
       is_nvmcf = true;
     }
@@ -372,8 +372,8 @@ Version::~Version() {
         assert(cfd_ != nullptr);
         uint32_t path_id = f->fd.GetPathId();
         assert(path_id < cfd_->ioptions()->cf_paths.size());
-        //printf("obsolete_files_:%ld is_level0:%d key:%ld nvmcf:%p\n",f->fd.GetNumber(),f->is_level0,f->first_key_index,cfd_->nvmcfmodule);
-        if( f->is_level0 && (cfd_->nvmcfmodule != nullptr)) {
+        //printf("obsolete_files_:%ld is_nvm_level0:%d key:%ld nvmcf:%p\n",f->fd.GetNumber(),f->is_nvm_level0,f->first_key_index,cfd_->nvmcfmodule);
+        if( f->is_nvm_level0 && (cfd_->nvmcfmodule != nullptr)) {
           //printf("push:%ld\n",f->fd.GetNumber());
           vset_->obsolete_files_.push_back(
             ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path, cfd_->nvmcfmodule));
@@ -3734,6 +3734,20 @@ Status VersionSet::Recover(
                                current_version_number_++);
       builder->SaveTo(v->storage_info());
 
+      /* printf("%d\n",v->storage_info()->is_nvmcf);
+      //if(v->storage_info()->is_nvmcf) {
+        auto L0files = v->storage_info()->LevelFiles(0);
+        for(unsigned int i = 0;i < L0files.size();i++){
+          printf("L0table:%lu [%s-%s] %d %lu %d %lu %lu %lu\n",L0files.at(i)->fd.GetNumber(),L0files.at(i)->smallest.DebugString(true).c_str(),L0files.at(i)->largest.DebugString(true).c_str(),
+            L0files.at(i)->is_nvm_level0, L0files.at(i)->first_key_index,L0files.at(i)->nvm_sstable_index, L0files.at(i)->keys_num, L0files.at(i)->key_point_filenum,
+              L0files.at(i)->raw_file_size);
+        }
+      //} */
+
+      if(v->storage_info()->is_nvmcf){
+        cfd->nvmcfmodule->RecoverFromStorageInfo(v->storage_info());
+      }
+
       // Install recovered version
       v->PrepareApply(*cfd->GetLatestMutableCFOptions(),
           !(db_options_->skip_stats_update_on_db_open));
@@ -4203,7 +4217,9 @@ Status VersionSet::WriteSnapshot(log::Writer* log) {
           edit.AddFile(level, f->fd.GetNumber(), f->fd.GetPathId(),
                        f->fd.GetFileSize(), f->smallest, f->largest,
                        f->fd.smallest_seqno, f->fd.largest_seqno,
-                       f->marked_for_compaction);
+                       f->marked_for_compaction, f->is_nvm_level0, 
+                       f->first_key_index, f->nvm_sstable_index, 
+                       f->keys_num, f->key_point_filenum, f->raw_file_size, f->nvm_meta_size);
         }
       }
       edit.SetLogNumber(cfd->GetLogNumber());

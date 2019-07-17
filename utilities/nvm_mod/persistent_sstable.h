@@ -21,10 +21,15 @@ class PersistentSstable {
     size_t mapped_len;
     int is_pmem;
     uint64_t total_size = each_size * number;
+
+    bool file_exist = false;
+    if(nvm_file_exists(path.c_str()) == 0) { //文件存在
+      file_exist = true;
+    }
     pmemaddr = (char *)(pmem_map_file(path.c_str(), total_size,
                                                 PMEM_FILE_CREATE, 0666,
                                                 &mapped_len, &is_pmem));
-    RECORD_LOG("creat PersistentSstable path:%s map_len:%f MB is:%d each_size:%f MB number:%lu total_size:%f MB\n",
+    RECORD_LOG("%s PersistentSstable path:%s map_len:%f MB is:%d each_size:%f MB number:%lu total_size:%f MB\n",file_exist ? "open" : "crest",
       path.c_str(),mapped_len/1048576.0,is_pmem,each_size/1048576.0,number,total_size/1048576.0);
     assert(pmemaddr != nullptr);
     raw_ = pmemaddr;
@@ -78,6 +83,19 @@ class PersistentSstable {
     use_num_ = 0;
   }
   uint64_t GetEachSize(){ return each_size_;}
+
+  void RecoverAddSstable(int index) {
+    if ((uint64_t)index >= num_) {
+      printf("error:recover file index >= nvm index!\n");
+      return;
+    }
+    if (bitmap_->get(index) != 0 ) {
+      printf("error:recover file index is used !\n");
+      return;
+    }
+    bitmap_->set(index);
+    use_num_ = use_num_ + 1;
+  }
 
 
  private:

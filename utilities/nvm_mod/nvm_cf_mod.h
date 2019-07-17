@@ -49,6 +49,8 @@ class NvmCfModule {
 
   FileEntry* FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true) { return sst_meta_->FindFile(filenumber,forward,have_error_print); }
 
+  void RecoverFromStorageInfo(VersionStorageInfo* vstorage);
+
 
  private:
   bool UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end);
@@ -59,6 +61,8 @@ class NvmCfModule {
   NvmCfOptions* nvmcfoption_;
   SstableMetadata* sst_meta_;
   PersistentSstable* ptr_sst_;
+
+  bool open_by_creat_;
   
   const InternalKeyComparator* icmp_;
 
