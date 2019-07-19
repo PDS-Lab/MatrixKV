@@ -26,6 +26,8 @@
 #include "rocksdb/types.h"
 #include "rocksdb/version.h"
 
+#define MATRIXKV
+
 #ifdef _WIN32
 // Windows API macro interference
 #undef DeleteFile

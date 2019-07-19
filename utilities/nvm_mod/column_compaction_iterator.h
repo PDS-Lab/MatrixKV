@@ -11,13 +11,14 @@ using std::vector;
 
 class ColumnCompactionItemIterator : public InternalIterator {
 public:
-    ColumnCompactionItemIterator(char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
-                                   raw_data_(raw_data),file_(file){
+    ColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
+                                   icmp_(icmp),raw_data_(raw_data),file_(file){
         current_ = -1;
         vKey_.reserve(keys_num);
         vValue_.reserve(keys_num);
         char* data_addr = raw_data_;
 
+        assert(keys_num > 0);
         //uint64_t key_value_size = 0;
         uint64_t key_value_offset = 0;
         uint64_t key_size = 0;
@@ -66,9 +67,38 @@ public:
     }
 
   
-    void Seek(const Slice& ) override {
+    void Seek(const Slice& target) override {  //设置current_.key >= target
         //TODO
-        printf("No seek!\n");
+        /* InternalKey key_current;
+        key_current.DecodeFrom(target);
+        printf("No seek!:%lu %s\n",target.size(),key_current.DebugString(true).c_str()); */
+        int left = 0;
+        int right = (int)vKey_.size() - 1;
+        int mid = 0;
+
+        while(left < right) {   //Binary search to find left < target
+            mid = (left + right + 1)/2;
+            int cmp = icmp_->Compare(vKey_.at(mid), target);
+            if(cmp < 0){
+                left = mid ;
+            } else if ( cmp > 0){
+                right = mid - 1;
+            }
+            else {
+                left = right = mid;
+            }
+
+        }
+        
+        current_ = left ;
+        // Linear search (within restart block) for first key >= target
+        while(true) {
+            if(icmp_->Compare(vKey_.at(current_), target) >= 0 ){
+                return;
+            }
+            current_++;
+            if( !Valid() ) return;
+        }
     };
 
   
@@ -105,6 +135,8 @@ public:
     }
 
 private:
+    const InternalKeyComparator* icmp_;
+
     char *raw_data_;
     FileEntry* file_;
     vector<Slice> vKey_;
@@ -221,6 +253,6 @@ private:
 
 };
 
-InternalIterator* NewColumnCompactionItemIterator(char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num,bool use_buffer = false);
+InternalIterator* NewColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num,bool use_buffer = false);
    
 }

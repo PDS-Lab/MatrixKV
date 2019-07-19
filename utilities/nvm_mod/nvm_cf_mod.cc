@@ -523,7 +523,7 @@ void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder
   for(unsigned int i = 0;i < findfiles.size();i++){
     file = findfiles.at(i);
     key_num = file->keys_num - first_key_indexs[i];
-    merge_iter_builder->AddIterator(NewColumnCompactionItemIterator(GetIndexPtr(file->sstable_index),file,first_key_indexs[i],key_num));
+    merge_iter_builder->AddIterator(NewColumnCompactionItemIterator(icmp_, GetIndexPtr(file->sstable_index),file,first_key_indexs[i],key_num));
   }
 
 

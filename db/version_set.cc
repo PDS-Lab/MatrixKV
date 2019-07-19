@@ -134,7 +134,7 @@ class FilePicker {
     (void)files;
 #endif
     bool is_nvmcf = false; 
-    if(files_[0].size() > 0 && files_[0][0]->is_nvm_level0) {
+    if(files[0].size() > 0 && files[0][0]->is_nvm_level0) {
       curr_level_ = 0; //nvmcf 不加L0层
       is_nvmcf = true;
     }
@@ -4476,7 +4476,7 @@ InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
         for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
           file = c->GetColumnCompactionItem()->files.at(i);
 
-          list[num++] = NewColumnCompactionItemIterator(cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
+          list[num++] = NewColumnCompactionItemIterator(&cfd->internal_comparator(), cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
         }
       } else {
         // Create concatenating iterator for the files from this level

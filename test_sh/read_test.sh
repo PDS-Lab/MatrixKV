@@ -14,14 +14,19 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
-bench_benchmarks="fillrandom,stats,readrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,readrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
+bench_benchmarks="clean_cache,stats,readrandom,stats"
 bench_num="20000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
 max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
+
+
+use_existing_db="true"
+
 
 pmem_path="/pmem/nvm"
 use_nvm="true"
@@ -48,6 +53,7 @@ RUN_ONE_TEST() {
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \
     --reads=$bench_readnum \
+    --use_existing_db=$use_existing_db \
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
@@ -61,9 +67,9 @@ RUN_ONE_TEST() {
 }
 
 CLEAN_CACHE() {
-    if [ -n "$bench_db_path" ];then
-        rm -f $bench_db_path/*
-    fi
+    #if [ -n "$bench_db_path" ];then
+    #    rm -f $bench_db_path/*
+    #fi
     sleep 2
     sync
     echo 3 > /proc/sys/vm/drop_caches
@@ -84,7 +90,7 @@ COPY_OUT_FILE(){
 }
 RUN_ALL_TEST() {
     for value in ${value_array[@]}; do
-        CLEAN_CACHE
+        #CLEAN_CACHE
         bench_value="$value"
         bench_num="`expr $test_all_size / $bench_value`"
 
@@ -92,7 +98,7 @@ RUN_ALL_TEST() {
         if [ $? -ne 0 ];then
             exit 1
         fi
-        COPY_OUT_FILE
+        #COPY_OUT_FILE
         sleep 5
     done
 }

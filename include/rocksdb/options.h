@@ -47,7 +47,7 @@ class Slice;
 class Statistics;
 class InternalKeyComparator;
 class WalFilter;
-class NvmSetup;
+struct NvmSetup;
 
 // DB contents are stored in a set of blocks, each of which holds a
 // sequence of key,value pairs.  Each block may be compressed before
