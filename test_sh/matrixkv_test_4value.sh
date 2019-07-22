@@ -2,7 +2,7 @@
 
 #value_array=(1024 4096 16384 65536)
 value_array=(4096)
-test_all_size=81920000000   #80G
+test_all_size=8192000000   #8G
 
 
 bench_db_path="/mnt/ssd/ceshi"
@@ -14,9 +14,9 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
-bench_benchmarks="fillrandom,stats,readrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
-bench_num="20000000"
+bench_num="2000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
 max_background_jobs="3"
