@@ -980,7 +980,7 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
     return false;
   }
   auto* vstorage = current_->storage_info();
-  if(vstorage->NumLevelFiles(1) == 0){ //L0层为空
+  if(vstorage->NumLevelFiles(1) == 0){ //L1层为空
     return vstorage->NumLevelBytes(0) >= Level0_column_compaction_trigger_size;
   }
   else{  //可及时将L0往下刷
