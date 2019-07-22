@@ -37,6 +37,8 @@
 #define ROCKSDB_DEPRECATED_FUNC __declspec(deprecated)
 #endif
 
+//#define ROCKSDB_L0_NVM
+
 namespace rocksdb {
 
 struct Options;

@@ -2726,7 +2726,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         WaitBalanceLevel();
       } else if(name == "clean_cache") {
         CleanCache();
-      } else if (name == "stats") {
+      } else if(name == "sleep20s") {
+        Sleep20s();
+      }  else if (name == "stats") {
         PrintStats("rocksdb.stats");
       } else if (name == "resetstats") {
         ResetStats();
@@ -5740,6 +5742,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     sleep(5);
     system("free -h");
     printf("clean cache ok!\n");
+  }
+  void Sleep20s() {
+    sleep(20);
   }
   void PrintStats(const char* key) {
     if (db_.db != nullptr) {
