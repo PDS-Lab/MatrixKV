@@ -11,7 +11,7 @@
 #include "table/merging_iterator.h"
 
 #include "common.h"
-#include "nvm_option.h"
+#include "rocksdb/nvm_option.h"
 #include "persistent_sstable.h"
 #include "my_log.h"
 #include "sstable_meta.h"

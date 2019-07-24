@@ -10,8 +10,6 @@
 
 #include "rocksdb/options.h"
 
-#include "utilities/nvm_mod/nvm_option.h"
-
 namespace rocksdb {
 
 struct ImmutableDBOptions {

@@ -10,7 +10,7 @@
 #include "db/dbformat.h"
 #include "db/version_edit.h"
 
-#include "nvm_option.h"
+#include "rocksdb/nvm_option.h"
 #include "my_log.h"
 #include "my_mutex.h"
 

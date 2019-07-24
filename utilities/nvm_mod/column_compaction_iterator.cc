@@ -11,4 +11,8 @@ InternalIterator* NewColumnCompactionItemIterator(const InternalKeyComparator* i
     }
 }
 
+InternalIterator* NewNVMLevel0ReadIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num){
+    return new NVMLevel0ReadIterator(icmp, raw_data,file,first_key_index,keys_num);
+}
+
 }

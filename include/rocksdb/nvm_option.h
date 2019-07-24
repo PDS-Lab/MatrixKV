@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <string>
-#include "my_log.h"
+
 //#include "db/dbformat.h"
 
 namespace rocksdb {

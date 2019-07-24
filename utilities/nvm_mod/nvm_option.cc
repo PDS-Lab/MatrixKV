@@ -2,7 +2,8 @@
 //
 //
 
-#include "nvm_option.h"
+#include "rocksdb/nvm_option.h"
+#include "my_log.h"
 
 namespace rocksdb {
 

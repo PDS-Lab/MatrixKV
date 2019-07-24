@@ -23,6 +23,7 @@
 #include "rocksdb/universal_compaction.h"
 #include "rocksdb/version.h"
 #include "rocksdb/write_buffer_manager.h"
+#include "rocksdb/nvm_option.h"
 
 #ifdef max
 #undef max
