@@ -26,6 +26,9 @@
 #include "rocksdb/types.h"
 #include "rocksdb/version.h"
 
+#define ROCKSDB_L0_NVM
+
+
 #ifdef _WIN32
 // Windows API macro interference
 #undef DeleteFile
@@ -37,7 +40,6 @@
 #define ROCKSDB_DEPRECATED_FUNC __declspec(deprecated)
 #endif
 
-//#define ROCKSDB_L0_NVM
 
 namespace rocksdb {
 

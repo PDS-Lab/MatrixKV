@@ -197,7 +197,7 @@ Status DBImpl::FlushMemTableToOutputFile(
     if (sfm) {
       // Notify sst_file_manager that a new file was added
       std::string file_path = MakeTableFileName(
-          cfd->ioptions()->cf_paths[0].path, file_meta.fd.GetNumber());
+          cfd->ioptions()->cf_paths[file_meta.fd.GetPathId()].path, file_meta.fd.GetNumber());
       sfm->OnAddFile(file_path);
       if (sfm->IsMaxAllowedSpaceReached()) {
         Status new_bg_error = Status::SpaceLimit("Max allowed space was reached");
@@ -471,7 +471,7 @@ Status DBImpl::AtomicFlushMemTablesToOutputFiles(
                              job_context->job_id, jobs[i].GetTableProperties());
       if (sfm) {
         std::string file_path = MakeTableFileName(
-            cfds[i]->ioptions()->cf_paths[0].path, file_meta[i].fd.GetNumber());
+            cfds[i]->ioptions()->cf_paths[file_meta[i].fd.GetPathId()].path, file_meta[i].fd.GetNumber());
         sfm->OnAddFile(file_path);
         if (sfm->IsMaxAllowedSpaceReached() &&
             error_handler_.GetBGError().ok()) {
@@ -533,7 +533,7 @@ void DBImpl::NotifyOnFlushBegin(ColumnFamilyData* cfd, FileMetaData* file_meta,
     info.cf_name = cfd->GetName();
     // TODO(yhchiang): make db_paths dynamic in case flush does not
     //                 go to L0 in the future.
-    info.file_path = MakeTableFileName(cfd->ioptions()->cf_paths[0].path,
+    info.file_path = MakeTableFileName(cfd->ioptions()->cf_paths[file_meta->fd.GetPathId()].path,
                                        file_meta->fd.GetNumber());
     info.thread_id = env_->GetThreadID();
     info.job_id = job_id;
@@ -584,7 +584,7 @@ void DBImpl::NotifyOnFlushCompleted(ColumnFamilyData* cfd,
     info.cf_name = cfd->GetName();
     // TODO(yhchiang): make db_paths dynamic in case flush does not
     //                 go to L0 in the future.
-    info.file_path = MakeTableFileName(cfd->ioptions()->cf_paths[0].path,
+    info.file_path = MakeTableFileName(cfd->ioptions()->cf_paths[file_meta->fd.GetPathId()].path,
                                        file_meta->fd.GetNumber());
     info.thread_id = env_->GetThreadID();
     info.job_id = job_id;

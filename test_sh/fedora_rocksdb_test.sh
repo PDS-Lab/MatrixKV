@@ -1,8 +1,8 @@
 #! /bin/sh
 
 bench_db_path="/home/lzw/ceshi"
-bench_level0_file_path="/pmem/ceshi"
-#bench_level0_file_path=""
+#bench_level0_file_path="/pmem/ceshi"
+bench_level0_file_path=""
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -12,7 +12,7 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 bench_benchmarks="fillrandom,stats"
 bench_num="200000"
-bench_readnum="10000"
+bench_readnum="1000"
 #bench_max_open_files="1000"
 max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
