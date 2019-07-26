@@ -75,6 +75,7 @@
 #include "utilities/merge_operators/bytesxor.h"
 #include "utilities/persistent_cache/block_cache_tier.h"
 
+#include <algorithm>
 #include "utilities/nvm_mod/my_log.h"
 #include "utilities/nvm_mod/global_statistic.h"
 
@@ -200,6 +201,12 @@ DEFINE_bool(use_nvm_module, false,"");
 //DEFINE_bool(reset_nvm_storage, false,"");
 DEFINE_string(pmem_path,"","");
 //DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
+
+DEFINE_bool(report_write_latency, false,"");
+
+////
+uint64_t *ops_latency;
+////
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
@@ -1598,6 +1605,46 @@ class Stats {
     seconds_ = (finish_ - start_) * 1e-6;
   }
 
+  void ReportLatency(){
+    if( !FLAGS_report_write_latency ) return;
+    std::sort(ops_latency, ops_latency + done_);
+    /* for(uint64_t i = 0; i < done_; i++) {
+      printf("%lu\n",ops_latency[i]);
+    }
+    printf("done:%lu\n",done_); */
+    uint64_t cnt = 0;
+    printf("---------write latency---------\n");
+    cnt = 0.1 * done_;
+    printf("latency: 10%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.2 * done_;
+    printf("latency: 20%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.3 * done_;
+    printf("latency: 30%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.4 * done_;
+    printf("latency: 40%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.5 * done_;
+    printf("latency: 50%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.6 * done_;
+    printf("latency: 60%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.7 * done_;
+    printf("latency: 70%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.8 * done_;
+    printf("latency: 80%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9 * done_;
+    printf("latency: 90%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99 * done_;
+    printf("latency: 99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.999 * done_;
+    printf("latency: 99.9%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9999 * done_;
+    printf("latency: 99.99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99999 * done_;
+    printf("latency: 99.999%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    printf("-------------------------------\n");
+
+    delete []ops_latency;
+  }
+
   void AddMessage(Slice msg) {
     AppendWithSpace(&message_, msg);
   }
@@ -2962,6 +3009,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       merge_stats.Merge(arg[i].thread->stats);
     }
     merge_stats.Report(name);
+    merge_stats.ReportLatency();
 
     for (int i = 0; i < n; i++) {
       delete arg[i].thread;
@@ -3874,6 +3922,12 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     global_stats.start_time = t_start_time;
 #endif
 
+    uint64_t l_last_time = Env::Default()->NowMicros();
+    if( FLAGS_report_write_latency ){
+      ops_latency = new uint64_t[FLAGS_num];
+    }
+
+
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
         stage = duration.GetStage();
@@ -3921,6 +3975,11 @@ void VerifyDBFromDB(std::string& truth_db_name) {
                     gen.Generate(value_size_));
         }
         bytes += value_size_ + key_size_;
+        if( FLAGS_report_write_latency ) {
+          uint64_t l_end_time = Env::Default()->NowMicros();
+          ops_latency[num_written] = l_end_time - l_last_time;
+          l_last_time = l_end_time;
+        }
         ++num_written;
         //printf("put:%s\n",key.ToString(true).c_str());
         if (writes_per_range_tombstone_ > 0 &&
