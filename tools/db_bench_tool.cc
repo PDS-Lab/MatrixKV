@@ -204,7 +204,7 @@ DEFINE_string(
 DEFINE_bool(report_write_latency, false,"");
 
 ////
-uint64_t *ops_latency;
+uint64_t *ops_latency = nullptr;
 ////
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
@@ -1604,7 +1604,7 @@ class Stats {
     seconds_ = (finish_ - start_) * 1e-6;
   }
   void ReportLatency(){
-    if( !FLAGS_report_write_latency ) return;
+    if( !FLAGS_report_write_latency || ops_latency == nullptr) return;
     std::sort(ops_latency, ops_latency + done_);
     /* for(uint64_t i = 0; i < done_; i++) {
       printf("%lu\n",ops_latency[i]);
@@ -1645,6 +1645,7 @@ class Stats {
     }
 
     delete []ops_latency;
+    ops_latency = nullptr;
   }
   void AddMessage(Slice msg) {
     AppendWithSpace(&message_, msg);
