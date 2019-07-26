@@ -82,6 +82,7 @@ COPY_OUT_FILE(){
     \cp -f $bench_file_dir/OP_DATA $res_dir/
     \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
     \cp -f $bench_file_dir/out.out $res_dir/
+    \cp -f $bench_file_dir/Latency.csv $res_dir/
     #\cp -f $bench_file_dir/NVM_LOG $res_dir/
     \cp -f $bench_db_path/OPTIONS-* $res_dir/
     #\cp -f $bench_db_path/LOG $res_dir/

@@ -205,7 +205,7 @@ DEFINE_string(pmem_path,"","");
 DEFINE_bool(report_write_latency, false,"");
 
 ////
-uint64_t *ops_latency;
+uint64_t *ops_latency = nullptr;
 ////
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
@@ -1606,7 +1606,7 @@ class Stats {
   }
 
   void ReportLatency(){
-    if( !FLAGS_report_write_latency ) return;
+    if( !FLAGS_report_write_latency || ops_latency == nullptr) return;
     std::sort(ops_latency, ops_latency + done_);
     /* for(uint64_t i = 0; i < done_; i++) {
       printf("%lu\n",ops_latency[i]);
@@ -1642,7 +1642,12 @@ class Stats {
     printf("latency: 99.999%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
     printf("-------------------------------\n");
 
+    for(uint64_t i = 0; i < done_; i++) {
+      RECORD_INFO(4,"%lu\n",ops_latency[i]);
+    }
+
     delete []ops_latency;
+    ops_latency = nullptr;
   }
 
   void AddMessage(Slice msg) {
