@@ -24,8 +24,10 @@ max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-perf_level="4"
-#perf_level="1"
+#perf_level="4"
+perf_level="1"
+
+report_write_latency="true"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
@@ -53,6 +55,7 @@ RUN_ONE_TEST() {
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
+    --report_write_latency=$report_write_latency \
     "
     cmd="$bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
@@ -78,6 +81,7 @@ COPY_OUT_FILE(){
     \cp -f $bench_file_dir/OP_DATA $res_dir/
     \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
     \cp -f $bench_file_dir/out.out $res_dir/
+    \cp -f $bench_file_dir/Latency.csv $res_dir/
     \cp -f $bench_db_path/OPTIONS-* $res_dir/
     #\cp -f $bench_db_path/LOG $res_dir/
 }

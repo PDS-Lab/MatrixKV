@@ -79,3 +79,4 @@ OP_DATA
 OP_TIME.csv
 compaction.csv
 result
+Latency.csv

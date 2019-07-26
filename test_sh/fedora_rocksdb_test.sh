@@ -20,6 +20,8 @@ max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`"
 
 perf_level="1"
 
+report_write_latency="true"
+
 const_params="
     --db=$bench_db_path \
     --level0_file_path=$bench_level0_file_path \
@@ -30,6 +32,7 @@ const_params="
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
+    --report_write_latency=$report_write_latency \
     --perf_level=$perf_level \
     "
 
