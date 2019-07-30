@@ -2,12 +2,12 @@
 
 #value_array=(1024 4096 16384 65536)
 value_array=(4096)
-test_all_size=8192000000   #80G
+test_all_size=81920000000   #80G
 
 
 bench_db_path="/mnt/ssd/ceshi"
-#bench_level0_file_path="/pmem/ceshi"
-bench_level0_file_path=""
+bench_level0_file_path="/pmem/ceshi"
+#bench_level0_file_path=""
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -17,25 +17,28 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,stats,clean_cache,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
-bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+bench_benchmarks="fillrandom,stats"
 bench_num="2000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
 max_background_jobs="2"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
-#level0_file_num_compaction_trigger="4"   #
-#level0_slowdown_writes_trigger="112"       #7G
-#level0_stop_writes_trigger="128"           #8G
+level0_file_num_compaction_trigger="4"   #
+level0_slowdown_writes_trigger="112"       #7G
+level0_stop_writes_trigger="128"           #8G
 
 ### L0 8G read test
-level0_file_num_compaction_trigger="144"   #
-level0_slowdown_writes_trigger="152"       #7G
-level0_stop_writes_trigger="160"           #8G
+#level0_file_num_compaction_trigger="144"   #
+#level0_slowdown_writes_trigger="152"       #7G
+#level0_stop_writes_trigger="160"           #8G
 ###
 
 #perf_level="4"
 perf_level="1"
+
+report_write_latency="true"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
@@ -66,6 +69,7 @@ RUN_ONE_TEST() {
     --level0_file_num_compaction_trigger=$level0_file_num_compaction_trigger \
     --level0_slowdown_writes_trigger=$level0_slowdown_writes_trigger \
     --level0_stop_writes_trigger=$level0_stop_writes_trigger \
+    --report_write_latency=$report_write_latency \
     "
     cmd="$bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
@@ -91,6 +95,7 @@ COPY_OUT_FILE(){
     \cp -f $bench_file_dir/OP_DATA $res_dir/
     \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
     \cp -f $bench_file_dir/out.out $res_dir/
+    \cp -f $bench_file_dir/Latency.csv $res_dir/
     \cp -f $bench_db_path/OPTIONS-* $res_dir/
     #\cp -f $bench_db_path/LOG $res_dir/
 }
