@@ -5,8 +5,8 @@ value_array=(4096)
 test_all_size=81920000000   #8G
 
 
-bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/pmem/log"
+bench_db_path="/pmem/ceshi"
+wal_dir="/pmem/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -59,7 +59,7 @@ RUN_ONE_TEST() {
     --use_nvm_module=$use_nvm \
     --pmem_path=$pmem_path \
     "
-    cmd="$bench_file_path $const_params >>out.out 2>&1"
+    cmd="numa -N 1 -M 1 $bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
     echo $cmd
     eval $cmd
