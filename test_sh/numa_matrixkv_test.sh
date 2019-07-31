@@ -59,7 +59,7 @@ RUN_ONE_TEST() {
     --use_nvm_module=$use_nvm \
     --pmem_path=$pmem_path \
     "
-    cmd="numa -N 1 -M 1 $bench_file_path $const_params >>out.out 2>&1"
+    cmd="numactl -N 1 -m 1 $bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
     echo $cmd
     eval $cmd
