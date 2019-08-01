@@ -84,7 +84,7 @@ CLEAN_CACHE() {
 
 COPY_OUT_FILE(){
     mkdir $bench_file_dir/result > /dev/null 2>&1
-    res_dir=$bench_file_dir/result/nvm-l0-$level0_slowdown_writes_trigger-$level0_stop_writes_trigger
+    res_dir=$bench_file_dir/result/nvm-size-$level0_slowdown_writes_trigger-$level0_stop_writes_trigger
     mkdir $res_dir > /dev/null 2>&1
     \cp -f $bench_file_dir/compaction.csv $res_dir/
     \cp -f $bench_file_dir/OP_DATA $res_dir/
