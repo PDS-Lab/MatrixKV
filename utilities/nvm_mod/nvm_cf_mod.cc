@@ -19,11 +19,11 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
   if(nvm_file_exists(pol_path.c_str()) == 0) { //文件存在
     open_by_creat_ = false;
   }
-  uint64_t level0_table_num = (Level0_column_compaction_stop_size/nvmcfoption_->write_buffer_size + 1)*2;
+  uint64_t level0_table_num = (nvmcfoption_->Level0_column_compaction_stop_size/nvmcfoption_->write_buffer_size + 1)*2;
   ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size + 8ul * 1024 * 1024,
             level0_table_num);
   
-  sst_meta_ = new SstableMetadata(icmp_);
+  sst_meta_ = new SstableMetadata(icmp_, nvmcfoption_);
   
 }
 NvmCfModule::~NvmCfModule() {
@@ -122,8 +122,8 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   auto user_comparator = icmp_->user_comparator(); //比较只根据user key比较
   KeysMergeIterator* k_iter = new KeysMergeIterator(&comfiles,&first_key_indexs,user_comparator);
   
-  uint64_t L1NoneCompactionSizeStop = Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * Column_compaction_no_L1_select_L0;  //每个文件减去6MB是为了防止小文件的产生
-  uint64_t L1HaveCompactionSizeStop = Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * Column_compaction_have_L1_select_L0;
+  uint64_t L1NoneCompactionSizeStop = nvmcfoption_->Column_compaction_no_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * nvmcfoption_->Column_compaction_no_L1_select_L0;  //每个文件减去6MB是为了防止小文件的产生
+  uint64_t L1HaveCompactionSizeStop = nvmcfoption_->Column_compaction_have_L1_select_L0 * nvmcfoption_->target_file_size_base - 6ul*1024*1024 * nvmcfoption_->Column_compaction_have_L1_select_L0;
   int files_index = -1;
   int keys_index = -1;
   uint64_t itemsize = 0;

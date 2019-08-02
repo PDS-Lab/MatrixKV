@@ -51,6 +51,8 @@ class NvmCfModule {
 
   void RecoverFromStorageInfo(VersionStorageInfo* vstorage);
 
+  const NvmCfOptions* GetNvmCfOptions() { return nvmcfoption_; }
+
 
  private:
   bool UserKeyInRange(Slice *user_key,InternalKey *start,InternalKey *end);

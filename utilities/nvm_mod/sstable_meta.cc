@@ -5,8 +5,8 @@
 namespace rocksdb {
 
 
-SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp)
-    :icmp_(icmp){
+SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp, const NvmCfOptions* nvmcfoption)
+    :icmp_(icmp), nvmcfoption_(nvmcfoption){
     mu_ = new MyMutex();
     RECORD_LOG("creat SstableMetadata\n");
 
@@ -175,8 +175,8 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     for(unsigned int i = 0; i < L0files.size(); i++){
         l0_files_size += L0files[i]->fd.GetFileSize();
     }
-    if (l0_files_size < Level0_column_compaction_trigger_size) {
-        RECORD_LOG("warn:L0 l0_files_size:%f MB < Level0_column_compaction_trigger_size:%f MB\n",l0_files_size/1048576.0, Level0_column_compaction_trigger_size/1048576.0);
+    if (l0_files_size < nvmcfoption_->Level0_column_compaction_trigger_size) {
+        RECORD_LOG("warn:L0 l0_files_size:%f MB < Level0_column_compaction_trigger_size:%f MB\n",l0_files_size/1048576.0, nvmcfoption_->Level0_column_compaction_trigger_size/1048576.0);
     }
     //int level0_stop_writes_trigger = level0_stop_writes_trigger_;
     int file_num = L0files.size() - 1;

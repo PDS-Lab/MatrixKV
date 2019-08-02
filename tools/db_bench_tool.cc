@@ -201,8 +201,13 @@ DEFINE_bool(use_nvm_module, false,"");
 //DEFINE_bool(reset_nvm_storage, false,"");
 DEFINE_string(pmem_path,"","");
 //DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
+DEFINE_uint64(level0_column_compaction_trigger_size, rocksdb::NvmSetup().Level0_column_compaction_trigger_size, "");
+DEFINE_uint64(level0_column_compaction_slowdown_size, rocksdb::NvmSetup().Level0_column_compaction_slowdown_size, "");
+DEFINE_uint64(level0_column_compaction_stop_size, rocksdb::NvmSetup().Level0_column_compaction_stop_size, "");
 
 DEFINE_bool(report_write_latency, false,"");
+
+
 
 ////
 uint64_t *ops_latency = nullptr;
@@ -3636,6 +3641,11 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       //nvm_setup->reset_nvm_storage = FLAGS_reset_nvm_storage;
       nvm_setup->pmem_path = FLAGS_pmem_path;
       //nvm_setup->pmem_size = FLAGS_pmem_size;
+      nvm_setup->Level0_column_compaction_trigger_size = FLAGS_level0_column_compaction_trigger_size;
+      nvm_setup->Level0_column_compaction_slowdown_size = FLAGS_level0_column_compaction_slowdown_size;
+      nvm_setup->Level0_column_compaction_stop_size = FLAGS_level0_column_compaction_stop_size;
+
+      
       options.nvm_setup.reset(nvm_setup);
     }
 

@@ -59,7 +59,7 @@ struct FileEntry{
 
 class SstableMetadata {
  public:
-  SstableMetadata(const InternalKeyComparator* icmp);
+  SstableMetadata(const InternalKeyComparator* icmp, const NvmCfOptions* nvmcfoption);
   ~SstableMetadata();
   FileEntry* AddFile(uint64_t filenumber,int index);
   FileEntry* FindFile(uint64_t filenumber,bool forward = true,bool have_error_print = true);
@@ -81,6 +81,8 @@ private:
   const InternalKeyComparator* icmp_;
 ///
   MyMutex *mu_;   //互斥锁，可优化为读写锁
+
+  const NvmCfOptions* nvmcfoption_;
 
 };
 

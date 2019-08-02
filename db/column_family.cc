@@ -687,12 +687,12 @@ std::pair<WriteStallCondition, ColumnFamilyData::WriteStallCause>
 ColumnFamilyData::GetWriteStallConditionAndCause(
     int num_unflushed_memtables, int num_l0_files,
     uint64_t num_compaction_needed_bytes,
-    const MutableCFOptions& mutable_cf_options,uint64_t l0_files_size) {
+    const MutableCFOptions& mutable_cf_options,uint64_t l0_files_size, const NvmCfOptions* nvmcfoption) {
   if(l0_files_size != 0){ //说明是使用nvm限制
     if (num_unflushed_memtables >= mutable_cf_options.max_write_buffer_number) {
       return {WriteStallCondition::kStopped, WriteStallCause::kMemtableLimit};
     } else if (!mutable_cf_options.disable_auto_compactions &&
-              l0_files_size >= Level0_column_compaction_stop_size) {
+              l0_files_size >= nvmcfoption->Level0_column_compaction_stop_size) {
       return {WriteStallCondition::kStopped, WriteStallCause::kL0FileCountLimit};
     } else if (!mutable_cf_options.disable_auto_compactions &&
               mutable_cf_options.hard_pending_compaction_bytes_limit > 0 &&
@@ -705,9 +705,8 @@ ColumnFamilyData::GetWriteStallConditionAndCause(
                   mutable_cf_options.max_write_buffer_number - 1) {
       return {WriteStallCondition::kDelayed, WriteStallCause::kMemtableLimit};
     } else if (!mutable_cf_options.disable_auto_compactions &&
-              Level0_column_compaction_slowdown_size >= 0 &&
               l0_files_size >=
-                  Level0_column_compaction_slowdown_size) {
+                  nvmcfoption->Level0_column_compaction_slowdown_size) {
       return {WriteStallCondition::kDelayed, WriteStallCause::kL0FileCountLimit};
     } else if (!mutable_cf_options.disable_auto_compactions &&
               mutable_cf_options.soft_pending_compaction_bytes_limit > 0 &&
@@ -761,7 +760,7 @@ WriteStallCondition ColumnFamilyData::RecalculateWriteStallConditions(
     if(nvmcfmodule != nullptr){
       write_stall_condition_and_cause =  GetWriteStallConditionAndCause(
         imm()->NumNotFlushed(), vstorage->l0_delay_trigger_count(),
-        vstorage->estimated_compaction_needed_bytes(), mutable_cf_options,vstorage->NumLevelBytes(0));
+        vstorage->estimated_compaction_needed_bytes(), mutable_cf_options,vstorage->NumLevelBytes(0),nvmcfmodule->GetNvmCfOptions());
     }
     else{
       write_stall_condition_and_cause = GetWriteStallConditionAndCause(
@@ -836,7 +835,7 @@ WriteStallCondition ColumnFamilyData::RecalculateWriteStallConditions(
       }
       else {
         bool near_stop = vstorage->NumLevelBytes(0) >=
-                        Level0_column_compaction_stop_size - 128ul*1024*1024;
+                        nvmcfmodule->GetNvmCfOptions()->Level0_column_compaction_stop_size - 128ul*1024*1024;
         write_controller_token_ =
             SetupDelay(write_controller, compaction_needed_bytes,
                       prev_compaction_needed_bytes_, was_stopped || near_stop,
@@ -981,7 +980,7 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
   }
   auto* vstorage = current_->storage_info();
   if(vstorage->NumLevelFiles(1) == 0){ //L1层为空
-    return vstorage->NumLevelBytes(0) >= Level0_column_compaction_trigger_size;
+    return vstorage->NumLevelBytes(0) >= nvmcfmodule->GetNvmCfOptions()->Level0_column_compaction_trigger_size;
   }
   else{  //可及时将L0往下刷
     return vstorage->NumLevelFiles(0) >= mutable_cf_options_.level0_file_num_compaction_trigger;
@@ -1000,9 +999,11 @@ bool ColumnFamilyData::NeedsColumnCompaction() const{
 ///
 ////
 bool ColumnFamilyData::HaveBalancedDistribution() const{
-  if (nvmcfmodule != nullptr && (current_->storage_info()->NumLevelFiles(0) >= mutable_cf_options_.level0_file_num_compaction_trigger || 
-    current_->storage_info()->NumLevelBytes(1) >= mutable_cf_options_.max_bytes_for_level_base )) return false;
-  return !compaction_picker_->NeedsCompaction(current_->storage_info());
+  auto* vstorage = current_->storage_info();
+  if( nvmcfmodule != nullptr && vstorage->NumLevelFiles(1) == 0 && vstorage->NumLevelBytes(0) < nvmcfmodule->GetNvmCfOptions()->Level0_column_compaction_trigger_size) return true;
+  if ( vstorage->NumLevelFiles(0) >= mutable_cf_options_.level0_file_num_compaction_trigger || 
+    vstorage->NumLevelBytes(1) >= mutable_cf_options_.max_bytes_for_level_base ) return false;
+  return !compaction_picker_->NeedsCompaction(vstorage);
 }
 
 ////

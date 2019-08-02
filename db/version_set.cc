@@ -1558,13 +1558,13 @@ void VersionStorageInfo::EstimateCompactionBytesNeeded(
   }
   else{
     return;
-    if (level_size >= Level0_column_compaction_trigger_size) {
+    /* if (level_size >= Level0_column_compaction_trigger_size) {
       level0_compact_triggered = true;
       estimated_compaction_needed_bytes_ = level_size;
       bytes_compact_to_next_level = level_size;
     } else {
       estimated_compaction_needed_bytes_ = 0;
-    }
+    } */
   }
   
 
