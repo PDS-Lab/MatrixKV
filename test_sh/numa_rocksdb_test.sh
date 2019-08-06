@@ -29,6 +29,13 @@ max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`"
 perf_level="1"
 
 report_write_latency="true"
+#report_write_latency="false"
+
+stats_interval="10000"
+stats_interval_seconds="10"
+histogram="true"
+
+
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
@@ -57,6 +64,9 @@ RUN_ONE_TEST() {
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
     --report_write_latency=$report_write_latency \
+    --stats_interval=$stats_interval \
+    --stats_interval_seconds=$stats_interval_seconds \
+    --histogram=$histogram \
     "
     cmd="numactl -N 1 -m 1 $bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out

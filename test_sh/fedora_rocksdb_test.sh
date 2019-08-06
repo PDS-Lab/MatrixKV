@@ -10,7 +10,7 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
-bench_benchmarks="fillrandom,stats,readrandom"
+bench_benchmarks="fillrandom,stats"
 bench_num="200000"
 bench_readnum="100"
 #bench_max_open_files="1000"
@@ -21,6 +21,10 @@ max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`"
 perf_level="1"
 
 report_write_latency="true"
+
+stats_interval="10000"
+stats_interval_seconds="1"
+histogram="true"
 
 const_params="
     --db=$bench_db_path \
@@ -34,6 +38,9 @@ const_params="
     --max_bytes_for_level_base=$max_bytes_for_level_base \
     --report_write_latency=$report_write_latency \
     --perf_level=$perf_level \
+    --stats_interval=$stats_interval \
+    --stats_interval_seconds=$stats_interval_seconds \
+    --histogram=$histogram \
     "
 
 bench_file_path="$(dirname $PWD )/db_bench"
