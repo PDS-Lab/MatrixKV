@@ -4149,8 +4149,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         double now = (now_time - start_time)*1e-6;
         uint64_t e_request_num = now_request_num - last_request_num;
 
-        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,\n",
-                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now,e_request_num);
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,queue_size,%lu,%lu\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now,e_request_num,
+                    thread->shared->op_queues[0].size(),thread->shared->op_queues[1].size());
         
         Latency *ops_latency = thread->shared->ops_latency;
         std::sort(ops_latency + last_ops, ops_latency + now_done, CmpLatency);
