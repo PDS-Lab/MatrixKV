@@ -1979,6 +1979,9 @@ struct SharedState {
 /////
   port::Mutex queue_mu[REQUEST_QUEUE];   //mutex of op_queues
   std::queue<uint64_t> op_queues[REQUEST_QUEUE];  // request queue, save the time to join the queue
+  
+  uint64_t request_num = 0;
+  std::shared_ptr<RateLimiter> request_rate_limiter;
 
   port::Mutex latency_mu;   //mutex of ops_latency, last_second_op, ops_done
   Latency *ops_latency = nullptr;  //all ops latency;
@@ -2989,6 +2992,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     if (method == &Benchmark::FillRandomControlRequest ) {
       shared.ops_latency = new Latency[FLAGS_num];
+      shared.request_rate_limiter.reset(
+          NewGenericRateLimiter(FLAGS_request_rate_limit));
     }
 
     ThreadArg* arg = new ThreadArg[n];
@@ -4124,8 +4129,10 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       uint64_t now_done = 0;
       uint64_t per_second_done;
       uint64_t now_time;
+      uint64_t last_request_num = 0;
+      uint64_t now_request_num;
       while(true) {
-        if( thread->shared->num_done >= REQUEST_QUEUE + 1 ) break;
+        if( thread->shared->num_done >= thread->shared->total - 1 ) break;
         sleep(1);
         
         now_time = FLAGS_env->NowMicros();
@@ -4133,14 +4140,17 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         now_done = thread->shared->ops_done;
         thread->shared->latency_mu.Unlock();
 
+        now_request_num = thread->shared->request_num;
+
         per_second_done = now_done - last_ops;
         double use_time = (now_time - last_time)*1e-6;
         int64_t ebytes = (value_size_ + key_size_) * per_second_done;
         int64_t now_bytes = (value_size_ + key_size_) * now_done;
         double now = (now_time - start_time)*1e-6;
+        uint64_t e_request_num = now_request_num - last_request_num;
 
-        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops\n",
-                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now);
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now,e_request_num);
         
         Latency *ops_latency = thread->shared->ops_latency;
         std::sort(ops_latency + last_ops, ops_latency + now_done, CmpLatency);
@@ -4148,24 +4158,27 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
         } */
         if (per_second_done > 2) {
-          uint64_t cnt90 = 0.90 * per_second_done - 1;
-          uint64_t cnt99 = 0.99 * per_second_done - 1;
-          uint64_t cnt999 = 0.999 * per_second_done - 1;
-          uint64_t cnt9999 = 0.9999 * per_second_done - 1;
-          uint64_t cnt99999 = 0.99999 * per_second_done - 1;
+          uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
+          uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
+          uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
+          uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
+          uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
+
+          //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
 
           RECORD_INFO(5,"%.2f,%.1f,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
                     now,1.0*per_second_done/use_time,
-                    AllLatency(ops_latency[cnt90-1]),ops_latency[cnt90-1].stay_queue_time,ops_latency[cnt90-1].execute_time,
-                    AllLatency(ops_latency[cnt99-1]),ops_latency[cnt99-1].stay_queue_time,ops_latency[cnt99-1].execute_time,
-                    AllLatency(ops_latency[cnt999-1]),ops_latency[cnt999-1].stay_queue_time,ops_latency[cnt999-1].execute_time,
-                    AllLatency(ops_latency[cnt9999-1]),ops_latency[cnt9999-1].stay_queue_time,ops_latency[cnt9999-1].execute_time,
-                    AllLatency(ops_latency[cnt99999-1]),ops_latency[cnt99999-1].stay_queue_time,ops_latency[cnt99999-1].execute_time);
+                    AllLatency(ops_latency[cnt90]),ops_latency[cnt90].stay_queue_time,ops_latency[cnt90].execute_time,
+                    AllLatency(ops_latency[cnt99]),ops_latency[cnt99].stay_queue_time,ops_latency[cnt99].execute_time,
+                    AllLatency(ops_latency[cnt999]),ops_latency[cnt999].stay_queue_time,ops_latency[cnt999].execute_time,
+                    AllLatency(ops_latency[cnt9999]),ops_latency[cnt9999].stay_queue_time,ops_latency[cnt9999].execute_time,
+                    AllLatency(ops_latency[cnt99999]),ops_latency[cnt99999].stay_queue_time,ops_latency[cnt99999].execute_time);
         }
         
 
         last_ops = now_done;
         last_time = now_time;
+        last_request_num = now_request_num;
         //thread->shared->last_second_op = thread->shared->done;
 
         
@@ -4179,13 +4192,21 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       int queue_index = 0;
 
       while(done < num) {
+        thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
+
         thread->shared->queue_mu[queue_index].Lock();
         thread->shared->op_queues[queue_index].push(FLAGS_env->NowMicros());
         thread->shared->queue_mu[queue_index].Unlock();
 
         done++;
+        thread->shared->request_num++;
         queue_index = (queue_index + 1) % REQUEST_QUEUE;
-        usleep(1000000/FLAGS_request_rate_limit); //control requst,
+        //uint64_t sleep_time = 1000000/FLAGS_request_rate_limit;
+        //printf("sleep_time:%lu\n",sleep_time);
+        //uint64_t st = FLAGS_env->NowMicros();
+        //usleep(sleep_time); //control requst,
+        //uint64_t et = FLAGS_env->NowMicros();
+        //printf("sleep_time:%lu\n",et - st);
       }
     }
     else if ( thread->tid > 1 ) { //Put db
