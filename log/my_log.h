@@ -40,6 +40,7 @@ const std::string log_file1("OP_TIME.csv");
 const std::string log_file2("OP_DATA");
 const std::string log_file3("compaction.csv");
 const std::string log_file4("Latency.csv");
+const std::string log_file5("PerSecondLatency.csv");
 
 
 extern void init_log_file();

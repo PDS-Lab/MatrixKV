@@ -1,6 +1,6 @@
 #! /bin/sh
 
-db="/home/lzw/ceshi"
+db="/mnt/ssd/ceshi"
 #bench_level0_file_path="/pmem/ceshi"
 level0_file_path=""
 value_size="4096"
@@ -12,16 +12,14 @@ compression_type="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 benchmarks="fillrandomcontrolrequest,stats"
 #benchmarks="fillrandom,stats"
-num="20000"
-reads="100"
+num="20000000"
+#reads="100"
 #bench_max_open_files="1000"
 max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
 #perf_level="1"
-
-#report_write_latency="true"
 
 #stats_interval="100"
 #stats_interval_seconds="10"
@@ -75,10 +73,6 @@ function FILL_PATAMS() {
         const_params=$const_params"--perf_level=$perf_level "
     fi
 
-    if [ -n "$report_write_latency" ];then
-        const_params=$const_params"--report_write_latency=$report_write_latency "
-    fi
-
     if [ -n "$threads" ];then
         const_params=$const_params"--threads=$threads "
     fi
@@ -104,12 +98,37 @@ function FILL_PATAMS() {
     fi
 
 }
+CLEAN_CACHE() {
+    if [ -n "$db" ];then
+        rm -f $db/*
+    fi
+    sleep 2
+    sync
+    echo 3 > /proc/sys/vm/drop_caches
+    sleep 2
+}
+COPY_OUT_FILE(){
+    mkdir $bench_file_dir/result > /dev/null 2>&1
+    res_dir=$bench_file_dir/result/value-$value_size
+    mkdir $res_dir > /dev/null 2>&1
+    \cp -f $bench_file_dir/compaction.csv $res_dir/
+    \cp -f $bench_file_dir/OP_DATA $res_dir/
+    \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
+    \cp -f $bench_file_dir/out.out $res_dir/
+    \cp -f $bench_file_dir/Latency.csv $res_dir/
+    \cp -f $bench_file_dir/PerSecondLatency.csv $res_dir/
+    \cp -f $db/OPTIONS-* $res_dir/
+
+    #\cp -f $db/LOG $res_dir/
+}
 
 
 bench_file_path="$(dirname $PWD )/db_bench"
+bench_file_dir="$(dirname $PWD )"
 
 if [ ! -f "${bench_file_path}" ];then
 bench_file_path="$PWD/db_bench"
+bench_file_dir="$PWD"
 fi
 
 if [ ! -f "${bench_file_path}" ];then
@@ -118,6 +137,7 @@ exit 1
 fi
 
 FILL_PATAMS 
+CLEAN_CACHE
 
 cmd="$bench_file_path $const_params "
 
@@ -128,3 +148,8 @@ fi
 
 echo $cmd
 eval $cmd
+
+if [ $? -ne 0 ];then
+    exit 1
+fi
+COPY_OUT_FILE
