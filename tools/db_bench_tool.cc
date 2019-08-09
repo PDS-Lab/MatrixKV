@@ -81,7 +81,7 @@
 #include "log/global_statistic.h"
 #include "util/zipf.h"
 
-#define REQUEST_QUEUE 2
+#define REQUEST_QUEUE 1
 
 #ifdef OS_WIN
 #include <io.h>  // open/close
@@ -209,8 +209,8 @@ DEFINE_string(
     "\treplay      -- replay the trace file specified with trace_file\n");
 
 /////
-DEFINE_uint64(request_rate_limit, 18000, "Number of request IOPS, default 18K iops");
-
+DEFINE_uint64(request_rate_limit, 20000, "Number of request IOPS, default 18K iops");
+DEFINE_uint64(per_queue_length, 4, "Number of per request queue length");
 /////
 /////
 DEFINE_bool(report_ops_latency, false,"");
@@ -3115,7 +3115,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       merge_stats.Merge(arg[i].thread->stats);
     }
     merge_stats.Report(name);
-    ReportLatency(shared.ops_latency, FLAGS_num);
+    ReportLatency(shared.ops_latency, shared.ops_done);
     ReportLatency2(shared.latencys, shared.ops_num);
 
     if (method == &Benchmark::FillRandomControlRequest ) {
@@ -4241,9 +4241,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         double now = (now_time - start_time)*1e-6;
         uint64_t e_request_num = now_request_num - last_request_num;
 
-        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,queue_size,%lu,%lu\n",
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,queue_size,%lu,\n",
                     now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now,e_request_num,
-                    thread->shared->op_queues[0].size(),thread->shared->op_queues[1].size());
+                    thread->shared->op_queues[0].size());
         
         Latency *ops_latency = thread->shared->ops_latency;
         std::sort(ops_latency + last_ops, ops_latency + now_done, CmpLatency);
@@ -4283,16 +4283,23 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       int64_t done = 0;
 
       int queue_index = 0;
+      bool push_ok = false;
 
       while(done < num) {
-        thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
+        //thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
 
         thread->shared->queue_mu[queue_index].Lock();
-        thread->shared->op_queues[queue_index].push(FLAGS_env->NowMicros());
+        if(thread->shared->op_queues[queue_index].size() < FLAGS_per_queue_length ) {
+          thread->shared->op_queues[queue_index].push(FLAGS_env->NowMicros());
+          push_ok = true;
+        }
         thread->shared->queue_mu[queue_index].Unlock();
-
-        done++;
-        thread->shared->request_num++;
+        if(push_ok == true) {
+          done++;
+          thread->shared->request_num++;
+          push_ok = false;
+          thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
+        }
         queue_index = (queue_index + 1) % REQUEST_QUEUE;
         //uint64_t sleep_time = 1000000/FLAGS_request_rate_limit;
         //printf("sleep_time:%lu\n",sleep_time);
@@ -4306,9 +4313,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       int64_t num = FLAGS_num / (thread->shared->total - 2);
       int64_t done = 0;
 
-      int64_t bytes = 0;
+      //int64_t bytes = 0;
 
-      size_t num_key_gens = 1;
+      /* size_t num_key_gens = 1;
       if (db_.db == nullptr) {
         num_key_gens = multi_dbs_.size();
       }
@@ -4323,7 +4330,19 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       }
       std::unique_ptr<const char[]> key_guard;
       Slice key = AllocateKey(&key_guard);
+      RandomGenerator gen; */
+
+      ReadOptions options(FLAGS_verify_checksum, true);
       RandomGenerator gen;
+      init_zipf_generator(0, FLAGS_num);
+    
+      std::string value;
+      std::unique_ptr<const char[]> key_guard;
+      Slice key = AllocateKey(&key_guard);
+      DB* db = SelectDB(thread);
+      int64_t reads_done = 0;
+      int64_t writes_done = 0;
+      int64_t found = 0;
 
       while(done < num) {
 
@@ -4336,7 +4355,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
           thread->stats.ResetLastOpTime();
 
-          size_t id = thread->rand.Next() % num_key_gens;
+          /* size_t id = thread->rand.Next() % num_key_gens;
           DBWithColumnFamilies* db_with_cfh = SelectDBWithCfh(id);
           int64_t rand_num = key_gens[id]->Next();
           GenerateKeyFromInt(rand_num, FLAGS_num, &key);
@@ -4345,8 +4364,46 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           if (!s.ok()) {
               fprintf(stderr, "put error: %s\n", s.ToString().c_str());
               exit(1);
+          } */
+
+
+          long k;
+          if (FLAGS_YCSB_uniform_distribution){
+            //Generate number from uniform distribution            
+            k = thread->rand.Next() % FLAGS_num;
+          } else { //default
+            //Generate number from zipf distribution
+            k = nextValue() % FLAGS_num;            
           }
-          bytes += value_size_ + key_size_;
+          GenerateKeyFromInt(k, FLAGS_num, &key);
+
+          int next_op = thread->rand.Next() % 100;
+          if (next_op < 50){
+            //read
+            Status s = db->Get(options, key, &value);
+            if (!s.ok() && !s.IsNotFound()) {
+              fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
+        
+            } else if (!s.IsNotFound()) {
+              found++;
+              //thread->stats.FinishedOps(nullptr, db, 1, kRead);
+            }
+            thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
+            reads_done++;
+            
+          } else{
+
+            Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+            if (!s.ok()) {
+              fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+              //exit(1);
+            } else{
+              writes_done++;
+              thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+            }                
+          }
+
+          //bytes += value_size_ + key_size_;
           done++;
           uint64_t done_micro = FLAGS_env->NowMicros();
           thread->shared->latency_mu.Lock();
@@ -4354,7 +4411,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           thread->shared->ops_latency[thread->shared->ops_done].execute_time = done_micro - pop_from_queue_micro;
           thread->shared->ops_done++;
           thread->shared->latency_mu.Unlock();
-          thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db, 1, kWrite);
+          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
 
         }
         else{
@@ -4362,7 +4419,12 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           //usleep(2);
         }
       }
-      thread->stats.AddBytes(bytes);
+      char msg[200];
+      snprintf(msg, sizeof(msg), "(thread id:%d reads:%" PRIu64 " writes:%" PRIu64 \
+              " total:%" PRIu64 " found:%" PRIu64 ")",
+              thread->tid, reads_done, writes_done, done, found);
+      thread->stats.AddMessage(msg);
+      //thread->stats.AddBytes(bytes);
 
     }
   }
