@@ -29,6 +29,7 @@ threads="1"
 benchmark_write_rate_limit="`expr 20000 \* \( $value_size + 16 \)`"  #20K iops, key: 16 bytes
 
 report_ops_latency="true"
+YCSB_uniform_distribution="true"
 
 
 const_params=""
@@ -100,6 +101,10 @@ function FILL_PATAMS() {
 
     if [ -n "$report_ops_latency" ];then
         const_params=$const_params"--report_ops_latency=$report_ops_latency "
+    fi
+
+    if [ -n "$YCSB_uniform_distribution" ];then
+        const_params=$const_params"--YCSB_uniform_distribution=$YCSB_uniform_distribution "
     fi
 
 }
