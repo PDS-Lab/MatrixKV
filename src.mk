@@ -223,6 +223,7 @@ LIB_SOURCES =                                                   \
   utilities/write_batch_with_index/write_batch_with_index_internal.cc    \
   log/my_log.cc \
   log/global_statistic.cc \
+  util/zipf.cc                                                \
 
 ifeq (,$(shell $(CXX) -fsyntax-only -maltivec -xc /dev/null 2>&1))
 LIB_SOURCES_ASM =\

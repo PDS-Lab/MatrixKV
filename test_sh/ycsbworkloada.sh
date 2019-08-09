@@ -10,11 +10,10 @@ compression_type="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
-#benchmarks="fillrandomcontrolrequest,stats"
-benchmarks="fillrandom,stats"
+#benchmarks="fillrandom,stats"
+benchmarks="ycsbwklda,stats,wait,stats"
 num="20000000"
-#reads="100"
-#bench_max_open_files="1000"
+
 max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
@@ -27,8 +26,7 @@ histogram="true"
 
 threads="1"
 
-#request_rate_limit="18000"
-benchmark_write_rate_limit="`expr 18000 \* \( $value_size + 16 \)`"  #20K iops, key: 16 bytes
+benchmark_write_rate_limit="`expr 20000 \* \( $value_size + 16 \)`"  #20K iops, key: 16 bytes
 
 report_ops_latency="true"
 
@@ -123,7 +121,7 @@ COPY_OUT_FILE(){
     \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
     \cp -f $bench_file_dir/out.out $res_dir/
     \cp -f $bench_file_dir/Latency.csv $res_dir/
-    \cp -f $bench_file_dir/PerSecondLatency.csv $res_dir/
+    #\cp -f $bench_file_dir/PerSecondLatency.csv $res_dir/
     \cp -f $db/OPTIONS-* $res_dir/
 
     #\cp -f $db/LOG $res_dir/

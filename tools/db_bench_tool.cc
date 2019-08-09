@@ -79,6 +79,7 @@
 #include <queue>
 #include "log/my_log.h"
 #include "log/global_statistic.h"
+#include "util/zipf.h"
 
 #define REQUEST_QUEUE 2
 
@@ -132,7 +133,10 @@ DEFINE_string(
     "fillseekseq,"
     "randomtransaction,"
     "randomreplacekeys,"
-    "timeseries",
+    "timeseries,"
+    "fillrandomcontrolrequest,"
+    "ycsbwklda,"
+    ,
 
     "Comma-separated list of operations to run in the specified"
     " order. Available benchmarks:\n"
@@ -211,6 +215,10 @@ DEFINE_uint64(request_rate_limit, 18000, "Number of request IOPS, default 18K io
 /////
 DEFINE_bool(report_ops_latency, false,"");
 /////
+/////
+DEFINE_bool(YCSB_uniform_distribution, false, "Uniform key distribution for YCSB");
+/////
+
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
 DEFINE_int64(numdistinct, 1000,
@@ -2034,7 +2042,7 @@ struct SharedState {
 
 /////
 
-//////for fillrandom && report_ops_latency
+//////for report_ops_latency && ( fillrandom )
 port::Mutex latencys_mutex;
 uint64_t *latencys = nullptr;
 uint64_t ops_num = 0;
@@ -2724,6 +2732,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       } else if (name == "fillrandomcontrolrequest") {  //////add 
         fresh_db = true;
         method = &Benchmark::FillRandomControlRequest;
+      } else if (name == "ycsbwklda") {
+        method = &Benchmark::YCSBWorkloadA;    /////
       } else if (name == "filluniquerandom") {
         fresh_db = true;
         if (num_threads > 1) {
@@ -3048,7 +3058,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           NewGenericRateLimiter(FLAGS_request_rate_limit));
     }
 
-    if ( FLAGS_report_ops_latency && method == &Benchmark::WriteRandom ) {
+    if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
       shared.latencys = new uint64_t[FLAGS_num * n];
       //n = n + 1;
       //shared.total = n;  //need extra thread to record latency and throughput per second
@@ -3110,7 +3120,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       shared.ops_latency = nullptr;
     }
 
-    if ( FLAGS_report_ops_latency && method == &Benchmark::WriteRandom ) {
+    if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
       delete[] shared.latencys;
       shared.latencys = nullptr;
     }
@@ -4352,7 +4362,108 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     }
   }
+// Workload A: Update heavy workload
+  // This workload has a mix of 50/50 reads and writes. 
+  // An application example is a session store recording recent actions.
+  // Read/update ratio: 50/50
+  // Default data size: 1 KB records 
+  // Request distribution: zipfian
+  void YCSBWorkloadA(ThreadState* thread) {
+    ReadOptions options(FLAGS_verify_checksum, true);
+    RandomGenerator gen;
+    
+    init_zipf_generator(0, FLAGS_num);
+    
+    std::string value;
+    int64_t found = 0;
+    uint64_t per_op_start_time = 0;
 
+    int64_t reads_done = 0;
+    int64_t writes_done = 0;
+    Duration duration(FLAGS_duration, FLAGS_num);
+
+    std::unique_ptr<const char[]> key_guard;
+    Slice key = AllocateKey(&key_guard);
+
+    if (FLAGS_benchmark_write_rate_limit > 0) {
+       printf(">>>> FLAGS_benchmark_write_rate_limit YCSBA \n");
+      thread->shared->write_rate_limiter.reset(
+          NewGenericRateLimiter(FLAGS_benchmark_write_rate_limit));
+    }
+    
+    // the number of iterations is the larger of read_ or write_
+    while (!duration.Done(1)) {
+      DB* db = SelectDB(thread);
+       
+      long k;
+      if (FLAGS_YCSB_uniform_distribution){
+        //Generate number from uniform distribution            
+        k = thread->rand.Next() % FLAGS_num;
+      } else { //default
+        //Generate number from zipf distribution
+        k = nextValue() % FLAGS_num;            
+      }
+      GenerateKeyFromInt(k, FLAGS_num, &key);
+
+      if (FLAGS_report_ops_latency) {   //
+        per_op_start_time = FLAGS_env->NowMicros();
+      }
+
+      int next_op = thread->rand.Next() % 100;
+      if (next_op < 50){
+        //read
+        Status s = db->Get(options, key, &value);
+        if (!s.ok() && !s.IsNotFound()) {
+          fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
+          //exit(1);
+          // we continue after error rather than exiting so that we can
+          // find more errors if any
+        } else if (!s.IsNotFound()) {
+          found++;
+          //thread->stats.FinishedOps(nullptr, db, 1, kRead);
+        }
+        thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
+        reads_done++;
+        
+      } else{
+        //write
+        if (FLAGS_benchmark_write_rate_limit > 0) {
+            
+            thread->shared->write_rate_limiter->Request(
+                value_size_ + key_size_, Env::IO_HIGH,
+                nullptr /* stats */, RateLimiter::OpType::kWrite);
+            thread->stats.ResetLastOpTime();
+        }
+        
+        if (FLAGS_report_ops_latency) {   //
+          per_op_start_time = FLAGS_env->NowMicros();
+        }
+
+        Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+        if (!s.ok()) {
+          fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+          //exit(1);
+        } else{
+          writes_done++;
+          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+        }                
+      }
+
+      if (FLAGS_report_ops_latency) {   //
+
+        thread->shared->latencys_mutex.Lock();
+        thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_op_start_time;
+        thread->shared->ops_num++;
+        thread->shared->latencys_mutex.Unlock();
+      }
+
+    } 
+    char msg[100];
+    snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
+             " total:%" PRIu64 " found:%" PRIu64 ")",
+             reads_done, writes_done, readwrites_, found);
+    thread->stats.AddMessage(msg);
+  }
 
 
 /////
