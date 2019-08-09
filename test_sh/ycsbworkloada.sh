@@ -11,7 +11,7 @@ compression_type="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 #benchmarks="fillrandom,stats"
-benchmarks="ycsbwklda,stats,wait,stats"
+benchmarks="fillrandom,stats,wait,stats,clean_cache,stats,ycsbwklda,stats"
 num="20000000"
 
 max_background_jobs="2"
@@ -29,7 +29,8 @@ threads="1"
 benchmark_write_rate_limit="`expr 20000 \* \( $value_size + 16 \)`"  #20K iops, key: 16 bytes
 
 report_ops_latency="true"
-YCSB_uniform_distribution="true"
+#YCSB_uniform_distribution="true"
+ycsb_workloada_num="1000000"
 
 
 const_params=""
@@ -105,6 +106,10 @@ function FILL_PATAMS() {
 
     if [ -n "$YCSB_uniform_distribution" ];then
         const_params=$const_params"--YCSB_uniform_distribution=$YCSB_uniform_distribution "
+    fi
+
+    if [ -n "$ycsb_workloada_num" ];then
+        const_params=$const_params"--ycsb_workloada_num=$ycsb_workloada_num "
     fi
 
 }

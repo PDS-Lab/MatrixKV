@@ -216,6 +216,8 @@ DEFINE_uint64(request_rate_limit, 18000, "Number of request IOPS, default 18K io
 DEFINE_bool(report_ops_latency, false,"");
 /////
 /////
+DEFINE_int64(ycsb_workloada_num, 1000000,"");
+
 DEFINE_bool(YCSB_uniform_distribution, false, "Uniform key distribution for YCSB");
 /////
 
@@ -3058,8 +3060,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           NewGenericRateLimiter(FLAGS_request_rate_limit));
     }
 
-    if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
-      shared.latencys = new uint64_t[FLAGS_num * n];
+    //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
+    if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
+      shared.latencys = new uint64_t[FLAGS_ycsb_workloada_num * n];
       //n = n + 1;
       //shared.total = n;  //need extra thread to record latency and throughput per second
     }
@@ -3120,7 +3123,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       shared.ops_latency = nullptr;
     }
 
-    if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
+    //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
+    if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
       delete[] shared.latencys;
       shared.latencys = nullptr;
     }
@@ -4033,7 +4037,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 #endif
 
 
-    uint64_t per_write_start_time = 0;
+    //uint64_t per_write_start_time = 0;
 
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
@@ -4060,9 +4064,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         // once per write.
         thread->stats.ResetLastOpTime();
       }
-      if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+      /* if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
         per_write_start_time = FLAGS_env->NowMicros();
-      }
+      } */
 
       for (int64_t j = 0; j < entries_per_batch_; j++) {
         int64_t rand_num = key_gens[id]->Next();
@@ -4134,14 +4138,14 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       if (!use_blob_db_) {
         s = db_with_cfh->db->Write(write_options_, &batch);
       }
-      if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+      /* if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
 
         thread->shared->latencys_mutex.Lock();
         thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_write_start_time;
         thread->shared->ops_num++;
         thread->shared->ops_bytes += (value_size_ + key_size_);
         thread->shared->latencys_mutex.Unlock();
-      }
+      } */
 
       thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db,
                                 entries_per_batch_, kWrite);
@@ -4380,7 +4384,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     int64_t reads_done = 0;
     int64_t writes_done = 0;
-    Duration duration(FLAGS_duration, FLAGS_num);
+    Duration duration(FLAGS_duration, FLAGS_ycsb_workloada_num);
 
     std::unique_ptr<const char[]> key_guard;
     Slice key = AllocateKey(&key_guard);
@@ -4434,7 +4438,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
                 nullptr /* stats */, RateLimiter::OpType::kWrite);
             thread->stats.ResetLastOpTime();
         }
-        
+
         if (FLAGS_report_ops_latency) {   //
           per_op_start_time = FLAGS_env->NowMicros();
         }
