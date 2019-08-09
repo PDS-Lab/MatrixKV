@@ -208,6 +208,9 @@ DEFINE_string(
 DEFINE_uint64(request_rate_limit, 18000, "Number of request IOPS, default 18K iops");
 
 /////
+/////
+DEFINE_bool(report_ops_latency, false,"");
+/////
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
 DEFINE_int64(numdistinct, 1000,
@@ -1959,6 +1962,47 @@ void ReportLatency(Latency *ops_latency, uint64_t num) {
       RECORD_INFO(4,"%lu,%lu,%lu\n",AllLatency(ops_latency[i]),ops_latency[i].stay_queue_time,ops_latency[i].execute_time);
     }
 }
+void ReportLatency2(uint64_t *ops_latency, uint64_t num) {
+    if( ops_latency == nullptr || num < 10 ) return;
+    std::sort(ops_latency, ops_latency + num);
+    /* for(uint64_t i = 0; i < num; i++) {
+      printf("%lu\n",ops_latency[i]);
+    }
+    printf("done:%lu\n",num); */
+    uint64_t cnt = 0;
+    printf("---------write latency---------\n");
+    cnt = 0.1 * num;
+    printf("latency: 10%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.2 * num;
+    printf("latency: 20%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.3 * num;
+    printf("latency: 30%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.4 * num;
+    printf("latency: 40%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.5 * num;
+    printf("latency: 50%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.6 * num;
+    printf("latency: 60%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.7 * num;
+    printf("latency: 70%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.8 * num;
+    printf("latency: 80%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9 * num;
+    printf("latency: 90%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99 * num;
+    printf("latency: 99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.999 * num;
+    printf("latency: 99.9%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9999 * num;
+    printf("latency: 99.99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99999 * num;
+    printf("latency: 99.999%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    printf("-------------------------------\n");
+
+    for(uint64_t i = 0; i < num; i++) {
+      RECORD_INFO(4,"%lu\n",ops_latency[i]);
+    }
+}
 struct SharedState {
   port::Mutex mu;
   port::CondVar cv;
@@ -1976,7 +2020,7 @@ struct SharedState {
   long num_initialized;
   long num_done;
   bool start;
-/////
+/////for fillrandomcontrolrequest
   port::Mutex queue_mu[REQUEST_QUEUE];   //mutex of op_queues
   std::queue<uint64_t> op_queues[REQUEST_QUEUE];  // request queue, save the time to join the queue
   
@@ -1989,6 +2033,14 @@ struct SharedState {
   uint64_t ops_done = 0; //
 
 /////
+
+//////for fillrandom && report_ops_latency
+port::Mutex latencys_mutex;
+uint64_t *latencys = nullptr;
+uint64_t ops_num = 0;
+uint64_t ops_bytes = 0;
+
+//////
 
   SharedState() : cv(&mu), perf_level(FLAGS_perf_level) { }
 };
@@ -2996,6 +3048,13 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           NewGenericRateLimiter(FLAGS_request_rate_limit));
     }
 
+    if ( FLAGS_report_ops_latency && method == &Benchmark::WriteRandom ) {
+      shared.latencys = new uint64_t[FLAGS_num * n];
+      //n = n + 1;
+      //shared.total = n;  //need extra thread to record latency and throughput per second
+    }
+
+
     ThreadArg* arg = new ThreadArg[n];
 
     for (int i = 0; i < n; i++) {
@@ -3044,10 +3103,16 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
     merge_stats.Report(name);
     ReportLatency(shared.ops_latency, FLAGS_num);
+    ReportLatency2(shared.latencys, shared.ops_num);
 
     if (method == &Benchmark::FillRandomControlRequest ) {
       delete[] shared.ops_latency;
       shared.ops_latency = nullptr;
+    }
+
+    if ( FLAGS_report_ops_latency && method == &Benchmark::WriteRandom ) {
+      delete[] shared.latencys;
+      shared.latencys = nullptr;
     }
 
     for (int i = 0; i < n; i++) {
@@ -3895,6 +3960,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   }
 
   void DoWrite(ThreadState* thread, WriteMode write_mode) {
+
     const int test_duration = write_mode == RANDOM ? FLAGS_duration : 0;
     const int64_t num_ops = writes_ == 0 ? num_ : writes_;
     //printf("writes_:%ld num_:%ld reads_:%ld readwrites_:%ld\n",writes_,num_,reads_,readwrites_);
@@ -3957,7 +4023,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 #endif
 
 
-    
+    uint64_t per_write_start_time = 0;
 
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
@@ -3983,6 +4049,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         // sleep from rate limiter. Also, do the check once per batch, not
         // once per write.
         thread->stats.ResetLastOpTime();
+      }
+      if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+        per_write_start_time = FLAGS_env->NowMicros();
       }
 
       for (int64_t j = 0; j < entries_per_batch_; j++) {
@@ -4055,6 +4124,15 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       if (!use_blob_db_) {
         s = db_with_cfh->db->Write(write_options_, &batch);
       }
+      if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+
+        thread->shared->latencys_mutex.Lock();
+        thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_write_start_time;
+        thread->shared->ops_num++;
+        thread->shared->ops_bytes += (value_size_ + key_size_);
+        thread->shared->latencys_mutex.Unlock();
+      }
+
       thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db,
                                 entries_per_batch_, kWrite);
       if (FLAGS_sine_write_rate) {

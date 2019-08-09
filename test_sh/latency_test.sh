@@ -2,7 +2,7 @@
 
 db="/mnt/ssd/ceshi"
 #bench_level0_file_path="/pmem/ceshi"
-level0_file_path=""
+#level0_file_path=""
 value_size="4096"
 compression_type="none" #"snappy,none"
 
@@ -10,9 +10,9 @@ compression_type="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
-benchmarks="fillrandomcontrolrequest,stats"
-#benchmarks="fillrandom,stats"
-num="20000000"
+#benchmarks="fillrandomcontrolrequest,stats"
+benchmarks="fillrandom,stats"
+num="2000000"
 #reads="100"
 #bench_max_open_files="1000"
 max_background_jobs="2"
@@ -25,9 +25,12 @@ max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`"
 #stats_interval_seconds="10"
 histogram="true"
 
-threads="4"
+threads="1"
 
-request_rate_limit="18000"
+#request_rate_limit="18000"
+benchmark_write_rate_limit="`expr 18000 \* $value_size`"  #20K iops
+
+report_ops_latency="true"
 
 
 const_params=""
@@ -97,6 +100,10 @@ function FILL_PATAMS() {
         const_params=$const_params"--request_rate_limit=$request_rate_limit "
     fi
 
+    if [ -n "$report_ops_latency" ];then
+        const_params=$const_params"--report_ops_latency=$report_ops_latency "
+    fi
+
 }
 CLEAN_CACHE() {
     if [ -n "$db" ];then
@@ -141,10 +148,6 @@ CLEAN_CACHE
 
 cmd="$bench_file_path $const_params "
 
-if [ -n "$1" ];then
-cmd="nohup $bench_file_path $const_params >>out.out 2>&1 &"
-echo $cmd >out.out
-fi
 
 echo $cmd
 eval $cmd
