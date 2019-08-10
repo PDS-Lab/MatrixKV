@@ -11,8 +11,8 @@ compression_type="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,readrandom,readrandom,stats"
 #benchmarks="fillrandom,stats"
-benchmarks="fillrandom,stats,wait,stats,clean_cache,stats,ycsbwklda,stats"
-num="20000000"
+benchmarks="ycsbwklda,stats"
+num="40000000"
 
 max_background_jobs="2"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
@@ -29,8 +29,8 @@ threads="1"
 benchmark_write_rate_limit="`expr 20000 \* \( $value_size + 16 \)`"  #20K iops, key: 16 bytes
 
 report_ops_latency="true"
-#YCSB_uniform_distribution="true"
-ycsb_workloada_num="1000000"
+YCSB_uniform_distribution="true"
+ycsb_workloada_num="40000000"
 
 
 const_params=""

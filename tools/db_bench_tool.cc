@@ -4527,7 +4527,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     char msg[100];
     snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
              " total:%" PRIu64 " found:%" PRIu64 ")",
-             reads_done, writes_done, readwrites_, found);
+             reads_done, writes_done, FLAGS_ycsb_workloada_num, found);
     thread->stats.AddMessage(msg);
   }
 
