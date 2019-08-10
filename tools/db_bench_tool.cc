@@ -214,6 +214,7 @@ DEFINE_uint64(per_queue_length, 4, "Number of per request queue length");
 /////
 /////
 DEFINE_bool(report_ops_latency, false,"");
+DEFINE_bool(report_fillrandom_latency, false,"");
 /////
 /////
 DEFINE_int64(ycsb_workloada_num, 1000000,"");
@@ -3059,12 +3060,14 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       shared.request_rate_limiter.reset(
           NewGenericRateLimiter(FLAGS_request_rate_limit));
     }
-
+    if ( FLAGS_report_fillrandom_latency && method == &Benchmark::WriteRandom) {
+      shared.latencys = new uint64_t[FLAGS_num * n];
+    }
     //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
     if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
       shared.latencys = new uint64_t[FLAGS_ycsb_workloada_num * n];
-      //n = n + 1;
-      //shared.total = n;  //need extra thread to record latency and throughput per second
+      n = n + 1;
+      shared.total = n;  //need extra thread to record latency and throughput per second
     }
 
 
@@ -3123,6 +3126,10 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       shared.ops_latency = nullptr;
     }
 
+    if ( FLAGS_report_fillrandom_latency && method == &Benchmark::WriteRandom) {
+      delete[] shared.latencys;
+      shared.latencys = nullptr;
+    }
     //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
     if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
       delete[] shared.latencys;
@@ -4037,7 +4044,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 #endif
 
 
-    //uint64_t per_write_start_time = 0;
+    uint64_t per_write_start_time = 0;
 
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
@@ -4064,9 +4071,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         // once per write.
         thread->stats.ResetLastOpTime();
       }
-      /* if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+      if (FLAGS_report_fillrandom_latency) {   //entries_per_batch_ need equal 1
         per_write_start_time = FLAGS_env->NowMicros();
-      } */
+      }
 
       for (int64_t j = 0; j < entries_per_batch_; j++) {
         int64_t rand_num = key_gens[id]->Next();
@@ -4138,14 +4145,14 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       if (!use_blob_db_) {
         s = db_with_cfh->db->Write(write_options_, &batch);
       }
-      /* if (FLAGS_report_ops_latency) {   //entries_per_batch_ need equal 1
+      if (FLAGS_report_fillrandom_latency) {   //entries_per_batch_ need equal 1
 
         thread->shared->latencys_mutex.Lock();
         thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_write_start_time;
         thread->shared->ops_num++;
         thread->shared->ops_bytes += (value_size_ + key_size_);
         thread->shared->latencys_mutex.Unlock();
-      } */
+      }
 
       thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db,
                                 entries_per_batch_, kWrite);
@@ -4435,6 +4442,63 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   // Default data size: 1 KB records 
   // Request distribution: zipfian
   void YCSBWorkloadA(ThreadState* thread) {
+    if( thread->tid == thread->shared->total - 1 ) {  //record latency and throughput per second
+      uint64_t start_time = thread->stats.GetStart();
+      uint64_t last_ops = 0;
+      uint64_t last_time = start_time;
+      uint64_t now_done = 0;
+      uint64_t per_second_done;
+      uint64_t now_time;
+      
+      while(true) {
+        if( thread->shared->num_done >= thread->shared->total - 1 ) break;
+        sleep(1);
+        
+        now_time = FLAGS_env->NowMicros();
+        thread->shared->latencys_mutex.Lock();
+        now_done = thread->shared->ops_num;
+        thread->shared->latencys_mutex.Unlock();
+
+        per_second_done = now_done - last_ops;
+        double use_time = (now_time - last_time)*1e-6;
+        int64_t ebytes = (value_size_ + key_size_) * per_second_done;
+        int64_t now_bytes = (value_size_ + key_size_) * now_done;
+        double now = (now_time - start_time)*1e-6;
+
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops ,\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now);
+        
+        uint64_t *ops_latency = thread->shared->latencys;
+        std::sort(ops_latency + last_ops, ops_latency + now_done);
+        /* for(uint64_t i = last_ops; i < now_done; i++) {
+          printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
+        } */
+        if (per_second_done > 2) {
+          uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
+          uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
+          uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
+          uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
+          uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
+
+          //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
+
+          RECORD_INFO(5,"%.2f,%.1f,%lu,,,%lu,,,%lu,,,%lu,,,%lu,,,\n",
+                    now,1.0*per_second_done/use_time,
+                    ops_latency[cnt90],
+                    ops_latency[cnt99],
+                    ops_latency[cnt999],
+                    ops_latency[cnt9999],
+                    ops_latency[cnt99999]);
+        }
+        
+
+        last_ops = now_done;
+        last_time = now_time;
+
+      }
+    return;
+    }
+
     ReadOptions options(FLAGS_verify_checksum, true);
     RandomGenerator gen;
     
