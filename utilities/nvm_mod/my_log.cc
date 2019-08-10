@@ -20,6 +20,11 @@ void init_log_file() {
   if(fp == nullptr) printf("log failed\n");
   fclose(fp);
 
+  fp = fopen(log_file5.c_str(), "w");
+  if(fp == nullptr) printf("log failed\n");
+  fclose(fp);
+  RECORD_INFO(5,"now(s),through(iops),p90,,,p99,,,p999,,,p9999,,,p99999,,,\n");
+
 #endif
 
 #ifdef LZW_DEBUG
@@ -55,6 +60,9 @@ void LZW_LOG(int file_num, const char* format, ...) {
       break;
     case 4:
       log_file = &log_file4;
+      break;
+    case 5:
+      log_file = &log_file5;
       break;
     default:
       return;
