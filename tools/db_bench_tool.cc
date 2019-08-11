@@ -209,7 +209,7 @@ DEFINE_string(
     "\treplay      -- replay the trace file specified with trace_file\n");
 
 /////
-DEFINE_uint64(request_rate_limit, 20000, "Number of request IOPS, default 18K iops");
+DEFINE_uint64(request_rate_limit, 20000, "Number of request IOPS, default 20K iops");
 DEFINE_uint64(per_queue_length, 4, "Number of per request queue length");
 /////
 /////
@@ -4418,7 +4418,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           thread->shared->ops_latency[thread->shared->ops_done].execute_time = done_micro - pop_from_queue_micro;
           thread->shared->ops_done++;
           thread->shared->latency_mu.Unlock();
-          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+          //thread->stats.FinishedOps(nullptr, db, 1, kWrite);
 
         }
         else{
