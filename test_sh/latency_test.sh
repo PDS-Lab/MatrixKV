@@ -162,9 +162,13 @@ CLEAN_CACHE
 
 cmd="$bench_file_path $const_params "
 
+if [ "$1" == "numa" ];then
+cmd="numactl -N 1 -m 1 $bench_file_path $const_params"
+fi
+
 
 echo $cmd
-eval $cmd
+#eval $cmd
 
 if [ $? -ne 0 ];then
     exit 1
