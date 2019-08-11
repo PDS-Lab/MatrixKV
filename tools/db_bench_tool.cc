@@ -4433,7 +4433,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           thread->shared->ops_latency[thread->shared->ops_done].execute_time = done_micro - pop_from_queue_micro;
           thread->shared->ops_done++;
           thread->shared->latency_mu.Unlock();
-          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+          //thread->stats.FinishedOps(nullptr, db, 1, kWrite);
 
         }
         else{
