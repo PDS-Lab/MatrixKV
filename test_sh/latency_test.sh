@@ -168,7 +168,7 @@ fi
 
 
 echo $cmd
-#eval $cmd
+eval $cmd
 
 if [ $? -ne 0 ];then
     exit 1
