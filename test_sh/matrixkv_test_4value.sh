@@ -25,6 +25,8 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
+threads="5"
+
 pmem_path="/mnt/pmem1/nvm"
 use_nvm="true"
 
@@ -48,6 +50,7 @@ RUN_ONE_TEST() {
     const_params="
     --db=$bench_db_path \
     --wal_dir=$wal_dir \
+    --threads=$threads \
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \
