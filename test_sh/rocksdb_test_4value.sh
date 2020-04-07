@@ -1,22 +1,22 @@
 #! /bin/sh
 
 #value_array=(1024 4096 16384 65536)
-value_array=(4096)
+value_array=(256 64)
 test_all_size=81920000000   #80G
 
 
-bench_db_path="/mnt/ssd/ceshi"
-#bench_level0_file_path="/pmem/ceshi"
-bench_level0_file_path=""
+bench_db_path="/home/lzw/ceshi"
+bench_level0_file_path="/mnt/pmem1/nvm"
+#bench_level0_file_path=""
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
-#bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,stats,clean_cache,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,stats,clean_cache,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,clean_cache,stats,readrandom,stats"
-bench_benchmarks="fillrandom,stats"
+#bench_benchmarks="fillrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="20000000"
 bench_readnum="1000000"
@@ -28,7 +28,7 @@ max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`"
 #perf_level="4"
 perf_level="1"
 
-report_write_latency="true"
+#report_write_latency="true"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
@@ -56,7 +56,6 @@ RUN_ONE_TEST() {
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
     --max_bytes_for_level_base=$max_bytes_for_level_base \
-    --report_write_latency=$report_write_latency \
     "
     cmd="$bench_file_path $const_params >>out.out 2>&1"
     echo $cmd >out.out
