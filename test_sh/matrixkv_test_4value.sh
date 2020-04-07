@@ -6,7 +6,7 @@ test_all_size=81920000000   #8G
 
 
 bench_db_path="/home/lzw/ceshi"
-wal_dir="/mnt/pmem1/log"
+wal_dir="/home/lzw/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
