@@ -1,8 +1,8 @@
 #! /bin/sh
 
 
-bench_db_path="/home/lzw/ceshi"
-wal_dir="/home/lzw/ceshi"
+bench_db_path="/media/psf/lzw/ceshi"
+wal_dir="/media/psf/lzw/ceshi"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -10,7 +10,8 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
-bench_benchmarks="fillrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats"
 bench_num="20000"
 bench_readnum="1000"
 #bench_max_open_files="1000"
@@ -18,10 +19,10 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/pmem/nvm"
+pmem_path="/media/psf/lzw/nvm"
 use_nvm="true"
 
-report_write_latency="true"
+report_write_latency="false"
 
 const_params="
     --db=$bench_db_path \

@@ -77,6 +77,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <sys/syscall.h>  
 #include "utilities/nvm_mod/my_log.h"
 #include "utilities/nvm_mod/global_statistic.h"
 #include "util/zipf.h"
@@ -2648,6 +2649,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
     Open(&open_options_);
     PrintHeader();
+    fflush(stdout);
     std::stringstream benchmark_stream(FLAGS_benchmarks);
     std::string name;
     std::unique_ptr<ExpiredTimeFilter> filter;
@@ -3999,6 +4001,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   }
 
   void DoWrite(ThreadState* thread, WriteMode write_mode) {
+    fprintf(stdout, "write tid:%lu\n", syscall(__NR_gettid));
+    fflush(stdout);
     const int test_duration = write_mode == RANDOM ? FLAGS_duration : 0;
     const int64_t num_ops = writes_ == 0 ? num_ : writes_;
 
