@@ -1,12 +1,12 @@
 #! /bin/sh
 
 #value_array=(1024 4096 16384 65536)
-value_array=(4096)
+value_array=(256)
 test_all_size=81920000000   #8G
 
 
-bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/pmem/log"
+bench_db_path="/home/lzw/ceshi"
+wal_dir="/mnt/pmem1/log"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -15,8 +15,8 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
-#bench_benchmarks="fillrandom,stats,readrandom,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="20000000"
 bench_readnum="1000000"
@@ -25,10 +25,10 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/pmem/nvm"
+pmem_path="/mnt/pmem1/nvm"
 use_nvm="true"
 
-report_write_latency="true"
+report_write_latency="false"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
