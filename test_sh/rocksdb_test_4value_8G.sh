@@ -1,12 +1,12 @@
 #! /bin/sh
 
 #value_array=(1024 4096 16384 65536)
-value_array=(4096)
+value_array=(256 64)
 test_all_size=81920000000   #80G
 
 
-bench_db_path="/mnt/ssd/ceshi"
-bench_level0_file_path="/pmem/ceshi"
+bench_db_path="/home/lzw/ceshi"
+bench_level0_file_path="/mnt/pmem1/nvm"
 #bench_level0_file_path=""
 bench_value="4096"
 bench_compression="none" #"snappy,none"
@@ -17,8 +17,8 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,stats,clean_cache,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
-#bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
-bench_benchmarks="fillrandom,stats"
+bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats"
 bench_num="2000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
@@ -38,7 +38,7 @@ level0_stop_writes_trigger="128"           #8G
 #perf_level="4"
 perf_level="1"
 
-report_write_latency="true"
+report_write_latency="false"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
