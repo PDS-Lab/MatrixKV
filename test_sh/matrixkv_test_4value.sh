@@ -25,7 +25,7 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-threads="5"
+threads="1"
 
 pmem_path="/mnt/pmem1/nvm"
 use_nvm="true"
