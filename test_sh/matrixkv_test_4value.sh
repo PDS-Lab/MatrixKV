@@ -1,12 +1,12 @@
 #! /bin/sh
 
-#value_array=(1024 4096 16384 65536)
-value_array=(256)
+value_array=(1024 4096 16384 65536)
+#value_array=(256)
 test_all_size=81920000000   #8G
 
 
-bench_db_path="/home/lzw/ceshi"
-wal_dir="/home/lzw/ceshi"
+bench_db_path="/mnt/ssd/test"
+wal_dir="/mnt/ssd/test"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -27,7 +27,7 @@ max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"
 
 threads="1"
 
-pmem_path="/mnt/pmem1/nvm"
+pmem_path="/mnt/pmem0/nvm"
 use_nvm="true"
 
 report_write_latency="false"
