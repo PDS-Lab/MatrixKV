@@ -30,7 +30,7 @@ To test with db_bench, please refer to the test script
 > nohup ./tesh_sh/matrixkv_test_4value.sh >out.out 2>&1 &     ##Run in the background
 ```
 
-## 3 Implement
+## 3 MatrixKV's differences with RocksDB
 MatrixKV is implemented based on RocksDB Version v5.18.3. If you want to have RocksDB under the same version, do:
 ```
 > git checkout 641fae60f63619ed5d0c9d9e4c4ea5a0ffa3e253
