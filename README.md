@@ -5,14 +5,15 @@ We implement MatrixKV based on [Rocksdb](https://github.com/facebook/rocksdb) an
 
 ## 2 Compilation and Run
 ### 2.1 Tools
-MatrixKV acesses NVM via [PMDK](https://github.com/pmem/pmdk). Hence, to run MatrixKV, PMDK must be installed.
+MatrixKV acesses NVM via [PMDK](https://github.com/pmem/pmdk). To run MatrixKV, please install PMDK first.
 
 
 ### 2.2 Compilation
+We only support Makefile instead of cmake currently.
 ```
 > make -j64   
 ```
-Currently, we only support Makefile instead of cmake.
+
 
 ### 2.3 Run
 To run MatrixKV, please modify the configuration in ``include/rocksdb/option.h``.
@@ -23,8 +24,7 @@ To learn more about ``NvmSetup``, please refer to ``include/rocksdb/nvm_option.h
 
 
 To test with db_bench, please refer to the test script 
-``test_sh/matrixkv_test_4value.sh ``, you can :
-
+``test_sh/matrixkv_test_4value.sh `` and follow the next two steps:
 ```
 > ./tesh_sh/matrixkv_test_4value.sh
 > nohup ./tesh_sh/matrixkv_test_4value.sh >out.out 2>&1 &     ##Run in the background
