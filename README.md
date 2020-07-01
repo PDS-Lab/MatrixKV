@@ -1,28 +1,29 @@
 # MatrixKV
 ## 1 Introduction
-MatrixKV is a key-value storage database optimized for [Rocksdb](https://github.com/facebook/rocksdb) based on NVM(AEP).
-
+This is the implementation of the paper "**MatrixKV: Reducing Write Stalls and Write Amplification in LSM-tree Based KV Stores with a Matrix Container in NVM**" appeared in [ATC 2020](https://www.usenix.org/conference/atc20).
+We implement MatrixKV based on [Rocksdb](https://github.com/facebook/rocksdb) and evaluate it on a hybrid DRAM/NVM/SSD system using Intel's latest 3D Xpoint NVM device Optane DC PMM. 
 
 ## 2 Compilation and Run
 ### 2.1 Tools
-MatrixKV uses [PMDK](https://github.com/pmem/pmdk) as read and write interface using NVM, and PMDK must be installed.
+MatrixKV acesses NVM via [PMDK](https://github.com/pmem/pmdk). Hence, to run MatrixKV, PMDK must be installed.
 
 
 ### 2.2 Compilation
 ```
 > make -j64   
 ```
-Only Makefile is currently supported, and cmake is not implemented.
+Currently, we only support Makefile instead of cmake.
 
 ### 2.3 Run
-If you want to use MatrixKV, you need to modify the configuration, in ``include/rocksdb/option.h``.
+To run MatrixKV, please modify the configuration in ``include/rocksdb/option.h``.
 ```
 std::shared_ptr<NvmSetup> nvm_setup = nullptr;
 ```
-To learn more about ``NvmSetup``, you can view the file ``include/rocksdb/nvm_option.h``.
+To learn more about ``NvmSetup``, please refer to ``include/rocksdb/nvm_option.h``.
 
 
-Run db_bench can refer to the test script file ``test_sh/matrixkv_test_4value.sh ``, you can :
+To test with db_bench, please refer to the test script 
+``test_sh/matrixkv_test_4value.sh ``, you can :
 
 ```
 > ./tesh_sh/matrixkv_test_4value.sh
@@ -30,17 +31,18 @@ Run db_bench can refer to the test script file ``test_sh/matrixkv_test_4value.sh
 ```
 
 ## 3 Implement
-We implement MatrixKV based on the Rocksdb v5.18.3 version code. If you want to view the rocksdb code:
+MatrixKV is implemented based on RocksDB Version v5.18.3. If you want to have RocksDB under the same version, do:
 ```
 > git checkout 641fae60f63619ed5d0c9d9e4c4ea5a0ffa3e253
 ```
-If you want to see what parts of the code have been modified:
+To check the difference between RocksDB and MatrixKV, please do:
 ```
 > git reset --mixed 641fae60f63619ed5d0c9d9e4c4ea5a0ffa3e253
 ```
-It is recommended to use vscode to view.
+
 ## 4 Acknowledgement
-Thanks to Intel and PingCAP for their help and support!
+We appreciate PingCap and Intel for the hardware support and maintenance.
+
 ## 5 Contributors
 - Ph.D supervisor: Jiguang Wan  (jgwan@hust.edu.cn)
 - Ting Yao (tingyao@hust.edu.cn)
