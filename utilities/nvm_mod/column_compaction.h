@@ -7,6 +7,7 @@
 
 #include "db/dbformat.h"
 
+//#include "nvm_pager.h"
 namespace rocksdb {
 struct FileMetaData;
 class InternalKey;

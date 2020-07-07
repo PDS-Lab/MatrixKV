@@ -15,8 +15,11 @@ bench_compression="none" #"snappy,none"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,sleep20s,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,clean_cache,stats,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readrandom,stats"
+#bench_benchmarks="fillseq,stats,wait,clean_cache,stats,readseq,stats,clean_cache"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readrandom,stats,clean_cache"
+
 #bench_benchmarks="fillseq,stats"
 bench_num="20000000"
 bench_readnum="1000000"
@@ -27,7 +30,7 @@ max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"
 
 threads="1"
 
-pmem_path="/mnt/pmem0/nvm"
+pmem_path="/pmem0/test/nvm"
 use_nvm="true"
 
 report_write_latency="false"

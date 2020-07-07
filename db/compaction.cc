@@ -389,6 +389,9 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
     else{  //该文件还有数据
       out_edit->DeleteFile(0,file->filenum);
       uint64_t file_size = filemeta->fd.GetFileSize() - ccitem_->keys_size.at(i);
+      // Add for NVMPager begin
+      uint64_t compaction_size_so_far = filemeta->compact_size_so_far + ccitem_->keys_size.at(i);
+      // Add for NVMPager end
       uint64_t first_key_index = filemeta->first_key_index + ccitem_->keys_num.at(i);
       InternalKey smallest = file->keys_meta[first_key_index].key;
       //TODO:smallest_seqno and largest_seqno need update
@@ -396,7 +399,8 @@ void Compaction::AddInputDeletions(VersionEdit* out_edit) {
                    file_size, smallest, filemeta->largest,
                    filemeta->fd.smallest_seqno, filemeta->fd.largest_seqno,
                    filemeta->marked_for_compaction, filemeta->is_nvm_level0, first_key_index,filemeta->nvm_sstable_index,
-                   filemeta->keys_num, filemeta->key_point_filenum, filemeta->raw_file_size, filemeta->nvm_meta_size);
+                   filemeta->keys_num, filemeta->key_point_filenum, filemeta->raw_file_size, filemeta->nvm_meta_size,
+                   compaction_size_so_far, filemeta->file_page, first_key_index);
     }
   }
 

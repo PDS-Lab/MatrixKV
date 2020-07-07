@@ -12,7 +12,8 @@
 
 #include "common.h"
 #include "rocksdb/nvm_option.h"
-#include "persistent_sstable.h"
+//#include "persistent_sstable.h"
+#include "nvm_pager.h"
 #include "my_log.h"
 #include "sstable_meta.h"
 #include "column_compaction.h"
@@ -23,14 +24,15 @@ namespace rocksdb {
 struct FileEntry;
 class SstableMetadata;
 class VersionStorageInfo;
-
+class NVMPager;
+using PersistentSstable = NVMPager;
 
 class NvmCfModule {
  public:
   NvmCfModule(NvmCfOptions* nvmcfoption,const std::string &cf_name,uint32_t cf_id,const InternalKeyComparator* icmp);
   ~NvmCfModule();
   void Delete();
-  bool AddL0TableRoom(uint64_t filenum,char** raw,FileEntry** file);
+  bool AddL0TableRoom(uint64_t filenum,char** raw,FileEntry** file, FileMetaData* meta = nullptr);
   uint64_t GetSstableEachSize() { return ptr_sst_->GetEachSize(); }
   void UpdateKeyNext(FileEntry* file) { sst_meta_->UpdateKeyNext(file); }
   void UpdateCompactionState(std::vector<FileMetaData*>& L0files) { sst_meta_->UpdateCompactionState(L0files); }
@@ -40,7 +42,9 @@ class NvmCfModule {
   double GetCompactionScore();
 
   char* GetIndexPtr(int index) { return ptr_sst_->GetIndexPtr(index); }
-
+  char* GetAddr(int index, int offset) { return ptr_sst_->GetAddr(index, offset); }
+  uint64_t AddData(int index,int offset,uint64_t size,char* buf){ return ptr_sst_->AddData(index, offset, size, buf); }
+  PersistentSstable * GetPersistentSstable(){ return ptr_sst_; }
   void DeleteL0file(uint64_t filenumber);
   void DeleteColumnCompactionFile(uint64_t filenumber) {  sst_meta_->DeleteCompactionFile(filenumber); }
 

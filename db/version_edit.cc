@@ -129,6 +129,17 @@ bool VersionEdit::EncodeTo(std::string* dst) const {
       PutVarint64Varint64(dst, f.keys_num, f.key_point_filenum);
       PutVarint64(dst, f.raw_file_size);
       PutVarint64(dst, f.nvm_meta_size);
+      // Add for NVMPager begin
+      PutVarint64(dst, f.compact_size_so_far);
+      // 保存分得的页面数量
+      PutVarint32(dst, f.file_page.size());
+      // 保存页面分配情况
+      for (uint32_t j = 0; j < f.file_page.size(); j++) {
+        PutVarint32(dst, f.file_page[j]);
+      }
+      // 写入 first_page_index
+      PutVarint32(dst, f.first_page_index);
+      // Add for NVMPager end
       PutVarint32(dst, f.fd.GetPathId()); //kNewFile5直接存f.fd.GetPathId()
       if(f.marked_for_compaction || has_min_log_number_to_keep_) {
         has_customized_fields = true;
@@ -336,6 +347,14 @@ const char* msg = nullptr;
   uint64_t raw_file_size;
   uint64_t nvm_meta_size;
 
+  // Add for NVMPager begin
+  uint64_t compact_size_so_far;
+  assert(f.file_page.size() == 0);
+  uint32_t page_num;
+  uint32_t first_page_index;
+
+  // Add for NVMPager end
+
   bool has_customized_fields = false;
 
   // Since this is the only forward-compatible part of the code, we hack new
@@ -344,7 +363,20 @@ const char* msg = nullptr;
   if (GetVarint64(input, &first_key_index) && GetVarint32(input, (uint32_t*)&nvm_sstable_index) &&
       GetVarint64(input, &keys_num) && GetVarint64(input, &key_point_filenum) && 
       GetVarint64(input, &raw_file_size) && GetVarint64(input, &nvm_meta_size) &&
-      GetVarint32(input, &path_id) && GetVarint32(input, (uint32_t*)&has_customized_fields) &&
+      GetVarint64(input, &compact_size_so_far) && GetVarint32(input, &page_num)) {
+    f.compact_size_so_far = compact_size_so_far;
+    for (uint32_t i = 0; i < page_num; i++) {
+      uint32_t tmp;
+      if (GetVarint32(input, &tmp)) {
+        f.file_page.push_back(tmp);
+      }
+    }
+    if (GetVarint32(input, &first_page_index)) {
+      f.first_page_index = first_page_index;
+    }
+  }
+      
+  if (GetVarint32(input, &path_id) && GetVarint32(input, (uint32_t*)&has_customized_fields) &&
       GetLevel(input, &level, &msg) && GetVarint64(input, &number) &&
       GetVarint64(input, &file_size) && GetInternalKey(input, &f.smallest) &&
       GetInternalKey(input, &f.largest) &&

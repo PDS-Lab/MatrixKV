@@ -44,6 +44,7 @@ struct FileEntry{
     uint64_t keys_num;
    // uint64_t first_key_index;          //index 从0开始,在FileMetaData中保存
     uint64_t key_point_filenum;       //key 指向下一个文件的filenum，防止中间删除了文件
+    
   
     FileEntry(uint64_t a,int b):filenum(a),sstable_index(b){
       keys_num = 0;

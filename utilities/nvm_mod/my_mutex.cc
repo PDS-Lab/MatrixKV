@@ -17,14 +17,4 @@ void MyMutex::Lock() { PthreadCall("lock", pthread_mutex_lock(&mu_)); }
 
 void MyMutex::Unlock() { PthreadCall("unlock", pthread_mutex_unlock(&mu_)); }
 
-
-
-
-
-
-
-
-
-
-
 }

@@ -232,6 +232,7 @@ LIB_SOURCES =                                                   \
   utilities/nvm_mod/l0_table_builder.cc  \
   utilities/nvm_mod/global_statistic.cc  \
   utilities/nvm_mod/column_compaction_iterator.cc  \
+  utilities/nvm_mod/nvm_pager.cc  \
   util/zipf.cc                                  \
 
 

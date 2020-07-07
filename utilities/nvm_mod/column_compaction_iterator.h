@@ -4,38 +4,37 @@
 
 #include "table/internal_iterator.h"
 #include "sstable_meta.h"
-
+#include "nvm_pager.h"
 namespace rocksdb {
 using std::vector;
 
+using PersistentSstable = NVMPager;
 
 class ColumnCompactionItemIterator : public InternalIterator {
 public:
-    ColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
-                                   icmp_(icmp),raw_data_(raw_data),file_(file){
+    ColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,PersistentSstable * ptr_sst,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
+                                   icmp_(icmp),raw_data_(raw_data),ptr_sst_(ptr_sst),file_(file){
         current_ = -1;
         vKey_.reserve(keys_num);
         vValue_.reserve(keys_num);
-        char* data_addr = raw_data_;
 
         assert(keys_num > 0);
-        //uint64_t key_value_size = 0;
         uint64_t key_value_offset = 0;
         uint64_t key_size = 0;
         uint64_t value_size = 0;
         uint64_t offset = 0;
         for(size_t i = 0;i < keys_num; i++){  //注意：Slice结构只保留了char *指针和大小，并没有拷贝数据
-            //key_value_size = file_->keys_meta[file_->first_key_index + i].size;
             key_value_offset = file_->keys_meta[first_key_index + i].offset;
-
+            // Add for NVMPager begin
             offset = key_value_offset;
-            key_size = DecodeFixed64(data_addr + offset);
+            key_size = DecodeFixed64(ptr_sst_->GetAddr(file_->sstable_index,offset));
             offset += 8;
-            vKey_.emplace_back(data_addr + offset,key_size);
+            vKey_.emplace_back(ptr_sst_->GetAddr(file_->sstable_index,offset),key_size);
             offset += key_size;
-            value_size = DecodeFixed64(data_addr + offset);
+            value_size = DecodeFixed64(ptr_sst_->GetAddr(file->sstable_index,offset));
             offset += 8;
-            vValue_.emplace_back(data_addr + offset,value_size);
+            vValue_.emplace_back(ptr_sst_->GetAddr(file_->sstable_index,offset),value_size);
+            // Add for NVMPager end
         }
 
 
@@ -46,8 +45,6 @@ public:
 
     
     bool Valid() const override {
-        //uint64_t xx= file_->filenum;
-        //printf("file:%lu xdc:%d m:%lu\n",xx,current_,vKey_.size());
         if(current_ >= 0 && current_ < (int)vKey_.size()){
             return true;
         }
@@ -138,6 +135,7 @@ private:
     const InternalKeyComparator* icmp_;
 
     char *raw_data_;
+    PersistentSstable* ptr_sst_;
     FileEntry* file_;
     vector<Slice> vKey_;
     vector<Slice> vValue_;
@@ -146,8 +144,8 @@ private:
 };
 class ColumnCompactionWithBufferIterator : public InternalIterator {
 public:
-    ColumnCompactionWithBufferIterator(char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
-                                   raw_data_(raw_data),file_(file){
+    ColumnCompactionWithBufferIterator(char *raw_data,PersistentSstable * ptr_sst,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
+                                   raw_data_(raw_data),ptr_sst_(ptr_sst),file_(file){
         current_ = -1;
         vKey_.reserve(keys_num);
         vValue_.reserve(keys_num);
@@ -155,16 +153,13 @@ public:
         uint64_t key_value_offset = file_->keys_meta[first_key_index].offset;
         buf_size_ = (file_->keys_meta[first_key_index + keys_num - 1].offset - key_value_offset) + file_->keys_meta[first_key_index + keys_num - 1].size;
         buf_ = new char[buf_size_];
-
-        memcpy(buf_,raw_data_ + key_value_offset,buf_size_);
-        //uint64_t key_value_size = 0;
+        //Add for NVMPager begin
+         ptr_sst_->ReadData(file_->sstable_index, key_value_offset, buf_size_, buf_);
+        //Add for NVMPager end
         uint64_t key_size = 0;
         uint64_t value_size = 0;
         uint64_t offset = 0;
         for(size_t i = 0;i < keys_num; i++){  //注意：Slice结构只保留了char *指针和大小，并没有拷贝数据
-            //key_value_size = file_->keys_meta[file_->first_key_index + i].size;
-            //key_value_offset = file_->keys_meta[first_key_index + i].offset;
-
             offset = file_->keys_meta[first_key_index + i].offset - key_value_offset;
             key_size = DecodeFixed64(buf_ + offset);
             offset += 8;
@@ -183,8 +178,6 @@ public:
 
     
     bool Valid() const override {
-        //uint64_t xx= file_->filenum;
-        //printf("file:%lu xdc:%d m:%lu\n",xx,current_,vKey_.size());
         if(current_ >= 0 && current_ < (int)vKey_.size()){
             return true;
         }
@@ -244,6 +237,7 @@ public:
 
 private:
     char *raw_data_;
+    PersistentSstable * ptr_sst_;
     FileEntry* file_;
     vector<Slice> vKey_;
     vector<Slice> vValue_;
@@ -255,8 +249,8 @@ private:
 
 class NVMLevel0ReadIterator : public InternalIterator {
 public:
-    NVMLevel0ReadIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
-                                   icmp_(icmp),raw_data_(raw_data),file_(file),first_key_index_(first_key_index),keys_num_(keys_num){
+    NVMLevel0ReadIterator(const InternalKeyComparator* icmp, char *raw_data,PersistentSstable * ptr_sst,FileEntry* file,uint64_t first_key_index,uint64_t keys_num):
+                                   icmp_(icmp),raw_data_(raw_data),ptr_sst_(ptr_sst),file_(file),first_key_index_(first_key_index),keys_num_(keys_num){
         current_ = -1;
 
         assert(keys_num > 0);
@@ -359,16 +353,15 @@ public:
         uint64_t offset = 0;
         
         key_value_offset = file_->keys_meta[first_key_index_ + current_].offset;
-
+        // Add for NVMPager begin
         offset = key_value_offset;
-        key_size = DecodeFixed64(raw_data_ + offset);
+        key_size = DecodeFixed64(ptr_sst_->GetAddr(file_->sstable_index,offset));
         offset += 8;
         offset += key_size;
-
-        value_size = DecodeFixed64(raw_data_ + offset);
+        value_size = DecodeFixed64(ptr_sst_->GetAddr(file_->sstable_index,offset));
         offset += 8;
-
-        return Slice(raw_data_ + offset,value_size);
+        return Slice(ptr_sst_->GetAddr(file_->sstable_index,offset),value_size);
+        // Add for NVMPager end
     };
 
   
@@ -380,6 +373,7 @@ private:
     const InternalKeyComparator* icmp_;
 
     char *raw_data_;
+    PersistentSstable * ptr_sst_;
     FileEntry* file_;
     uint64_t first_key_index_;
     uint64_t keys_num_;
@@ -390,8 +384,8 @@ private:
 
 };
 
-InternalIterator* NewColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num,bool use_buffer = false);
+InternalIterator* NewColumnCompactionItemIterator(const InternalKeyComparator* icmp, char *raw_data,PersistentSstable * ptr_sst,FileEntry* file,uint64_t first_key_index,uint64_t keys_num,bool use_buffer = false);
 
-InternalIterator* NewNVMLevel0ReadIterator(const InternalKeyComparator* icmp, char *raw_data,FileEntry* file,uint64_t first_key_index,uint64_t keys_num);
+InternalIterator* NewNVMLevel0ReadIterator(const InternalKeyComparator* icmp, char *raw_data,PersistentSstable * ptr_sst,FileEntry* file,uint64_t first_key_index,uint64_t keys_num);
    
 }

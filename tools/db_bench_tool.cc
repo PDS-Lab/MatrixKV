@@ -77,7 +77,6 @@
 
 #include <algorithm>
 #include <queue>
-#include <sys/syscall.h>  
 #include "utilities/nvm_mod/my_log.h"
 #include "utilities/nvm_mod/global_statistic.h"
 #include "util/zipf.h"

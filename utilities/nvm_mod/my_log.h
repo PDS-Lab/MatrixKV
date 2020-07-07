@@ -25,7 +25,7 @@ namespace rocksdb {
 #define DBG_PRINT(format, a...)
 #endif
 
-#define LZW_DEBUG
+//#define LZW_DEBUG
 
 #ifdef LZW_DEBUG
 #define RECORD_LOG(format,...)   LZW_LOG(0,format,##__VA_ARGS__)
