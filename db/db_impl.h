@@ -78,7 +78,10 @@ class DBImpl : public DB {
   DBImpl(const DBOptions& options, const std::string& dbname,
          const bool seq_per_batch = false, const bool batch_per_txn = true);
   virtual ~DBImpl();
-
+////
+  using DB::HaveBalancedDistribution;
+ virtual bool HaveBalancedDistribution(ColumnFamilyHandle* column_family) override;
+////
   using DB::Resume;
   virtual Status Resume() override;
 
@@ -883,7 +886,7 @@ class DBImpl : public DB {
   // Delete obsolete files and log status and information of file deletion
   void DeleteObsoleteFileImpl(int job_id, const std::string& fname,
                               const std::string& path_to_sync, FileType type,
-                              uint64_t number);
+                              uint64_t number,std::vector<NvmCfModule*> *nvmcfs = nullptr);
 
   // Background process needs to call
   //     auto x = CaptureCurrentFileNumberInPendingOutputs()
@@ -935,7 +938,16 @@ class DBImpl : public DB {
     // requires a SuperVersionContext object (currently embedded in JobContext).
     SuperVersionContext* superversion_context_;
   };
-
+///
+Status FlushMemTableToNvm(ColumnFamilyData *cfd,
+                                 const MutableCFOptions &mutable_cf_options,
+                                 bool *made_progress, JobContext *job_context,
+                                 SuperVersionContext *superversion_context,
+                                 LogBuffer *log_buffer);
+Status FlushMemTablesToNvm(
+      const autovector<BGFlushArg>& bg_flush_args, bool* made_progress,
+      JobContext* job_context, LogBuffer* log_buffer);
+///
   // Flush the memtables of (multiple) column families to multiple files on
   // persistent storage.
   Status FlushMemTablesToOutputFiles(
@@ -1083,6 +1095,9 @@ class DBImpl : public DB {
   void SchedulePendingPurge(std::string fname, std::string dir_to_sync,
                             FileType type, uint64_t number, int job_id);
   static void BGWorkCompaction(void* arg);
+  ///
+
+  ///
   // Runs a pre-chosen universal compaction involving bottom level in a
   // separate, bottom-pri thread pool.
   static void BGWorkBottomCompaction(void* arg);
@@ -1394,6 +1409,9 @@ class DBImpl : public DB {
 
   // number of background obsolete file purge jobs, submitted to the HIGH pool
   int bg_purge_scheduled_;
+///
+  
+///
 
   // Information for a manual compaction
   struct ManualCompactionState {
@@ -1513,6 +1531,10 @@ class DBImpl : public DB {
   // handle for scheduling jobs at fixed intervals
   // REQUIRES: mutex locked
   std::unique_ptr<rocksdb::RepeatableThread> thread_dump_stats_;
+
+////
+  
+////
 
   // No copying allowed
   DBImpl(const DBImpl&);

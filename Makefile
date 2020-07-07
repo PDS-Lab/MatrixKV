@@ -11,8 +11,9 @@ SHELL := $(shell which bash)
 
 CLEAN_FILES = # deliberately empty, so we can append below.
 CFLAGS += ${EXTRA_CFLAGS}
-CXXFLAGS += ${EXTRA_CXXFLAGS}
+CXXFLAGS += ${EXTRA_CXXFLAGS} -Wno-deprecated-copy -Wno-pessimizing-move
 LDFLAGS += $(EXTRA_LDFLAGS)
+LDFLAGS += -lpmem -pthread -std=c++11
 MACHINE ?= $(shell uname -m)
 ARFLAGS = ${EXTRA_ARFLAGS} rs
 STRIPFLAGS = -S -x
@@ -314,9 +315,9 @@ ifeq ($(PLATFORM), OS_OPENBSD)
 	WARNING_FLAGS += -Wno-unused-lambda-capture
 endif
 
-ifndef DISABLE_WARNING_AS_ERROR
-	WARNING_FLAGS += -Werror
-endif
+#ifndef DISABLE_WARNING_AS_ERROR
+#	WARNING_FLAGS += -Werror
+#endif
 
 
 ifdef LUA_PATH
@@ -604,7 +605,8 @@ TEST_LIBS = \
 	librocksdb_env_basic_test.a
 
 # TODO: add back forward_iterator_bench, after making it build in all environemnts.
-BENCHMARKS = db_bench table_reader_bench cache_bench memtablerep_bench column_aware_encoding_exp persistent_cache_bench range_del_aggregator_bench
+#BENCHMARKS = db_bench table_reader_bench cache_bench memtablerep_bench column_aware_encoding_exp persistent_cache_bench range_del_aggregator_bench
+BENCHMARKS = db_bench
 
 # if user didn't config LIBNAME, set the default
 ifeq ($(LIBNAME),)
@@ -697,7 +699,8 @@ endif  # PLATFORM_SHARED_EXT
 	analyze tools tools_lib
 
 
-all: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(TESTS)
+#all: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(TESTS)
+all: $(LIBRARY) $(BENCHMARKS)
 
 all_but_some_tests: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(SUBSET)
 

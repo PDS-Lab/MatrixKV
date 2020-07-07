@@ -27,6 +27,8 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/global_statistic.h"
+
 namespace rocksdb {
 
 namespace {
@@ -142,7 +144,10 @@ void CompactionPicker::ReleaseCompactionFiles(Compaction* c, Status status) {
     c->ResetNextCompactionIndex();
   }
 }
-
+void CompactionPicker::GetRange(InternalKey* smallest, InternalKey* largest, InternalKey* smallest1, InternalKey* largest1, InternalKey* smallest2, InternalKey* largest2) const{
+  *smallest = icmp_->Compare(*smallest1, *smallest2) < 0 ? *smallest1 : *smallest2;
+  *largest = icmp_->Compare(*largest1, *largest2) < 0 ? *largest2 : *largest1;
+}
 void CompactionPicker::GetRange(const CompactionInputFiles& inputs,
                                 InternalKey* smallest,
                                 InternalKey* largest) const {
@@ -1080,6 +1085,7 @@ bool LevelCompactionPicker::NeedsCompaction(
     return true;
   }
   for (int i = 0; i <= vstorage->MaxInputLevel(); i++) {
+    if (vstorage->is_nvmcf && vstorage->CompactionScoreLevel(i) == 0) continue;
     if (vstorage->CompactionScore(i) >= 1) {
       return true;
     }
@@ -1102,10 +1108,11 @@ class LevelCompactionBuilder {
         compaction_picker_(compaction_picker),
         log_buffer_(log_buffer),
         mutable_cf_options_(mutable_cf_options),
-        ioptions_(ioptions) {}
+        ioptions_(ioptions),
+        ccitem(nullptr) {}
 
   // Pick and return a compaction.
-  Compaction* PickCompaction();
+  Compaction* PickCompaction(bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr);
 
   // Pick the initial files to compact to the next level. (or together
   // in Intra-L0 compactions)
@@ -1118,7 +1125,10 @@ class LevelCompactionBuilder {
   // Based on initial files, setup other files need to be compacted
   // in this compaction, accordingly.
   bool SetupOtherInputsIfNeeded();
+///
+  bool SetupColumnCompactionInputs(NvmCfModule* nvmcf);
 
+///
   Compaction* GetCompaction();
 
   // For the specfied level, pick a file that we want to compact.
@@ -1165,6 +1175,9 @@ class LevelCompactionBuilder {
                             int level);
 
   static const int kMinFilesForIntraL0Compaction = 4;
+///
+  ColumnCompactionItem* ccitem;
+///
 };
 
 void LevelCompactionBuilder::PickExpiredTtlFiles() {
@@ -1209,6 +1222,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) {
     start_level_score_ = vstorage_->CompactionScore(i);
     start_level_ = vstorage_->CompactionScoreLevel(i);
+    if(vstorage_->is_nvmcf && start_level_ == 0) continue;
     assert(i == 0 || start_level_score_ <= vstorage_->CompactionScore(i - 1));
     if (start_level_score_ >= 1) {
       if (skipped_l0_to_base && start_level_ == vstorage_->base_level()) {
@@ -1338,10 +1352,87 @@ bool LevelCompactionBuilder::SetupOtherInputsIfNeeded() {
   }
   return true;
 }
+///
+bool LevelCompactionBuilder::SetupColumnCompactionInputs(NvmCfModule* nvmcf){
+    start_level_ = 0;
+    start_level_inputs_.level = 0;
+    output_level_ = vstorage_->base_level();
+    output_level_inputs_.level = output_level_;
+    compaction_reason_ = CompactionReason::kLevelMaxLevelSize;
+#ifdef STATISTIC_OPEN
+    RECORD_LOG("%ld nvm cf pick column compaction\n",global_stats.compaction_num + 1);
+    uint64_t start_time = get_now_micros();
+#else
+    ("nvm cf pick column compaction\n");
+#endif
+    ccitem = nvmcf->PickColumnCompaction(vstorage_);
+    if(ccitem == nullptr) {
+      return false;
+    }
 
-Compaction* LevelCompactionBuilder::PickCompaction() {
+#ifdef STATISTIC_OPEN
+    uint64_t end_time = get_now_micros();
+    global_stats.pick_compaction_time += (end_time - start_time);
+#endif
+    start_level_score_ = nvmcf->GetCompactionScore();
+    RECORD_LOG("L0 select num:%lu L0 select size:%.2f MB\n",ccitem->files.size(),1.0 * ccitem->L0select_size/1048576);
+    RECORD_LOG("L0smallest:%s L0largest:%s L0FileNum:%d\n",ccitem->L0smallest.DebugString(true).c_str(),ccitem->L0largest.DebugString(true).c_str(),ccitem->files.size());
+    for(unsigned int i = 0;i < ccitem->files.size();i++){
+      RECORD_LOG("select L0:%lu keynum:%lu size:%.2f MB\n",ccitem->files.at(i)->filenum,ccitem->keys_num.at(i),1.0*ccitem->keys_size.at(i)/1048576.0);
+    }
+    
+    for(unsigned int i = 0;i < ccitem->L0compactionfiles.size();i++){
+      start_level_inputs_.files.push_back(ccitem->L0compactionfiles.at(i));
+    }
+    for(unsigned int i = 0;i < ccitem->L1compactionfiles.size();i++){
+      RECORD_LOG("select L1:%lu [%s-%s]\n",ccitem->L1compactionfiles.at(i)->fd.GetNumber(),ccitem->L1compactionfiles.at(i)->smallest.DebugString(true).c_str(),ccitem->L1compactionfiles.at(i)->largest.DebugString(true).c_str());
+      output_level_inputs_.files.push_back(ccitem->L1compactionfiles.at(i));
+    }
+    for(unsigned int i = 0;i < ccitem->L1compactionfiles.size();i++){
+      if(ccitem->L1compactionfiles.at(i)->being_compacted) {  //挑选的L1 files 有正在compacted，失败
+          start_level_inputs_.clear();
+          output_level_inputs_.clear();
+          RECORD_LOG("warn:select L1:%ld being compacted!\n",ccitem->L1compactionfiles.at(i)->fd.GetNumber());
+          delete ccitem;
+          return false;
+      }
+    }
+    compaction_inputs_.push_back(start_level_inputs_);
+    if (!output_level_inputs_.empty()) {
+      compaction_inputs_.push_back(output_level_inputs_);
+    }
+
+    InternalKey start;
+    InternalKey limit;
+    if(!output_level_inputs_.empty()){
+      InternalKey start1,limit1,start2,limit2;
+      start1 = ccitem->L0smallest;
+      limit1 = ccitem->L0largest;
+      compaction_picker_->GetRange(output_level_inputs_,&start2,&limit2);
+      compaction_picker_->GetRange(&start,&limit,&start1,&limit1,&start2,&limit2);
+
+    }
+    else{
+      start = ccitem->L0smallest;
+      limit = ccitem->L0largest;
+    }
+    vstorage_->GetOverlappingInputs(output_level_inputs_.level + 1, &start,
+                                   &limit, &grandparents_);
+    return true;
+}
+///
+
+Compaction* LevelCompactionBuilder::PickCompaction(bool for_column_compaction,NvmCfModule* nvmcf) {
   // Pick up the first file to start compaction. It may have been extended
   // to a clean cut.
+  if(for_column_compaction){
+    RECORD_LOG("pick column compaction\n");
+    if(!SetupColumnCompactionInputs(nvmcf)) {  //选择 column Compaction 失败
+      RECORD_LOG("warn:pick column compaction failed!\n");
+      return nullptr;
+    }
+  }
+  else{
   SetupInitialFiles();
   if (start_level_inputs_.empty()) {
     return nullptr;
@@ -1358,6 +1449,7 @@ Compaction* LevelCompactionBuilder::PickCompaction() {
   // if needed.
   if (!SetupOtherInputsIfNeeded()) {
     return nullptr;
+  }
   }
 
   // Form a compaction object containing the files we picked.
@@ -1381,7 +1473,7 @@ Compaction* LevelCompactionBuilder::GetCompaction() {
                          output_level_, vstorage_->base_level()),
       GetCompressionOptions(ioptions_, vstorage_, output_level_),
       /* max_subcompactions */ 0, std::move(grandparents_), is_manual_,
-      start_level_score_, false /* deletion_compaction */, compaction_reason_);
+      start_level_score_, false /* deletion_compaction */, compaction_reason_,ccitem);
 
   // If it's level 0 compaction, make sure we don't execute any other level 0
   // compactions in parallel
@@ -1542,10 +1634,10 @@ bool LevelCompactionBuilder::PickIntraL0Compaction() {
 
 Compaction* LevelCompactionPicker::PickCompaction(
     const std::string& cf_name, const MutableCFOptions& mutable_cf_options,
-    VersionStorageInfo* vstorage, LogBuffer* log_buffer) {
+    VersionStorageInfo* vstorage, LogBuffer* log_buffer,bool for_column_compaction,NvmCfModule* nvmcf) {
   LevelCompactionBuilder builder(cf_name, vstorage, this, log_buffer,
                                  mutable_cf_options, ioptions_);
-  return builder.PickCompaction();
+  return builder.PickCompaction(for_column_compaction,nvmcf);
 }
 
 }  // namespace rocksdb

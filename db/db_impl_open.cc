@@ -22,6 +22,8 @@
 #include "util/sst_file_manager_impl.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/nvm_flush_job.h"
+
 namespace rocksdb {
 Options SanitizeOptions(const std::string& dbname, const Options& src) {
   auto db_options = SanitizeOptions(dbname, DBOptions(src));
@@ -1017,23 +1019,44 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
       if (range_del_iter != nullptr) {
         range_del_iters.emplace_back(range_del_iter);
       }
-      s = BuildTable(
-          dbname_, env_, *cfd->ioptions(), mutable_cf_options,
-          env_options_for_compaction_, cfd->table_cache(), iter.get(),
-          std::move(range_del_iters), &meta, cfd->internal_comparator(),
-          cfd->int_tbl_prop_collector_factories(), cfd->GetID(), cfd->GetName(),
-          snapshot_seqs, earliest_write_conflict_snapshot, snapshot_checker,
-          GetCompressionFlush(*cfd->ioptions(), mutable_cf_options),
-          cfd->ioptions()->compression_opts, paranoid_file_checks,
-          cfd->internal_stats(), TableFileCreationReason::kRecovery,
-          &event_logger_, job_id, Env::IO_HIGH, nullptr /* table_properties */,
-          -1 /* level */, current_time, write_hint);
-      LogFlush(immutable_db_options_.info_log);
-      ROCKS_LOG_DEBUG(immutable_db_options_.info_log,
-                      "[%s] [WriteLevel0TableForRecovery]"
-                      " Level-0 table #%" PRIu64 ": %" PRIu64 " bytes %s",
-                      cfd->GetName().c_str(), meta.fd.GetNumber(),
-                      meta.fd.GetFileSize(), s.ToString().c_str());
+      if (cfd->nvmcfmodule == nullptr) {
+        s = BuildTable(
+            dbname_, env_, *cfd->ioptions(), mutable_cf_options,
+            env_options_for_compaction_, cfd->table_cache(), iter.get(),
+            std::move(range_del_iters), &meta, cfd->internal_comparator(),
+            cfd->int_tbl_prop_collector_factories(), cfd->GetID(), cfd->GetName(),
+            snapshot_seqs, earliest_write_conflict_snapshot, snapshot_checker,
+            GetCompressionFlush(*cfd->ioptions(), mutable_cf_options),
+            cfd->ioptions()->compression_opts, paranoid_file_checks,
+            cfd->internal_stats(), TableFileCreationReason::kRecovery,
+            &event_logger_, job_id, Env::IO_HIGH, nullptr /* table_properties */,
+            -1 /* level */, current_time, write_hint);
+        LogFlush(immutable_db_options_.info_log);
+        ROCKS_LOG_DEBUG(immutable_db_options_.info_log,
+                        "[%s] [WriteLevel0TableForRecovery]"
+                        " Level-0 table #%" PRIu64 ": %" PRIu64 " bytes %s",
+                        cfd->GetName().c_str(), meta.fd.GetNumber(),
+                        meta.fd.GetFileSize(), s.ToString().c_str());
+      }
+      else{
+        s = BuildTableInsertNVM(
+            dbname_, env_, *cfd->ioptions(), mutable_cf_options,
+            env_options_for_compaction_, cfd->table_cache(), iter.get(),
+            std::move(range_del_iters), &meta, cfd->internal_comparator(),
+            cfd->int_tbl_prop_collector_factories(), cfd->GetID(), cfd->GetName(),
+            snapshot_seqs, earliest_write_conflict_snapshot, snapshot_checker,
+            GetCompressionFlush(*cfd->ioptions(), mutable_cf_options),
+            cfd->ioptions()->compression_opts, paranoid_file_checks,
+            cfd->internal_stats(), TableFileCreationReason::kRecovery,
+            &event_logger_, job_id, Env::IO_HIGH, nullptr /* table_properties */,
+            -1 /* level */, current_time, 0, write_hint, cfd->nvmcfmodule);
+        LogFlush(immutable_db_options_.info_log);
+        ROCKS_LOG_DEBUG(immutable_db_options_.info_log,
+                        "[%s] [WriteLevel0TableForRecovery] nvmcf"
+                        " Level-0 table #%" PRIu64 ": %" PRIu64 " bytes %s",
+                        cfd->GetName().c_str(), meta.fd.GetNumber(),
+                        meta.fd.GetFileSize(), s.ToString().c_str());
+      }
       mutex_.Lock();
     }
   }
@@ -1046,7 +1069,10 @@ Status DBImpl::WriteLevel0TableForRecovery(int job_id, ColumnFamilyData* cfd,
     edit->AddFile(level, meta.fd.GetNumber(), meta.fd.GetPathId(),
                   meta.fd.GetFileSize(), meta.smallest, meta.largest,
                   meta.fd.smallest_seqno, meta.fd.largest_seqno,
-                  meta.marked_for_compaction);
+                  meta.marked_for_compaction, meta.is_nvm_level0, meta.first_key_index,
+                  meta.nvm_sstable_index, meta.keys_num, meta.key_point_filenum,
+                  meta.raw_file_size, meta.nvm_meta_size, meta.compact_size_so_far,
+                  meta.file_page, meta.first_page_index);
   }
 
   InternalStats::CompactionStats stats(CompactionReason::kFlush, 1);

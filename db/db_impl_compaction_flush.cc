@@ -23,6 +23,8 @@
 #include "util/sst_file_manager_impl.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/nvm_flush_job.h"
+
 namespace rocksdb {
 
 bool DBImpl::EnoughRoomForCompaction(
@@ -238,6 +240,137 @@ Status DBImpl::FlushMemTablesToOutputFiles(
   }
   return status;
 }
+///
+Status DBImpl::FlushMemTableToNvm(ColumnFamilyData *cfd,const MutableCFOptions &mutable_cf_options,
+                            bool *made_progress, JobContext *job_context,
+                            SuperVersionContext *superversion_context,
+                            LogBuffer *log_buffer){
+  mutex_.AssertHeld();
+  assert(cfd->imm()->NumNotFlushed() != 0);
+  assert(cfd->imm()->IsFlushPending());
+
+  SequenceNumber earliest_write_conflict_snapshot;
+  std::vector<SequenceNumber> snapshot_seqs =
+      snapshots_.GetAll(&earliest_write_conflict_snapshot);
+
+  auto snapshot_checker = snapshot_checker_.get();
+  if (use_custom_gc_ && snapshot_checker == nullptr) {
+    snapshot_checker = DisableGCSnapshotChecker::Instance();
+  }
+  
+  NvmFlushJob  flush_job(
+      dbname_, cfd, immutable_db_options_, mutable_cf_options,
+      nullptr /* memtable_id */, env_options_for_compaction_, versions_.get(),
+      &mutex_, &shutting_down_, snapshot_seqs, earliest_write_conflict_snapshot,
+      snapshot_checker, job_context, log_buffer, directories_.GetDbDir(),
+      GetDataDir(cfd, 0U),
+      GetCompressionFlush(*cfd->ioptions(), mutable_cf_options), stats_,
+      &event_logger_, mutable_cf_options.report_bg_io_stats,
+      true /* sync_output_directory */, true /* write_manifest */);
+
+  FileMetaData file_meta;
+
+  //TEST_SYNC_POINT("DBImpl::FlushMemTableToOutputFile:BeforePickMemtables");
+  flush_job.PickMemTable();
+  //TEST_SYNC_POINT("DBImpl::FlushMemTableToOutputFile:AfterPickMemtables");
+
+/*#ifndef ROCKSDB_LITE
+  // may temporarily unlock and lock the mutex.
+  NotifyOnFlushBegin(cfd, &file_meta, mutable_cf_options, job_context->job_id,
+                     flush_job.GetTableProperties());
+#endif  // ROCKSDB_LITE*/
+
+  Status s;
+  if (logfile_number_ > 0 &&
+      versions_->GetColumnFamilySet()->NumberOfColumnFamilies() > 1) {
+    // If there are more than one column families, we need to make sure that
+    // all the log files except the most recent one are synced. Otherwise if
+    // the host crashes after flushing and before WAL is persistent, the
+    // flushed SST may contain data from write batches whose updates to
+    // other column families are missing.
+    // SyncClosedLogs() may unlock and re-lock the db_mutex.
+    s = SyncClosedLogs(job_context);
+  } else {
+    //TEST_SYNC_POINT("DBImpl::SyncClosedLogs:Skip");
+  }
+
+  // Within flush_job.Run, rocksdb may call event listener to notify
+  // file creation and deletion.
+  //
+  // Note that flush_job.Run will unlock and lock the db_mutex,
+  // and EventListener callback will be called when the db_mutex
+  // is unlocked by the current thread.
+  if (s.ok()) {
+    s = flush_job.Run(&logs_with_prep_tracker_, &file_meta);
+  } else {
+    flush_job.Cancel();
+  }
+
+  if (s.ok()) {
+    InstallSuperVersionAndScheduleWork(cfd, superversion_context,
+                                       mutable_cf_options);
+    if (made_progress) {
+      *made_progress = true;
+    }
+    VersionStorageInfo::LevelSummaryStorage tmp;
+    ROCKS_LOG_BUFFER(log_buffer, "[%s] Level summary: %s\n",
+                     cfd->GetName().c_str(),
+                     cfd->current()->storage_info()->LevelSummary(&tmp));
+  }
+
+  if (!s.ok() && !s.IsShutdownInProgress()) {
+    Status new_bg_error = s;
+    error_handler_.SetBGError(new_bg_error, BackgroundErrorReason::kFlush);
+  }
+/*  if (s.ok()) {
+#ifndef ROCKSDB_LITE
+    // may temporarily unlock and lock the mutex.
+    NotifyOnFlushCompleted(cfd, &file_meta, mutable_cf_options,
+                           job_context->job_id, flush_job.GetTableProperties());
+    auto sfm = static_cast<SstFileManagerImpl*>(
+        immutable_db_options_.sst_file_manager.get());
+    if (sfm) {
+      // Notify sst_file_manager that a new file was added
+      std::string file_path = MakeTableFileName(
+          cfd->ioptions()->cf_paths[0].path, file_meta.fd.GetNumber());
+      sfm->OnAddFile(file_path);
+      if (sfm->IsMaxAllowedSpaceReached()) {
+        Status new_bg_error = Status::SpaceLimit("Max allowed space was reached");
+        TEST_SYNC_POINT_CALLBACK(
+            "DBImpl::FlushMemTableToOutputFile:MaxAllowedSpaceReached",
+            &new_bg_error);
+        error_handler_.SetBGError(new_bg_error, BackgroundErrorReason::kFlush);
+      }
+    }
+#endif  // ROCKSDB_LITE
+  }*/
+  return s;
+    
+
+}
+Status DBImpl::FlushMemTablesToNvm(const autovector<BGFlushArg>& bg_flush_args, bool* made_progress,
+      JobContext* job_context, LogBuffer* log_buffer){
+  Status s;
+  for (auto& arg : bg_flush_args) {
+    ColumnFamilyData* cfd = arg.cfd_;
+    const MutableCFOptions& mutable_cf_options =
+        *cfd->GetLatestMutableCFOptions();
+    SuperVersionContext* superversion_context = arg.superversion_context_;
+    s = FlushMemTableToNvm(cfd, mutable_cf_options, made_progress,
+                                job_context, superversion_context, log_buffer);
+    /*if(s.ok()){
+      job_context->nvmcfs.push_back(cfd->nvmcfmodule);
+    }*/
+    if (!s.ok()) {
+      break;
+    }
+  }
+  return s;
+        
+ }
+
+
+///
 
 /*
  * Atomically flushes multiple column families.
@@ -1813,7 +1946,7 @@ void DBImpl::MaybeScheduleFlushOrCompaction() {
     TEST_SYNC_POINT("DBImpl::MaybeScheduleFlushOrCompaction:Conflict");
     return;
   }
-
+  //ROCKS_LOG_INFO(immutable_db_options_.info_log,"bg_compaction_scheduled_:%d max_compactions:%d unscheduled_compactions_:%d",bg_compaction_scheduled_,bg_job_limits.max_compactions,unscheduled_compactions_);
   while (bg_compaction_scheduled_ < bg_job_limits.max_compactions &&
          unscheduled_compactions_ > 0) {
     CompactionArg* ca = new CompactionArg;
@@ -1898,6 +2031,7 @@ void DBImpl::SchedulePendingFlush(const FlushRequest& flush_req,
 }
 
 void DBImpl::SchedulePendingCompaction(ColumnFamilyData* cfd) {
+  //ROCKS_LOG_INFO(immutable_db_options_.info_log,"queued_for_compaction:%d NeedsCompaction:%d",cfd->queued_for_compaction(),cfd->NeedsCompaction());
   if (!cfd->queued_for_compaction() && cfd->NeedsCompaction()) {
     AddToCompactionQueue(cfd);
     ++unscheduled_compactions_;
@@ -2022,8 +2156,13 @@ Status DBImpl::BackgroundFlush(bool* made_progress, JobContext* job_context,
           bg_job_limits.max_compactions, bg_flush_scheduled_,
           bg_compaction_scheduled_);
     }
-    status = FlushMemTablesToOutputFiles(bg_flush_args, made_progress,
-                                         job_context, log_buffer);
+    if (immutable_db_options_.nvm_setup != nullptr && immutable_db_options_.nvm_setup->use_nvm_module) {
+      status = FlushMemTablesToNvm(bg_flush_args, made_progress,
+                                        job_context, log_buffer);
+    } else {
+      status = FlushMemTablesToOutputFiles(bg_flush_args, made_progress,
+                                           job_context, log_buffer);                            
+    }
     // All the CFDs in the FlushReq must have the same flush reason, so just
     // grab the first one
     *reason = bg_flush_args[0].cfd_->GetFlushReason();
@@ -2216,6 +2355,8 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
     // that case, all DB variables will be dealloacated and referencing them
     // will cause trouble.
   }
+   ROCKS_LOG_INFO(immutable_db_options_.info_log,"[JOB %d] compaction end!",job_context.job_id);
+  
 }
 
 Status DBImpl::BackgroundCompaction(bool* made_progress,
@@ -2237,6 +2378,10 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     c.reset(prepicked_compaction->compaction);
   }
   bool is_prepicked = is_manual || c;
+
+///
+  bool is_column_compaction = false;  //是否进行column compaction
+///
 
   // (manual_compaction->in_progress == false);
   bool trivial_move_disallowed =
@@ -2340,6 +2485,12 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       // compact.
       return Status::OK();
     }
+    //job_context->nvmcfs.push_back(cfd->nvmcfmodule);
+    is_column_compaction = cfd->NeedsColumnCompaction();
+    if(is_column_compaction){
+      RECORD_LOG("do column compaction\n");
+      cfd->set_bg_column_compaction(true);
+    }
 
     // Pick up latest mutable CF Options and use it throughout the
     // compaction job
@@ -2352,9 +2503,12 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       // compaction is not necessary. Need to make sure mutex is held
       // until we make a copy in the following code
       TEST_SYNC_POINT("DBImpl::BackgroundCompaction():BeforePickCompaction");
-      c.reset(cfd->PickCompaction(*mutable_cf_options, log_buffer));
+      c.reset(cfd->PickCompaction(*mutable_cf_options, log_buffer,is_column_compaction,cfd->nvmcfmodule));
       TEST_SYNC_POINT("DBImpl::BackgroundCompaction():AfterPickCompaction");
-
+      if(is_column_compaction && c == nullptr) {  //column comapction pick failed!
+        cfd->set_bg_column_compaction(false);
+        c.reset(cfd->PickCompaction(*mutable_cf_options, log_buffer)); //挑选正常的compaction
+      }
       if (c != nullptr) {
         bool enough_room = EnoughRoomForCompaction(
             cfd, *(c->inputs()), &sfm_reserved_compact_space, log_buffer);
@@ -2464,6 +2618,10 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
             "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
             c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
             c->output_level(), f->fd.GetFileSize());
+          /*printf(
+          "[%s] Moving #%" PRIu64 " to level-%d %" PRIu64 " bytes\n",
+          c->column_family_data()->GetName().c_str(), f->fd.GetNumber(),
+          c->output_level(), f->fd.GetFileSize());*/
         ++moved_files;
         moved_bytes += f->fd.GetFileSize();
       }
@@ -2509,6 +2667,8 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     // such that compactions unlikely to contribute to write stalls can be
     // delayed or deprioritized.
     TEST_SYNC_POINT("DBImpl::BackgroundCompaction:ForwardToBottomPriPool");
+    ROCKS_LOG_BUFFER(log_buffer,"[cc] do BGWorkBottomCompaction,is_column_compaction:%d\n",is_column_compaction);
+    RECORD_LOG("do BGWorkBottomCompaction,is_column_compaction:%d\n",is_column_compaction);
     CompactionArg* ca = new CompactionArg;
     ca->db = this;
     ca->prepicked_compaction = new PrepickedCompaction;

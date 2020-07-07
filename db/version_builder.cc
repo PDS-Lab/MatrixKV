@@ -152,6 +152,7 @@ class VersionBuilder::Rep {
 #endif
     // make sure the files are sorted correctly
     for (int level = 0; level < num_levels_; level++) {
+      if(vstorage->is_nvmcf && level==0) continue;
       auto& level_files = vstorage->LevelFiles(level);
       for (size_t i = 1; i < level_files.size(); i++) {
         auto f1 = level_files[i - 1];
@@ -273,6 +274,7 @@ class VersionBuilder::Rep {
       const auto number = del_file.second;
       if (level < num_levels_) {
         levels_[level].deleted_files.insert(number);
+        //printf("delete num:%lu\n",number);
         CheckConsistencyForDeletes(edit, number, level);
 
         auto exising = levels_[level].added_files.find(number);
@@ -299,8 +301,11 @@ class VersionBuilder::Rep {
         f->refs = 1;
 
         assert(levels_[level].added_files.find(f->fd.GetNumber()) ==
-               levels_[level].added_files.end());
-        levels_[level].deleted_files.erase(f->fd.GetNumber());
+                  levels_[level].added_files.end());
+
+        if(!f->is_nvm_level0){  //L0可能删除和插入相同filenum
+          levels_[level].deleted_files.erase(f->fd.GetNumber());
+        }
         levels_[level].added_files[f->fd.GetNumber()] = f;
       } else {
         uint64_t number = new_file.second.fd.GetNumber();
@@ -312,6 +317,23 @@ class VersionBuilder::Rep {
         }
       }
     }
+
+    /*for (int i = 0; i < 2; i++) {
+      printf("add:[%d:",i);
+      const auto& added = levels_[i].added_files;
+      for (auto& pair : added) {
+        printf("%ld-%d-%ld ",pair.second->fd.GetNumber(),pair.second->is_nvm_level0,pair.second->first_key_index);
+      }
+      printf("]\n");
+    }
+    for (int i = 0; i < 2; i++) {
+      printf("delete:[%d:",i);
+      const auto& dele = levels_[i].deleted_files;
+      for (auto& d : dele) {
+        printf("%ld ",d);
+      }
+      printf("]\n");
+    }*/
   }
 
   // Save the current state in *v.
@@ -329,6 +351,7 @@ class VersionBuilder::Rep {
                         base_files.size() + unordered_added_files.size());
 
       // Sort added files for the level.
+      //printf("level:%d base:%lu add:%lu\n",level,base_files.size(),unordered_added_files.size());
       std::vector<FileMetaData*> added_files;
       added_files.reserve(unordered_added_files.size());
       for (const auto& pair : unordered_added_files) {
@@ -354,8 +377,13 @@ class VersionBuilder::Rep {
       while (added_iter != added_end || base_iter != base_end) {
         if (base_iter == base_end ||
                 (added_iter != added_end && cmp(*added_iter, *base_iter))) {
-          MaybeAddFile(vstorage, level, *added_iter++);
-        } else {
+          if(vstorage->is_nvmcf) {
+            MaybeAddFile(vstorage, level, *added_iter++, true);
+          }
+          else{
+            MaybeAddFile(vstorage, level, *added_iter++);
+          }
+        } else {   
           MaybeAddFile(vstorage, level, *base_iter++);
         }
       }
@@ -412,12 +440,26 @@ class VersionBuilder::Rep {
     }
   }
 
-  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f) {
-    if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
-      // f is to-be-deleted table file
-      vstorage->RemoveCurrentStats(f);
-    } else {
-      vstorage->AddFile(level, f, info_log_);
+  void MaybeAddFile(VersionStorageInfo* vstorage, int level, FileMetaData* f, bool is_nvmcf_added_iter = false) {
+    if (!is_nvmcf_added_iter) {
+      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0) {
+        // f is to-be-deleted table file
+        //printf("remove table:%lu\n",f->fd.GetNumber());
+        vstorage->RemoveCurrentStats(f);
+      } else {
+        //printf("add table:%lu\n",f->fd.GetNumber());
+        vstorage->AddFile(level, f, info_log_);
+      }
+    }
+    else {
+      if (levels_[level].deleted_files.count(f->fd.GetNumber()) > 0 && !f->is_nvm_level0 ) {  //nvm ,l0 is different
+        // f is to-be-deleted table file
+        //printf("remove table:%lu\n",f->fd.GetNumber());
+        vstorage->RemoveCurrentStats(f);
+      } else {
+        //printf("add table:%lu\n",f->fd.GetNumber());
+        vstorage->AddFile(level, f, info_log_);
+      }
     }
   }
 };
@@ -458,8 +500,8 @@ void VersionBuilder::LoadTableHandlers(InternalStats* internal_stats,
 }
 
 void VersionBuilder::MaybeAddFile(VersionStorageInfo* vstorage, int level,
-                                  FileMetaData* f) {
-  rep_->MaybeAddFile(vstorage, level, f);
+                                  FileMetaData* f, bool is_nvmcf_added_iter = false) {
+  rep_->MaybeAddFile(vstorage, level, f, is_nvmcf_added_iter);
 }
 
 }  // namespace rocksdb

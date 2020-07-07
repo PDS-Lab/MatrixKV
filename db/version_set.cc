@@ -52,6 +52,8 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/column_compaction_iterator.h"
+
 namespace rocksdb {
 
 namespace {
@@ -131,9 +133,14 @@ class FilePicker {
 #ifdef NDEBUG
     (void)files;
 #endif
+    bool is_nvmcf = false; 
+    if(files[0].size() > 0 && files[0][0]->is_nvm_level0) {
+      curr_level_ = 0; //nvmcf 不加L0层
+      is_nvmcf = true;
+    }
     // Setup member variables to search first level.
     search_ended_ = !PrepareNextLevel();
-    if (!search_ended_) {
+    if (!search_ended_ && !is_nvmcf) {
       // Prefetch Level 0 table data to avoid cache miss if possible.
       for (unsigned int i = 0; i < (*level_files_brief_)[0].num_files; ++i) {
         auto* r = (*level_files_brief_)[0].files[i].fd.table_reader;
@@ -365,8 +372,17 @@ Version::~Version() {
         assert(cfd_ != nullptr);
         uint32_t path_id = f->fd.GetPathId();
         assert(path_id < cfd_->ioptions()->cf_paths.size());
-        vset_->obsolete_files_.push_back(
+        //printf("obsolete_files_:%ld is_nvm_level0:%d key:%ld nvmcf:%p\n",f->fd.GetNumber(),f->is_nvm_level0,f->first_key_index,cfd_->nvmcfmodule);
+        if( f->is_nvm_level0 && (cfd_->nvmcfmodule != nullptr)) {
+          //printf("push:%ld\n",f->fd.GetNumber());
+          vset_->obsolete_files_.push_back(
+            ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path, cfd_->nvmcfmodule));
+        }
+        else {
+          vset_->obsolete_files_.push_back(
             ObsoleteFileInfo(f, cfd_->ioptions()->cf_paths[path_id].path));
+        }
+        
       }
     }
   }
@@ -1000,6 +1016,7 @@ void Version::AddIterators(const ReadOptions& read_options,
   assert(storage_info_.finalized_);
 
   for (int level = 0; level < storage_info_.num_non_empty_levels(); level++) {
+    if(storage_info_.is_nvmcf && level == 0 ) continue;
     AddIteratorsForLevel(read_options, soptions, merge_iter_builder, level,
                          range_del_agg);
   }
@@ -1143,6 +1160,7 @@ VersionStorageInfo::VersionStorageInfo(
       estimated_compaction_needed_bytes_(0),
       finalized_(false),
       force_consistency_checks_(_force_consistency_checks) {
+  is_nvmcf = false;
   if (ref_vstorage != nullptr) {
     accumulated_file_size_ = ref_vstorage->accumulated_file_size_;
     accumulated_raw_key_size_ = ref_vstorage->accumulated_raw_key_size_;
@@ -1185,7 +1203,11 @@ Version::Version(ColumnFamilyData* column_family_data, VersionSet* vset,
       refs_(0),
       env_options_(env_opt),
       mutable_cf_options_(mutable_cf_options),
-      version_number_(version_number) {}
+      version_number_(version_number) {
+        if(cfd_ != nullptr && cfd_->nvmcfmodule != nullptr){   //标识storage_info_是nvmcf
+          storage_info_.is_nvmcf = true;
+        }
+      }
 
 void Version::Get(const ReadOptions& read_options, const LookupKey& k,
                   PinnableSlice* value, Status* status,
@@ -1413,6 +1435,7 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     for (int level = 0;
          level < storage_info_.num_levels_ && init_count < kMaxInitCount;
          ++level) {
+      if(storage_info_.is_nvmcf && level == 0) continue;
       for (auto* file_meta : storage_info_.files_[level]) {
         if (MaybeInitializeFileMetaData(file_meta)) {
           // each FileMeta will be initialized only once.
@@ -1438,6 +1461,7 @@ void Version::UpdateAccumulatedStats(bool update_stats) {
     for (int level = storage_info_.num_levels_ - 1;
          storage_info_.accumulated_raw_value_size_ == 0 && level >= 0;
          --level) {
+      if(storage_info_.is_nvmcf && level ==0) continue;
       for (int i = static_cast<int>(storage_info_.files_[level].size()) - 1;
            storage_info_.accumulated_raw_value_size_ == 0 && i >= 0; --i) {
         if (MaybeInitializeFileMetaData(storage_info_.files_[level][i])) {
@@ -1521,15 +1545,28 @@ void VersionStorageInfo::EstimateCompactionBytesNeeded(
   }
   // Level 0
   bool level0_compact_triggered = false;
-  if (static_cast<int>(files_[0].size()) >=
-          mutable_cf_options.level0_file_num_compaction_trigger ||
-      level_size >= mutable_cf_options.max_bytes_for_level_base) {
-    level0_compact_triggered = true;
-    estimated_compaction_needed_bytes_ = level_size;
-    bytes_compact_to_next_level = level_size;
-  } else {
-    estimated_compaction_needed_bytes_ = 0;
+  if(!is_nvmcf){
+    if (static_cast<int>(files_[0].size()) >=
+            mutable_cf_options.level0_file_num_compaction_trigger ||
+        level_size >= mutable_cf_options.max_bytes_for_level_base) {
+      level0_compact_triggered = true;
+      estimated_compaction_needed_bytes_ = level_size;
+      bytes_compact_to_next_level = level_size;
+    } else {
+      estimated_compaction_needed_bytes_ = 0;
+    }
   }
+  else{
+    return;
+    /* if (level_size >= Level0_column_compaction_trigger_size) {
+      level0_compact_triggered = true;
+      estimated_compaction_needed_bytes_ = level_size;
+      bytes_compact_to_next_level = level_size;
+    } else {
+      estimated_compaction_needed_bytes_ = 0;
+    } */
+  }
+  
 
   // Level 1 and up.
   uint64_t bytes_next_level = 0;
@@ -3697,6 +3734,20 @@ Status VersionSet::Recover(
                                current_version_number_++);
       builder->SaveTo(v->storage_info());
 
+      /* printf("%d\n",v->storage_info()->is_nvmcf);
+      //if(v->storage_info()->is_nvmcf) {
+        auto L0files = v->storage_info()->LevelFiles(0);
+        for(unsigned int i = 0;i < L0files.size();i++){
+          printf("L0table:%lu [%s-%s] %d %lu %d %lu %lu %lu\n",L0files.at(i)->fd.GetNumber(),L0files.at(i)->smallest.DebugString(true).c_str(),L0files.at(i)->largest.DebugString(true).c_str(),
+            L0files.at(i)->is_nvm_level0, L0files.at(i)->first_key_index,L0files.at(i)->nvm_sstable_index, L0files.at(i)->keys_num, L0files.at(i)->key_point_filenum,
+              L0files.at(i)->raw_file_size);
+        }
+      //} */
+
+      if(v->storage_info()->is_nvmcf){
+        cfd->nvmcfmodule->RecoverFromStorageInfo(v->storage_info());
+      }
+
       // Install recovered version
       v->PrepareApply(*cfd->GetLatestMutableCFOptions(),
           !(db_options_->skip_stats_update_on_db_open));
@@ -4166,7 +4217,10 @@ Status VersionSet::WriteSnapshot(log::Writer* log) {
           edit.AddFile(level, f->fd.GetNumber(), f->fd.GetPathId(),
                        f->fd.GetFileSize(), f->smallest, f->largest,
                        f->fd.smallest_seqno, f->fd.largest_seqno,
-                       f->marked_for_compaction);
+                       f->marked_for_compaction, f->is_nvm_level0, 
+                       f->first_key_index, f->nvm_sstable_index, 
+                       f->keys_num, f->key_point_filenum, f->raw_file_size, f->nvm_meta_size, 
+                       f->compact_size_so_far, f->file_page, f->first_page_index);
         }
       }
       edit.SetLogNumber(cfd->GetLogNumber());
@@ -4394,7 +4448,59 @@ InternalIterator* VersionSet::MakeInputIterator(
   delete[] list;
   return result;
 }
+///
+InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
+      const Compaction* c, RangeDelAggregator* range_del_agg,
+      const EnvOptions& env_options_compactions){
+  auto cfd = c->column_family_data();
+  ReadOptions read_options;
+  read_options.verify_checksums = true;
+  read_options.fill_cache = false;
+  // Compaction iterators shouldn't be confined to a single prefix.
+  // Compactions use Seek() for
+  // (a) concurrent compactions,
+  // (b) CompactionFilter::Decision::kRemoveAndSkipUntil.
+  read_options.total_order_seek = true;
 
+  // Level-0 files have to be merged together.  For other levels,
+  // we will make a concatenating iterator per level.
+  // TODO(opt): use concatenating iterator for level-0 if there is no overlap
+  const size_t space = (c->level() == 0 ? c->input_levels(0)->num_files +
+                                              c->num_input_levels() - 1
+                                        : c->num_input_levels());
+  InternalIterator** list = new InternalIterator* [space];
+  size_t num = 0;
+  FileEntry* file = nullptr;
+  for (size_t which = 0; which < c->num_input_levels(); which++) {
+    if (c->input_levels(which)->num_files != 0) {
+      if (c->level(which) == 0) {
+        for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
+          file = c->GetColumnCompactionItem()->files.at(i);
+
+          list[num++] = NewColumnCompactionItemIterator(&cfd->internal_comparator(), cfd->nvmcfmodule->GetIndexPtr(file->sstable_index), cfd->nvmcfmodule->GetPersistentSstable(),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
+        }
+      } else {
+        // Create concatenating iterator for the files from this level
+        list[num++] = new LevelIterator(
+            cfd->table_cache(), read_options, env_options_compactions,
+            cfd->internal_comparator(), c->input_levels(which),
+            c->mutable_cf_options()->prefix_extractor.get(),
+            false /* should_sample */,
+            nullptr /* no per level latency histogram */,
+            true /* for_compaction */, false /* skip_filters */,
+            static_cast<int>(which) /* level */, range_del_agg,
+            c->boundaries(which));
+      }
+    }
+  }
+  assert(num <= space);
+  InternalIterator* result =
+      NewMergingIterator(&c->column_family_data()->internal_comparator(), list,
+                         static_cast<int>(num));
+  delete[] list;
+  return result;
+}
+///
 // verify that the files listed in this compaction are present
 // in the current version
 bool VersionSet::VerifyCompactionFileConsistency(Compaction* c) {
@@ -4512,8 +4618,10 @@ void VersionSet::GetObsoleteFiles(std::vector<ObsoleteFileInfo>* files,
   std::vector<ObsoleteFileInfo> pending_files;
   for (auto& f : obsolete_files_) {
     if (f.metadata->fd.GetNumber() < min_pending_output) {
+      //printf("add ctx:%ld min_pending_output:%ld %p\n",f.metadata->fd.GetNumber(),min_pending_output,f.nvmcf);
       files->push_back(std::move(f));
     } else {
+      //printf("add pending_files:%ld min_pending_output:%ld\n",f.metadata->fd.GetNumber(),min_pending_output);
       pending_files.push_back(std::move(f));
     }
   }

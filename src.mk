@@ -221,6 +221,20 @@ LIB_SOURCES =                                                   \
   utilities/ttl/db_ttl_impl.cc                                  \
   utilities/write_batch_with_index/write_batch_with_index.cc    \
   utilities/write_batch_with_index/write_batch_with_index_internal.cc    \
+  utilities/nvm_mod/my_log.cc   \
+  utilities/nvm_mod/my_mutex.cc   \
+  utilities/nvm_mod/common.cc   \
+  utilities/nvm_mod/nvm_option.cc    \
+  utilities/nvm_mod/bitmap.cc  \
+  utilities/nvm_mod/nvm_cf_mod.cc   \
+  utilities/nvm_mod/sstable_meta.cc   \
+  utilities/nvm_mod/nvm_flush_job.cc  \
+  utilities/nvm_mod/l0_table_builder.cc  \
+  utilities/nvm_mod/global_statistic.cc  \
+  utilities/nvm_mod/column_compaction_iterator.cc  \
+  utilities/nvm_mod/nvm_pager.cc  \
+  util/zipf.cc                                  \
+
 
 ifeq (,$(shell $(CXX) -fsyntax-only -maltivec -xc /dev/null 2>&1))
 LIB_SOURCES_ASM =\

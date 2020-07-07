@@ -162,6 +162,7 @@ struct JobContext {
   std::vector<SuperVersionContext> superversion_contexts;
 
   autovector<log::Writer*> logs_to_free;
+  std::vector<NvmCfModule*> nvmcfs;
 
   // the current manifest_file_number, log_number and prev_log_number
   // that corresponds to the set of files in 'live'.

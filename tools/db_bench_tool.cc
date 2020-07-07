@@ -75,6 +75,14 @@
 #include "utilities/merge_operators/bytesxor.h"
 #include "utilities/persistent_cache/block_cache_tier.h"
 
+#include <algorithm>
+#include <queue>
+#include "utilities/nvm_mod/my_log.h"
+#include "utilities/nvm_mod/global_statistic.h"
+#include "util/zipf.h"
+
+#define REQUEST_QUEUE 1
+
 #ifdef OS_WIN
 #include <io.h>  // open/close
 #endif
@@ -121,7 +129,10 @@ DEFINE_string(
     "fillseekseq,"
     "randomtransaction,"
     "randomreplacekeys,"
-    "timeseries",
+    "timeseries,"
+    "fillrandomcontrolrequest,"
+    "ycsbwklda,"
+    ,
 
     "Comma-separated list of operations to run in the specified"
     " order. Available benchmarks:\n"
@@ -192,6 +203,33 @@ DEFINE_string(
     "\tsstables    -- Print sstable info\n"
     "\theapprofile -- Dump a heap profile (if supported by this port)\n"
     "\treplay      -- replay the trace file specified with trace_file\n");
+
+DEFINE_bool(use_nvm_module, false,"");
+//DEFINE_bool(reset_nvm_storage, false,"");
+DEFINE_string(pmem_path,"","");
+//DEFINE_uint64(pmem_size,1ul * 1024 * 1024,"");
+DEFINE_uint64(level0_column_compaction_trigger_size, rocksdb::NvmSetup().Level0_column_compaction_trigger_size, "");
+DEFINE_uint64(level0_column_compaction_slowdown_size, rocksdb::NvmSetup().Level0_column_compaction_slowdown_size, "");
+DEFINE_uint64(level0_column_compaction_stop_size, rocksdb::NvmSetup().Level0_column_compaction_stop_size, "");
+
+DEFINE_bool(report_write_latency, false,"");
+
+
+
+/////
+DEFINE_uint64(request_rate_limit, 20000, "Number of request IOPS, default 20K iops");
+DEFINE_uint64(per_queue_length, 4, "Number of per request queue length");
+/////
+/////
+DEFINE_bool(report_ops_latency, false,"");
+DEFINE_bool(report_fillrandom_latency, false,"");
+/////
+/////
+DEFINE_int64(ycsb_workloada_num, 1000000,"");
+
+DEFINE_bool(YCSB_uniform_distribution, false, "Uniform key distribution for YCSB");
+/////
+
 
 DEFINE_int64(num, 1000000, "Number of key/values to place in database");
 
@@ -1781,12 +1819,12 @@ class Stats {
     double elapsed = (finish_ - start_) * 1e-6;
     double throughput = (double)done_/elapsed;
 
-    fprintf(stdout, "%-12s : %11.3f micros/op %ld ops/sec;%s%s\n",
+    fprintf(stdout, "%-12s : %11.3f micros/op %ld ops/sec;%s%s %.2f s\n",
             name.ToString().c_str(),
             elapsed * 1e6 / done_,
             (long)throughput,
             (extra.empty() ? "" : " "),
-            extra.c_str());
+            extra.c_str(),elapsed);
     if (FLAGS_histogram) {
       for (auto it = hist_.begin(); it != hist_.end(); ++it) {
         fprintf(stdout, "Microseconds per %s:\n%s\n",
@@ -1891,7 +1929,98 @@ class TimestampEmulator {
   uint64_t Get() const { return timestamp_.load(); }
   void Inc() { timestamp_++; }
 };
+struct Latency {
+  uint64_t stay_queue_time = 0;    //Microsecond
+  uint64_t execute_time = 0;      //Microsecond
+};
+bool CmpLatency(Latency x,Latency y) {
+  return ( x.stay_queue_time + x.execute_time ) < ( y.stay_queue_time + y.execute_time );
+}
+uint64_t AllLatency(Latency x) {
+  return ( x.stay_queue_time + x.execute_time );
+}
+void ReportLatency(Latency *ops_latency, uint64_t num) {
+    if( ops_latency == nullptr || num < 10 ) return;
+    std::sort(ops_latency, ops_latency + num, CmpLatency);
+    /* for(uint64_t i = 0; i < num; i++) {
+      printf("%lu\n",ops_latency[i]);
+    }
+    printf("done:%lu\n",num); */
+    uint64_t cnt = 0;
+    printf("---------write latency---------\n");
+    cnt = 0.1 * num;
+    printf("latency: 10%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.2 * num;
+    printf("latency: 20%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.3 * num;
+    printf("latency: 30%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.4 * num;
+    printf("latency: 40%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.5 * num;
+    printf("latency: 50%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.6 * num;
+    printf("latency: 60%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.7 * num;
+    printf("latency: 70%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.8 * num;
+    printf("latency: 80%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.9 * num;
+    printf("latency: 90%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.99 * num;
+    printf("latency: 99%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.999 * num;
+    printf("latency: 99.9%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.9999 * num;
+    printf("latency: 99.99%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    cnt = 0.99999 * num;
+    printf("latency: 99.999%%th(%lu) = [%lu us]\n", cnt, AllLatency(ops_latency[cnt - 1]));
+    printf("-------------------------------\n");
 
+    for(uint64_t i = 0; i < num; i++) {
+      RECORD_INFO(4,"%lu,%lu,%lu\n",AllLatency(ops_latency[i]),ops_latency[i].stay_queue_time,ops_latency[i].execute_time);
+    }
+}
+void ReportLatency2(uint64_t *ops_latency, uint64_t num) {
+    if( ops_latency == nullptr || num < 10 ) return;
+    std::sort(ops_latency, ops_latency + num);
+    /* for(uint64_t i = 0; i < num; i++) {
+      printf("%lu\n",ops_latency[i]);
+    }
+    printf("done:%lu\n",num); */
+    uint64_t cnt = 0;
+    printf("---------write latency---------\n");
+    cnt = 0.1 * num;
+    printf("latency: 10%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.2 * num;
+    printf("latency: 20%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.3 * num;
+    printf("latency: 30%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.4 * num;
+    printf("latency: 40%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.5 * num;
+    printf("latency: 50%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.6 * num;
+    printf("latency: 60%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.7 * num;
+    printf("latency: 70%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.8 * num;
+    printf("latency: 80%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9 * num;
+    printf("latency: 90%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99 * num;
+    printf("latency: 99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.999 * num;
+    printf("latency: 99.9%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.9999 * num;
+    printf("latency: 99.99%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    cnt = 0.99999 * num;
+    printf("latency: 99.999%%th(%lu) = [%lu us]\n", cnt, ops_latency[cnt - 1]);
+    printf("-------------------------------\n");
+
+    for(uint64_t i = 0; i < num; i++) {
+      RECORD_INFO(4,"%lu\n",ops_latency[i]);
+    }
+}
 // State shared by all concurrent executions of the same benchmark.
 struct SharedState {
   port::Mutex mu;
@@ -1910,6 +2039,28 @@ struct SharedState {
   long num_initialized;
   long num_done;
   bool start;
+
+/////for fillrandomcontrolrequest
+  port::Mutex queue_mu[REQUEST_QUEUE];   //mutex of op_queues
+  std::queue<uint64_t> op_queues[REQUEST_QUEUE];  // request queue, save the time to join the queue
+  
+  uint64_t request_num = 0;
+  std::shared_ptr<RateLimiter> request_rate_limiter;
+
+  port::Mutex latency_mu;   //mutex of ops_latency, last_second_op, ops_done
+  Latency *ops_latency = nullptr;  //all ops latency;
+  //uint64_t last_second_op = 0;   //last second op
+  uint64_t ops_done = 0; //
+
+/////
+
+//////for report_ops_latency && ( fillrandom )
+port::Mutex latencys_mutex;
+uint64_t *latencys = nullptr;
+uint64_t ops_num = 0;
+uint64_t ops_bytes = 0;
+
+//////
 
   SharedState() : cv(&mu), perf_level(FLAGS_perf_level) { }
 };
@@ -2589,6 +2740,11 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       } else if (name == "fillrandom") {
         fresh_db = true;
         method = &Benchmark::WriteRandom;
+      }  else if (name == "fillrandomcontrolrequest") {  //////add 
+        fresh_db = true;
+        method = &Benchmark::FillRandomControlRequest;
+      } else if (name == "ycsbwklda") {
+        method = &Benchmark::YCSBWorkloadA;    /////
       } else if (name == "filluniquerandom") {
         fresh_db = true;
         if (num_threads > 1) {
@@ -2715,7 +2871,13 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         }
         fresh_db = true;
         method = &Benchmark::TimeSeries;
-      } else if (name == "stats") {
+      } else if(name == "wait") {
+        WaitBalanceLevel();
+      } else if(name == "clean_cache") {
+        CleanCache();
+      }  else if(name == "sleep20s") {
+        Sleep20s();
+      }  else if (name == "stats") {
         PrintStats("rocksdb.stats");
       } else if (name == "resetstats") {
         ResetStats();
@@ -2901,6 +3063,21 @@ void VerifyDBFromDB(std::string& truth_db_name) {
                                              FLAGS_report_interval_seconds));
     }
 
+    if (method == &Benchmark::FillRandomControlRequest ) {
+      shared.ops_latency = new Latency[FLAGS_num];
+      shared.request_rate_limiter.reset(
+          NewGenericRateLimiter(FLAGS_request_rate_limit));
+    }
+    if ( FLAGS_report_fillrandom_latency && method == &Benchmark::WriteRandom) {
+      shared.latencys = new uint64_t[FLAGS_num * n];
+    }
+    //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
+    if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
+      shared.latencys = new uint64_t[FLAGS_ycsb_workloada_num * n];
+      n = n + 1;
+      shared.total = n;  //need extra thread to record latency and throughput per second
+    }
+
     ThreadArg* arg = new ThreadArg[n];
 
     for (int i = 0; i < n; i++) {
@@ -2948,6 +3125,23 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       merge_stats.Merge(arg[i].thread->stats);
     }
     merge_stats.Report(name);
+    ReportLatency(shared.ops_latency, shared.ops_done);
+    ReportLatency2(shared.latencys, shared.ops_num);
+
+    if (method == &Benchmark::FillRandomControlRequest ) {
+      delete[] shared.ops_latency;
+      shared.ops_latency = nullptr;
+    }
+
+    if ( FLAGS_report_fillrandom_latency && method == &Benchmark::WriteRandom) {
+      delete[] shared.latencys;
+      shared.latencys = nullptr;
+    }
+    //if ( FLAGS_report_ops_latency && ( method == &Benchmark::WriteRandom || method == &Benchmark::YCSBWorkloadA)) {
+    if ( FLAGS_report_ops_latency && (method == &Benchmark::YCSBWorkloadA)) {
+      delete[] shared.latencys;
+      shared.latencys = nullptr;
+    }
 
     for (int i = 0; i < n; i++) {
       delete arg[i].thread;
@@ -3563,6 +3757,20 @@ void VerifyDBFromDB(std::string& truth_db_name) {
           FLAGS_rate_limiter_auto_tuned));
     }
 
+    if (FLAGS_use_nvm_module && options.nvm_setup == nullptr) {
+      auto nvm_setup = new NvmSetup();
+      nvm_setup->use_nvm_module = FLAGS_use_nvm_module;
+      //nvm_setup->reset_nvm_storage = FLAGS_reset_nvm_storage;
+      nvm_setup->pmem_path = FLAGS_pmem_path;
+      //nvm_setup->pmem_size = FLAGS_pmem_size;
+      nvm_setup->Level0_column_compaction_trigger_size = FLAGS_level0_column_compaction_trigger_size;
+      nvm_setup->Level0_column_compaction_slowdown_size = FLAGS_level0_column_compaction_slowdown_size;
+      nvm_setup->Level0_column_compaction_stop_size = FLAGS_level0_column_compaction_stop_size;
+
+      
+      options.nvm_setup.reset(nvm_setup);
+    }
+
     options.listeners.emplace_back(listener_);
     if (FLAGS_num_multi_db <= 1) {
       OpenDb(options, FLAGS_db, &db_);
@@ -3842,6 +4050,18 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     int64_t stage = 0;
     int64_t num_written = 0;
+    int64_t t_last_num = 0;
+    int64_t t_last_bytes = 0;
+    double t_start_time = Env::Default()->NowMicros();
+    double t_last_time = t_start_time;
+    double t_cur_time;
+#ifdef STATISTIC_OPEN
+    global_stats.start_time = t_start_time;
+#endif
+
+    uint64_t per_write_start_time = 0;
+
+
     while (!duration.Done(entries_per_batch_)) {
       if (duration.GetStage() != stage) {
         stage = duration.GetStage();
@@ -3867,6 +4087,9 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         // once per write.
         thread->stats.ResetLastOpTime();
       }
+      if (FLAGS_report_fillrandom_latency) {   //entries_per_batch_ need equal 1
+        per_write_start_time = FLAGS_env->NowMicros();
+      }
 
       for (int64_t j = 0; j < entries_per_batch_; j++) {
         int64_t rand_num = key_gens[id]->Next();
@@ -3890,6 +4113,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         }
         bytes += value_size_ + key_size_;
         ++num_written;
+        //printf("put:%s\n",key.ToString(true).c_str());
         if (writes_per_range_tombstone_ > 0 &&
             num_written > writes_before_delete_range_ &&
             (num_written - writes_before_delete_range_) /
@@ -3938,6 +4162,14 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       if (!use_blob_db_) {
         s = db_with_cfh->db->Write(write_options_, &batch);
       }
+      if (FLAGS_report_fillrandom_latency) {   //entries_per_batch_ need equal 1
+
+        thread->shared->latencys_mutex.Lock();
+        thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_write_start_time;
+        thread->shared->ops_num++;
+        thread->shared->ops_bytes += (value_size_ + key_size_);
+        thread->shared->latencys_mutex.Unlock();
+      }
       thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db,
                                 entries_per_batch_, kWrite);
       if (FLAGS_sine_write_rate) {
@@ -3969,10 +4201,417 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         fprintf(stderr, "put error: %s\n", s.ToString().c_str());
         exit(1);
       }
+#ifdef STATISTIC_OPEN
+      t_cur_time = Env::Default()->NowMicros();
+      if (t_cur_time - t_last_time > 10*1e6) {
+        double use_time = (t_cur_time - t_last_time)*1e-6;
+        int64_t ebytes = bytes - t_last_bytes;
+        double now = (t_cur_time - t_start_time)*1e-6;
+        int64_t written_num = num_written - t_last_num;
+
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops compaction:,%ld,pick_time:,%.3f s\n",
+          now,(1.0*ebytes/1048576.0)/use_time,1.0*written_num/use_time,1.0*bytes/1048576.0,(1.0*bytes/1048576.0)/now,1.0*num_written/now,global_stats.compaction_num,
+          1.0*global_stats.pick_compaction_time*1e-6);
+
+        t_last_time = t_cur_time;
+        t_last_bytes = bytes;
+        t_last_num = num_written;
+
+        std::string stats;
+        //db_with_cfh->db->GetProperty("rocksdb.levelstats", &stats);
+        db_with_cfh->db->GetProperty("rocksdb.stats", &stats);
+        RECORD_INFO(2,"now= %.2f s\n%s\n",now,stats.c_str());
+      }
+
+#endif
     }
     thread->stats.AddBytes(bytes);
   }
+/////
+// Thread 0 -- record latency and throughput per second
+// Thread 1 -- the workload threads. Control request speed and push request to queues
+// Thread REQUEST_QUEUE 2 ~ REQUEST_QUEUE -- pop request from queues and put in db
+  void FillRandomControlRequest(ThreadState* thread) {
+    if( thread->shared->total < REQUEST_QUEUE + 2 ) {
+      printf("Error:Test FillRandomControlRequest need %d threads\n",REQUEST_QUEUE + 2);
+      return;
+    }
+    if( thread->tid == 0 ) {  //record latency and throughput per second
+      uint64_t start_time = thread->stats.GetStart();
+      uint64_t last_ops = 0;
+      uint64_t last_time = start_time;
+      uint64_t now_done = 0;
+      uint64_t per_second_done;
+      uint64_t now_time;
+      uint64_t last_request_num = 0;
+      uint64_t now_request_num;
+      while(true) {
+        if( thread->shared->num_done >= thread->shared->total - 1 ) break;
+        sleep(1);
+        
+        now_time = FLAGS_env->NowMicros();
+        thread->shared->latency_mu.Lock();
+        now_done = thread->shared->ops_done;
+        thread->shared->latency_mu.Unlock();
 
+        now_request_num = thread->shared->request_num;
+
+        per_second_done = now_done - last_ops;
+        double use_time = (now_time - last_time)*1e-6;
+        int64_t ebytes = (value_size_ + key_size_) * per_second_done;
+        int64_t now_bytes = (value_size_ + key_size_) * now_done;
+        double now = (now_time - start_time)*1e-6;
+        uint64_t e_request_num = now_request_num - last_request_num;
+
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops request_num,%lu,queue_size,%lu,\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now,e_request_num,
+                    thread->shared->op_queues[0].size());
+        
+        Latency *ops_latency = thread->shared->ops_latency;
+        std::sort(ops_latency + last_ops, ops_latency + now_done, CmpLatency);
+        /* for(uint64_t i = last_ops; i < now_done; i++) {
+          printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
+        } */
+        if (per_second_done > 2) {
+          uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
+          uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
+          uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
+          uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
+          uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
+
+          //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
+
+          RECORD_INFO(5,"%.2f,%.1f,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+                    now,1.0*per_second_done/use_time,
+                    AllLatency(ops_latency[cnt90]),ops_latency[cnt90].stay_queue_time,ops_latency[cnt90].execute_time,
+                    AllLatency(ops_latency[cnt99]),ops_latency[cnt99].stay_queue_time,ops_latency[cnt99].execute_time,
+                    AllLatency(ops_latency[cnt999]),ops_latency[cnt999].stay_queue_time,ops_latency[cnt999].execute_time,
+                    AllLatency(ops_latency[cnt9999]),ops_latency[cnt9999].stay_queue_time,ops_latency[cnt9999].execute_time,
+                    AllLatency(ops_latency[cnt99999]),ops_latency[cnt99999].stay_queue_time,ops_latency[cnt99999].execute_time);
+        }
+        
+
+        last_ops = now_done;
+        last_time = now_time;
+        last_request_num = now_request_num;
+        //thread->shared->last_second_op = thread->shared->done;
+
+        
+      }
+
+    }
+    else if( thread->tid == 1 ) {  //push request to queues
+      int64_t num = FLAGS_num;
+      int64_t done = 0;
+
+      int queue_index = 0;
+      bool push_ok = false;
+
+      while(done < num) {
+        //thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
+
+        thread->shared->queue_mu[queue_index].Lock();
+        if(thread->shared->op_queues[queue_index].size() < FLAGS_per_queue_length ) {
+          thread->shared->op_queues[queue_index].push(FLAGS_env->NowMicros());
+          push_ok = true;
+        }
+        thread->shared->queue_mu[queue_index].Unlock();
+        if(push_ok == true) {
+          done++;
+          thread->shared->request_num++;
+          push_ok = false;
+          thread->shared->request_rate_limiter->Request(1, Env::IO_HIGH, nullptr /* stats */, RateLimiter::OpType::kWrite);
+        }
+        queue_index = (queue_index + 1) % REQUEST_QUEUE;
+        //uint64_t sleep_time = 1000000/FLAGS_request_rate_limit;
+        //printf("sleep_time:%lu\n",sleep_time);
+        //uint64_t st = FLAGS_env->NowMicros();
+        //usleep(sleep_time); //control requst,
+        //uint64_t et = FLAGS_env->NowMicros();
+        //printf("sleep_time:%lu\n",et - st);
+      }
+    }
+    else if ( thread->tid > 1 ) { //Put db
+      int64_t num = FLAGS_num / (thread->shared->total - 2);
+      int64_t done = 0;
+
+      //int64_t bytes = 0;
+
+      /* size_t num_key_gens = 1;
+      if (db_.db == nullptr) {
+        num_key_gens = multi_dbs_.size();
+      }
+      std::vector<std::unique_ptr<KeyGenerator>> key_gens(num_key_gens);
+      int64_t max_ops = num * num_key_gens;
+      int64_t ops_per_stage = max_ops;
+
+      for (size_t i = 0; i < num_key_gens; i++) {
+        key_gens[i].reset(new KeyGenerator(&(thread->rand), RANDOM,
+                                          FLAGS_num ,
+                                          ops_per_stage));
+      }
+      std::unique_ptr<const char[]> key_guard;
+      Slice key = AllocateKey(&key_guard);
+      RandomGenerator gen; */
+
+      ReadOptions options(FLAGS_verify_checksum, true);
+      RandomGenerator gen;
+      init_zipf_generator(0, FLAGS_num);
+    
+      std::string value;
+      std::unique_ptr<const char[]> key_guard;
+      Slice key = AllocateKey(&key_guard);
+      DB* db = SelectDB(thread);
+      int64_t reads_done = 0;
+      int64_t writes_done = 0;
+      int64_t found = 0;
+
+      while(done < num) {
+
+        thread->shared->queue_mu[thread->tid - 2 ].Lock();
+        if(!thread->shared->op_queues[thread->tid - 2 ].empty()){
+          uint64_t add_to_queue_micro = thread->shared->op_queues[thread->tid - 2 ].front();
+          thread->shared->op_queues[thread->tid - 2 ].pop();
+          thread->shared->queue_mu[thread->tid - 2 ].Unlock();
+          uint64_t pop_from_queue_micro = FLAGS_env->NowMicros();
+
+          thread->stats.ResetLastOpTime();
+
+          /* size_t id = thread->rand.Next() % num_key_gens;
+          DBWithColumnFamilies* db_with_cfh = SelectDBWithCfh(id);
+          int64_t rand_num = key_gens[id]->Next();
+          GenerateKeyFromInt(rand_num, FLAGS_num, &key);
+
+          Status s = db_with_cfh->db->Put(write_options_, key, gen.Generate(value_size_));
+          if (!s.ok()) {
+              fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+              exit(1);
+          } */
+
+
+          long k;
+          if (FLAGS_YCSB_uniform_distribution){
+            //Generate number from uniform distribution            
+            k = thread->rand.Next() % FLAGS_num;
+          } else { //default
+            //Generate number from zipf distribution
+            k = nextValue() % FLAGS_num;            
+          }
+          GenerateKeyFromInt(k, FLAGS_num, &key);
+
+          int next_op = thread->rand.Next() % 100;
+          if (next_op < 50){
+            //read
+            Status s = db->Get(options, key, &value);
+            if (!s.ok() && !s.IsNotFound()) {
+              fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
+        
+            } else if (!s.IsNotFound()) {
+              found++;
+              //thread->stats.FinishedOps(nullptr, db, 1, kRead);
+            }
+            thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
+            reads_done++;
+            
+          } else{
+
+            Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+            if (!s.ok()) {
+              fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+              //exit(1);
+            } else{
+              writes_done++;
+              thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+            }                
+          }
+
+          //bytes += value_size_ + key_size_;
+          done++;
+          uint64_t done_micro = FLAGS_env->NowMicros();
+          thread->shared->latency_mu.Lock();
+          thread->shared->ops_latency[thread->shared->ops_done].stay_queue_time = pop_from_queue_micro - add_to_queue_micro;
+          thread->shared->ops_latency[thread->shared->ops_done].execute_time = done_micro - pop_from_queue_micro;
+          thread->shared->ops_done++;
+          thread->shared->latency_mu.Unlock();
+          //thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+
+        }
+        else{
+          thread->shared->queue_mu[thread->tid - 2 ].Unlock();
+          //usleep(2);
+        }
+      }
+      char msg[200];
+      snprintf(msg, sizeof(msg), "(thread id:%d reads:%" PRIu64 " writes:%" PRIu64 \
+              " total:%" PRIu64 " found:%" PRIu64 ")",
+              thread->tid, reads_done, writes_done, done, found);
+      thread->stats.AddMessage(msg);
+      //thread->stats.AddBytes(bytes);
+
+    }
+  }
+// Workload A: Update heavy workload
+  // This workload has a mix of 50/50 reads and writes. 
+  // An application example is a session store recording recent actions.
+  // Read/update ratio: 50/50
+  // Default data size: 1 KB records 
+  // Request distribution: zipfian
+  void YCSBWorkloadA(ThreadState* thread) {
+    if( thread->tid == thread->shared->total - 1 ) {  //record latency and throughput per second
+      uint64_t start_time = thread->stats.GetStart();
+      uint64_t last_ops = 0;
+      uint64_t last_time = start_time;
+      uint64_t now_done = 0;
+      uint64_t per_second_done;
+      uint64_t now_time;
+      
+      while(true) {
+        if( thread->shared->num_done >= thread->shared->total - 1 ) break;
+        sleep(1);
+        
+        now_time = FLAGS_env->NowMicros();
+        thread->shared->latencys_mutex.Lock();
+        now_done = thread->shared->ops_num;
+        thread->shared->latencys_mutex.Unlock();
+
+        per_second_done = now_done - last_ops;
+        double use_time = (now_time - last_time)*1e-6;
+        int64_t ebytes = (value_size_ + key_size_) * per_second_done;
+        int64_t now_bytes = (value_size_ + key_size_) * now_done;
+        double now = (now_time - start_time)*1e-6;
+
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops ,\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now);
+        
+        uint64_t *ops_latency = thread->shared->latencys;
+        std::sort(ops_latency + last_ops, ops_latency + now_done);
+        /* for(uint64_t i = last_ops; i < now_done; i++) {
+          printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
+        } */
+        if (per_second_done > 2) {
+          uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
+          uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
+          uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
+          uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
+          uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
+
+          //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
+
+          RECORD_INFO(5,"%.2f,%.1f,%lu,,,%lu,,,%lu,,,%lu,,,%lu,,,\n",
+                    now,1.0*per_second_done/use_time,
+                    ops_latency[cnt90],
+                    ops_latency[cnt99],
+                    ops_latency[cnt999],
+                    ops_latency[cnt9999],
+                    ops_latency[cnt99999]);
+        }
+        
+
+        last_ops = now_done;
+        last_time = now_time;
+
+      }
+    return;
+    }
+
+    ReadOptions options(FLAGS_verify_checksum, true);
+    RandomGenerator gen;
+    
+    init_zipf_generator(0, FLAGS_num);
+    
+    std::string value;
+    int64_t found = 0;
+    uint64_t per_op_start_time = 0;
+
+    int64_t reads_done = 0;
+    int64_t writes_done = 0;
+    Duration duration(FLAGS_duration, FLAGS_ycsb_workloada_num);
+
+    std::unique_ptr<const char[]> key_guard;
+    Slice key = AllocateKey(&key_guard);
+
+    if (FLAGS_benchmark_write_rate_limit > 0) {
+       printf(">>>> FLAGS_benchmark_write_rate_limit YCSBA \n");
+      thread->shared->write_rate_limiter.reset(
+          NewGenericRateLimiter(FLAGS_benchmark_write_rate_limit));
+    }
+    
+    // the number of iterations is the larger of read_ or write_
+    while (!duration.Done(1)) {
+      DB* db = SelectDB(thread);
+       
+      long k;
+      if (FLAGS_YCSB_uniform_distribution){
+        //Generate number from uniform distribution            
+        k = thread->rand.Next() % FLAGS_num;
+      } else { //default
+        //Generate number from zipf distribution
+        k = nextValue() % FLAGS_num;            
+      }
+      GenerateKeyFromInt(k, FLAGS_num, &key);
+
+      if (FLAGS_report_ops_latency) {   //
+        per_op_start_time = FLAGS_env->NowMicros();
+      }
+
+      int next_op = thread->rand.Next() % 100;
+      if (next_op < 50){
+        //read
+        Status s = db->Get(options, key, &value);
+        if (!s.ok() && !s.IsNotFound()) {
+          fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
+          //exit(1);
+          // we continue after error rather than exiting so that we can
+          // find more errors if any
+        } else if (!s.IsNotFound()) {
+          found++;
+          //thread->stats.FinishedOps(nullptr, db, 1, kRead);
+        }
+        thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
+        reads_done++;
+        
+      } else{
+        //write
+        if (FLAGS_benchmark_write_rate_limit > 0) {
+            
+            thread->shared->write_rate_limiter->Request(
+                value_size_ + key_size_, Env::IO_HIGH,
+                nullptr /* stats */, RateLimiter::OpType::kWrite);
+            thread->stats.ResetLastOpTime();
+        }
+
+        if (FLAGS_report_ops_latency) {   //
+          per_op_start_time = FLAGS_env->NowMicros();
+        }
+
+        Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+        if (!s.ok()) {
+          fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+          //exit(1);
+        } else{
+          writes_done++;
+          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+        }                
+      }
+
+      if (FLAGS_report_ops_latency) {   //
+
+        thread->shared->latencys_mutex.Lock();
+        thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_op_start_time;
+        thread->shared->ops_num++;
+        thread->shared->latencys_mutex.Unlock();
+      }
+
+    } 
+    char msg[100];
+    snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
+             " total:%" PRIu64 " found:%" PRIu64 ")",
+             reads_done, writes_done, FLAGS_ycsb_workloada_num, found);
+    thread->stats.AddMessage(msg);
+  }
+
+
+/////
   Status DoDeterministicCompact(ThreadState* thread,
                                 CompactionStyle compaction_style,
                                 WriteMode write_mode) {
@@ -4421,6 +5060,13 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   }
 
   void ReadRandom(ThreadState* thread) {
+#ifdef STATISTIC_OPEN
+    global_stats.l0_get_time = 0;
+    global_stats.l0_find_num = 0;
+    global_stats.l0_read_time = 0;
+    global_stats.l0_search_time = 0;
+    global_stats.l0_find_files_time = 0;
+#endif
     int64_t read = 0;
     int64_t found = 0;
     int64_t bytes = 0;
@@ -4455,6 +5101,10 @@ void VerifyDBFromDB(std::string& truth_db_name) {
         fprintf(stderr, "Get returned an error: %s\n", s.ToString().c_str());
         abort();
       }
+      /* printf("get:%s\n",key.ToString(true).c_str());
+      if(!s.ok()){
+        printf("no find:%s (%s)\n",key.ToString(true).c_str(),s.ToString().c_str());
+      }*/
 
       if (thread->shared->read_rate_limiter.get() != nullptr &&
           read % 256 == 255) {
@@ -4465,10 +5115,15 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       thread->stats.FinishedOps(db_with_cfh, db_with_cfh->db, 1, kRead);
     }
 
-    char msg[100];
+    char msg[200];
+#ifdef STATISTIC_OPEN
+    snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found) l0_get_time:%.3f s l0_find_num:%lu l0_read_time:%.3f s l0_search_time:%.3f s l0_find_files_time:%.3f s;\n",
+             found, read, 1.0*global_stats.l0_get_time*1e-6,global_stats.l0_find_num,1.0*global_stats.l0_read_time*1e-6,1.0*global_stats.l0_search_time*1e-6,
+             1.0*global_stats.l0_find_files_time*1e-6);
+#else
     snprintf(msg, sizeof(msg), "(%" PRIu64 " of %" PRIu64 " found)\n",
              found, read);
-
+#endif
     thread->stats.AddBytes(bytes);
     thread->stats.AddMessage(msg);
 
@@ -5679,7 +6334,25 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       db_with_cfh.db->ResetStats();
     }
   }
-
+  void WaitBalanceLevel() {
+    if(db_.db == nullptr) return;
+    uint64_t sleep_time = 0;
+    while(!db_.db->HaveBalancedDistribution()){
+      sleep(10);
+      sleep_time += 10;
+    }
+    printf("Wait balance:%lu s\n",sleep_time);
+  }
+  void CleanCache() {
+    system("sync");
+    system("echo 3 > /proc/sys/vm/drop_caches");
+    sleep(5);
+    system("free -h");
+    printf("clean cache ok!\n");
+  }
+  void Sleep20s() {
+    sleep(20);
+  }
   void PrintStats(const char* key) {
     if (db_.db != nullptr) {
       PrintStats(db_.db, key, false);
@@ -5733,6 +6406,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 };
 
 int db_bench_tool(int argc, char** argv) {
+  rocksdb::init_log_file();
   rocksdb::port::InstallStackTraceHandler();
   static bool initialized = false;
   if (!initialized) {

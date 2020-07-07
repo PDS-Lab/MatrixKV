@@ -95,6 +95,11 @@
 #include "util/string_util.h"
 #include "util/sync_point.h"
 
+#include "utilities/nvm_mod/my_log.h"
+#include "utilities/nvm_mod/nvm_flush_job.h"
+#include "utilities/nvm_mod/global_statistic.h"
+
+
 namespace rocksdb {
 const std::string kDefaultColumnFamilyName("default");
 void DumpRocksDBBuildVersion(Logger* log);
@@ -251,7 +256,12 @@ DBImpl::DBImpl(const DBOptions& options, const std::string& dbname,
   // is called by client and this seqnum is advanced.
   preserve_deletes_seqnum_.store(0);
 }
-
+////
+bool DBImpl::HaveBalancedDistribution(ColumnFamilyHandle* column_family){
+  auto* cfd = reinterpret_cast<ColumnFamilyHandleImpl*>(column_family)->cfd();
+  return cfd->HaveBalancedDistribution();
+}
+////
 Status DBImpl::Resume() {
   ROCKS_LOG_INFO(immutable_db_options_.info_log, "Resuming DB");
 
@@ -1185,6 +1195,9 @@ InternalIterator* DBImpl::NewInternalIterator(const ReadOptions& read_options,
   if (s.ok()) {
     // Collect iterators for files in L0 - Ln
     if (read_options.read_tier != kMemtableTier) {
+      if(cfd->nvmcfmodule != nullptr) {
+        cfd->nvmcfmodule->AddIterators(super_version->current->storage_info(),&merge_iter_builder);
+      }
       super_version->current->AddIterators(read_options, env_options_,
                                            &merge_iter_builder, range_del_agg);
     }
@@ -1306,9 +1319,28 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
   }
   if (!done) {
     PERF_TIMER_GUARD(get_from_output_files_time);
-    sv->current->Get(read_options, lkey, pinnable_val, &s, &merge_context,
+
+#ifdef STATISTIC_OPEN
+  uint64_t get_start_time = get_now_micros();
+#endif
+    if(cfd->nvmcfmodule !=nullptr && cfd->nvmcfmodule->Get(sv->current->storage_info(),&s,lkey, pinnable_val->GetSelf())){
+      done = true;
+      pinnable_val->PinSelf();
+#ifdef STATISTIC_OPEN
+  uint64_t get_end_time = get_now_micros();   //查找成功
+  global_stats.l0_get_time += (get_end_time - get_start_time);
+  global_stats.l0_find_num ++;
+#endif
+    }
+    else{
+#ifdef STATISTIC_OPEN
+  uint64_t get_end_time = get_now_micros();   //查找失败
+  global_stats.l0_get_time += (get_end_time - get_start_time);
+#endif
+      sv->current->Get(read_options, lkey, pinnable_val, &s, &merge_context,
                      &max_covering_tombstone_seq, value_found, nullptr, nullptr,
                      callback, is_blob_index);
+    }
     RecordTick(stats_, MEMTABLE_MISS);
   }
 
@@ -2519,7 +2551,7 @@ Status DBImpl::CheckConsistency() {
     // md.name has a leading "/".
     std::string file_path = md.db_path + md.name;
 
-    uint64_t fsize = 0;
+    /* //uint64_t fsize = 0;
     Status s = env_->GetFileSize(file_path, &fsize);
     if (!s.ok() &&
         env_->GetFileSize(Rocks2LevelTableFileName(file_path), &fsize).ok()) {
@@ -2533,7 +2565,7 @@ Status DBImpl::CheckConsistency() {
                              ". Size recorded in manifest " +
                              ToString(md.size) + ", actual size " +
                              ToString(fsize) + "\n";
-    }
+    }  */
   }
   if (corruption_messages.size() == 0) {
     return Status::OK();
@@ -2644,6 +2676,25 @@ Status DestroyDB(const std::string& dbname, const Options& options,
   const std::string lockname = LockFileName(dbname);
   Status result = env->LockFile(lockname, &lock);
   if (result.ok()) {
+    if(soptions.nvm_setup != nullptr){
+      if(soptions.nvm_setup->pmem_path.size() != 0){
+        RECORD_LOG("DestroyDB delete dir:%s\n",soptions.nvm_setup->pmem_path.c_str());
+        std::vector<std::string> nvmfiles;
+        env->GetChildren(soptions.nvm_setup->pmem_path, &nvmfiles);  
+        Status delnvm;
+        for (const std::string& nvmfile : nvmfiles) {
+          std::string nvm_path_to_delete = soptions.nvm_setup->pmem_path + "/" + nvmfile;
+          delnvm = env->DeleteFile(nvm_path_to_delete);
+          if(delnvm.ok()){
+            RECORD_LOG("DestroyDB delete file:%s\n",nvm_path_to_delete.c_str());
+          }
+        }
+        //env->DeleteDir(soptions.nvm_setup->pmem_path);
+      }
+    }
+    else{
+      RECORD_LOG("DestroyDB soptions.nvm_setup==nullptr\n");
+    }
     uint64_t number;
     FileType type;
     InfoLogPrefix info_log_prefix(!soptions.db_log_dir.empty(), dbname);

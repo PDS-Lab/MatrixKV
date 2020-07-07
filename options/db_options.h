@@ -79,6 +79,8 @@ struct ImmutableDBOptions {
   bool two_write_queues;
   bool manual_wal_flush;
   bool atomic_flush;
+
+  std::shared_ptr<NvmSetup> nvm_setup = nullptr;
 };
 
 struct MutableDBOptions {

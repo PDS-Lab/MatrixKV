@@ -1,0 +1,113 @@
+//
+//
+//
+
+#pragma once
+
+#include <fcntl.h>
+#include <libpmem.h>
+
+#include "common.h"
+#include "bitmap.h"
+#include "my_log.h"
+
+namespace rocksdb {
+
+class PersistentSstable {
+ public:
+  // nvm_cf_mod.cc 传入 each_size = write_buffer_size + 8 MB (元数据)
+   PersistentSstable(std::string &path, uint64_t each_size,
+                             uint64_t number) {
+    char* pmemaddr=nullptr;
+    size_t mapped_len;
+    int is_pmem;
+    uint64_t total_size = each_size * number;
+
+    bool file_exist = false;
+    if(nvm_file_exists(path.c_str()) == 0) { //文件存在
+      file_exist = true;
+    }
+    pmemaddr = (char *)(pmem_map_file(path.c_str(), total_size,
+                                                PMEM_FILE_CREATE, 0666,
+                                                &mapped_len, &is_pmem));
+    RECORD_LOG("%s PersistentSstable path:%s map_len:%f MB is:%d each_size:%f MB number:%lu total_size:%f MB\n",file_exist ? "open" : "crest",
+      path.c_str(),mapped_len/1048576.0,is_pmem,each_size/1048576.0,number,total_size/1048576.0);
+    assert(pmemaddr != nullptr);
+    raw_ = pmemaddr;
+    bitmap_ = new BitMap(number);
+    each_size_ = each_size;
+    num_ = number;
+    use_num_ = 0;
+    mapped_len_ = mapped_len;
+    is_pmem_ = is_pmem;
+  }
+  ~PersistentSstable() {
+    //Sync();
+    delete bitmap_;
+    pmem_unmap(raw_, mapped_len_);
+  }
+  char* AllocSstable(int& index) {
+    char* alloc = nullptr;
+    for(unsigned int i=0; i < num_; i++){
+      if(bitmap_->get(i) == 0) {
+        index = (int)i;
+        alloc = raw_ + index * each_size_;
+        bitmap_->set(index);
+        use_num_ = use_num_ + 1;
+        return alloc;
+      }
+    }
+    return alloc;
+  }
+
+  char* GetIndexPtr(int index) {
+    assert((uint64_t)index < num_ && index >= 0);
+    return raw_ + index * each_size_;
+  }
+
+  void DeleteSstable(int index) {
+    size_t pos = index;
+    bitmap_->clr(pos);
+    use_num_ = use_num_ - 1;
+  }
+  void Sync(){
+    if (is_pmem_)
+		pmem_persist(raw_, mapped_len_);
+	else
+		pmem_msync(raw_, mapped_len_);
+  }
+
+  uint64_t GetUseNum() { return use_num_; }
+  uint64_t GetNum() { return num_; }
+  void Reset() {
+    bitmap_->reset();
+    use_num_ = 0;
+  }
+  uint64_t GetEachSize(){ return each_size_;}
+
+  void RecoverAddSstable(int index) {
+    if ((uint64_t)index >= num_) {
+      printf("error:recover file index >= nvm index!\n");
+      return;
+    }
+    if (bitmap_->get(index) != 0 ) {
+      printf("error:recover file index is used !\n");
+      return;
+    }
+    bitmap_->set(index);
+    use_num_ = use_num_ + 1;
+  }
+
+
+ private:
+  char* raw_;             // pmem 内存映射的地址
+  BitMap* bitmap_;        // 记录每一个 table 空间是否被使用
+  size_t mapped_len_;     
+  int is_pmem_;
+  uint64_t total_size_;   // pmem 空间
+  uint64_t each_size_;
+  uint64_t num_;          // L0 max table number
+  uint64_t use_num_;      // 记录被使用的 table 空间的个数
+};
+
+}  // namespace rocksdb

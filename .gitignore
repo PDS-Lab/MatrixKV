@@ -74,3 +74,11 @@ tp2/
 fbcode/
 fbcode
 buckifier/*.pyc
+.vscode
+NVM_LOG
+OP_DATA
+OP_TIME.csv
+compaction.csv
+result
+Latency.csv
+PerSecondLatency.csv

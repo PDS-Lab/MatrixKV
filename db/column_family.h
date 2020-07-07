@@ -26,6 +26,9 @@
 #include "rocksdb/options.h"
 #include "util/thread_local.h"
 
+#include "utilities/nvm_mod/nvm_cf_mod.h"
+//#include "utilities/nvm_mod/column_compaction.h"
+
 namespace rocksdb {
 
 class Version;
@@ -270,7 +273,7 @@ class ColumnFamilyData {
   bool NeedsCompaction() const;
   // REQUIRES: DB mutex held
   Compaction* PickCompaction(const MutableCFOptions& mutable_options,
-                             LogBuffer* log_buffer);
+                             LogBuffer* log_buffer,bool for_column_compaction = false,NvmCfModule* nvmcf = nullptr);
 
   // Check if the passed range overlap with any running compactions.
   // REQUIRES: DB mutex held
@@ -359,7 +362,7 @@ class ColumnFamilyData {
   static std::pair<WriteStallCondition, WriteStallCause>
   GetWriteStallConditionAndCause(int num_unflushed_memtables, int num_l0_files,
                                  uint64_t num_compaction_needed_bytes,
-                                 const MutableCFOptions& mutable_cf_options);
+                                 const MutableCFOptions& mutable_cf_options, uint64_t l0_files_size = 0, const NvmCfOptions* nvmcfoption = nullptr);
 
   // Recalculate some small conditions, which are changed only during
   // compaction, adding new memtable and/or
@@ -382,7 +385,14 @@ class ColumnFamilyData {
   Status AddDirectories();
 
   Directory* GetDataDir(size_t path_id) const;
-
+///
+  bool NeedsColumnCompaction() const;
+  void set_bg_column_compaction(bool value) { bg_column_compaction_ = value; }
+  bool HaveBalancedDistribution() const;
+///
+///
+  NvmCfModule* nvmcfmodule = nullptr;
+///
  private:
   friend class ColumnFamilySet;
   ColumnFamilyData(uint32_t id, const std::string& name,
@@ -469,6 +479,10 @@ class ColumnFamilyData {
 
   // Directories corresponding to cf_paths.
   std::vector<std::unique_ptr<Directory>> data_dirs_;
+
+///
+  std::atomic<bool> bg_column_compaction_;
+///
 };
 
 // ColumnFamilySet has interesting thread-safety requirements
