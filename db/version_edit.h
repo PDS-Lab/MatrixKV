@@ -93,11 +93,17 @@ struct FileMetaData {
   uint64_t first_key_index;   //nvm need
 
   //for nvm recover
-  int nvm_sstable_index;
-  uint64_t keys_num;
+  int nvm_sstable_index;               // NVM 中 SSTable 的索引值
+  uint64_t keys_num; 
   uint64_t key_point_filenum;
   uint64_t raw_file_size;
   uint64_t nvm_meta_size;
+
+  // Add for NVMPager begin
+  uint64_t compact_size_so_far;        // 目前本 Table 已经 Compaction 掉了多少空间 
+  std::vector<int> file_page;          // 保存 L0 层每个 Table 的页面分配情况
+  uint32_t first_page_index;           // 在 file_page 中的索引，指示本 Table 当前尚未 Compaction 的页面
+  // Add for NVMPager end
   //
 ////
 
@@ -136,6 +142,10 @@ struct FileMetaData {
         key_point_filenum(0),
         raw_file_size(0),
         nvm_meta_size(0),
+        // Add for NVMPager begin
+        compact_size_so_far(0),
+        first_page_index(0),
+        // Add for NVMPager end
         table_reader_handle(nullptr),
         compensated_file_size(0),
         num_entries(0),
@@ -258,7 +268,13 @@ class VersionEdit {
                const SequenceNumber& largest_seqno,
                bool marked_for_compaction, bool is_nvm_level0 = false, uint64_t first_key_index = 0,
                int nvm_sstable_index = -1,uint64_t keys_num = 0,uint64_t key_point_filenum = 0, 
-               uint64_t raw_file_size = 0, uint64_t nvm_meta_size = 0) {
+               uint64_t raw_file_size = 0, uint64_t nvm_meta_size = 0,
+               // Add for NVMPager begin
+               uint64_t compaction_size_so_far = 0,
+               const std::vector<int> &file_page = std::vector<int>(),
+               uint32_t first_page_index = 0
+               // Add for NVMPager end
+               ){
     assert(smallest_seqno <= largest_seqno);
     FileMetaData f;
     f.fd = FileDescriptor(file, file_path_id, file_size, smallest_seqno,
@@ -275,6 +291,11 @@ class VersionEdit {
     f.key_point_filenum = key_point_filenum;
     f.raw_file_size = raw_file_size;
     f.nvm_meta_size = nvm_meta_size;
+    // Add for NVMPager begin
+    f.compact_size_so_far = compaction_size_so_far;
+    f.file_page = file_page;
+    f.first_page_index = first_page_index;
+    // Add for NVMPager end
     new_files_.emplace_back(level, std::move(f));
   }
 

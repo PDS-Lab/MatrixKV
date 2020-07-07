@@ -20,6 +20,8 @@ NvmCfModule::NvmCfModule(NvmCfOptions* nvmcfoption, const std::string& cf_name,
     open_by_creat_ = false;
   }
   uint64_t level0_table_num = (nvmcfoption_->Level0_column_compaction_stop_size/nvmcfoption_->write_buffer_size + 1)*2;
+  // nvmcfoption_->write_buffer_size 貌似就是 ColumnFamilyOption::write_buffer_size (64 MB)
+  // write_buffer_size 应该是 memtable 的限制大小
   ptr_sst_ = new PersistentSstable(pol_path,nvmcfoption_->write_buffer_size + 8ul * 1024 * 1024,
             level0_table_num);
   
@@ -36,10 +38,10 @@ NvmCfModule::~NvmCfModule() {
 void NvmCfModule::Delete() {}
 
 bool NvmCfModule::AddL0TableRoom(uint64_t filenum, char** raw,
-                    FileEntry** file) {
+                    FileEntry** file, FileMetaData* meta ) {
   int index = -1;
   char* tmp = nullptr;
-  tmp = ptr_sst_->AllocSstable(index);
+  tmp = ptr_sst_->AllocSstable(index,meta);
   if (index == -1 || tmp == nullptr) {
     printf("error:AddL0TableRoom AllocSstable error!\n");
     return false;
@@ -48,12 +50,11 @@ bool NvmCfModule::AddL0TableRoom(uint64_t filenum, char** raw,
   FileEntry* filetmp = nullptr;
   filetmp = sst_meta_->AddFile(filenum, index);
   if (filetmp == nullptr) {
-    printf("error:AddL0TableRoom AddFile error!\n");
+    printf("error:AddL0TableRoom AddFile error! \n");
     return false;
   } else {
     *file = filetmp;
   }
-  RECORD_LOG("add L0 table:%lu index:%d\n",filenum,index);
   return true;
 }
 
@@ -70,12 +71,17 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     RECORD_LOG("error:comfiles_num == 0, l0:%ld\n",L0files.size());
     return nullptr;
   }
-  
-  
   std::vector<FileEntry*> comfiles;   //compaction files
+
+  // 每一个 Table 在之前的 ColumnCompaction 执行到的索引位置
   std::vector<uint64_t> first_key_indexs;       //file <-> first_key_indexs
+  
+  // 每一个 Table 在本次 ColumnCompaction 中需要 compaction 的 key 数量
   uint64_t *keys_num = new uint64_t[comfiles_num];   //file对应加入compaction的keys num
+  
+  // 每一个 Table 在本次 ColumnCompaction 中需要 compaction 的 key 大小
   uint64_t *keys_size = new uint64_t[comfiles_num];
+  
   comfiles.reserve(comfiles_num);
   first_key_indexs.reserve(comfiles_num);
 
@@ -104,13 +110,6 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
       return nullptr;    //未找到对应文件，错误
     }
   }
-  
-  RECORD_LOG("compaction comfiles:[");
-  for(unsigned int i = 0;i < comfiles.size(); i++){
-    RECORD_LOG("%ld ",comfiles[i]->filenum);
-  }
-  RECORD_LOG("]\n");
-  
 
   for(unsigned int i=0;i < comfiles_num; i++) {
     keys_num[i] = 0;
@@ -140,19 +139,11 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
   if(k_iter->Valid()){
     k_iter->GetCurret(files_index,keys_index);
     minsmallest = comfiles.at(files_index)->keys_meta[keys_index].key;
-    RECORD_LOG("L0 minsmallest:%s maxlargest:%s\n",minsmallest.DebugString(true).c_str(),maxlargest.DebugString(true).c_str());
   }
 
   auto L1files = vstorage->LevelFiles(1);
-  for(unsigned int i = 0;i < L1files.size();i++){
-    RECORD_LOG("L1table:%lu [%s-%s]\n",L1files.at(i)->fd.GetNumber(),L1files.at(i)->smallest.DebugString(true).c_str(),L1files.at(i)->largest.DebugString(true).c_str());
-  }
   std::vector<FileMetaData*> L1overlapfiles;
   vstorage->GetOverlappingInputs(1,&minsmallest,&maxlargest,&L1overlapfiles);
-  for(unsigned int i = 0;i < L1overlapfiles.size();i++){
-    RECORD_LOG("L1over:%lu [%s-%s]\n",L1overlapfiles.at(i)->fd.GetNumber(),L1overlapfiles.at(i)->smallest.DebugString(true).c_str(),L1overlapfiles.at(i)->largest.DebugString(true).c_str());
-  }
-
 
   if(L1overlapfiles.size() == 0){  //L1没有交集文件，根据数据量选取
     RECORD_LOG("nvm cf pick no L1\n");
@@ -292,7 +283,6 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
         printf("error:no find L0:%lu table!\n",filenum);
       }
     }
-    RECORD_LOG("L1Range_index:%u\n",L1Range_index);
     for(unsigned int i = 0;i < ((L1Range_index + 1)/2);i++){
       c->L1compactionfiles.push_back(L1overlapfiles.at(i));
     }
@@ -300,8 +290,6 @@ ColumnCompactionItem* NvmCfModule::PickColumnCompaction(VersionStorageInfo* vsto
     delete []keys_num;
     delete []keys_size;
     return c;
-
-
   }
   delete k_iter;
   delete []keys_num;
@@ -328,29 +316,10 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
   std::vector<FileEntry*> findfiles;
   std::vector<uint64_t> first_key_indexs;
   
-/* #ifdef STATISTIC_OPEN
-  uint64_t start_time = get_now_micros();
-#endif */
   sst_meta_->GetL0Files(L0files,findfiles);
   for(unsigned int i = 0;i < L0files.size();i++){
     first_key_indexs.push_back(L0files.at(i)->first_key_index);
   }
-  /* FileEntry* tmp = nullptr;
-  for(unsigned int i = 0;i < L0files.size();i++){
-    tmp = sst_meta_->FindFile(L0files.at(i)->fd.GetNumber());
-    findfiles.push_back(tmp);
-    first_key_indexs.push_back(L0files.at(i)->first_key_index);
-  } */
-/* #ifdef STATISTIC_OPEN
-  uint64_t end_time = get_now_micros();
-  global_stats.l0_find_files_time += (end_time - start_time);
-#endif */
-  /* RECORD_LOG("find key:%s L0:%lu\n",lkey.user_key().ToString(true).c_str(),L0files.size());
-  for(unsigned int i = 0;i < L0files.size();i++){
-    RECORD_LOG("L0 file:%lu first:%lu [%s-%s][%s-%s]\n",L0files[i]->fd.GetNumber(),first_key_indexs[i],findfiles[i]->keys_meta[first_key_indexs[i]].key.DebugString(true).c_str(),
-      findfiles[i]->keys_meta[findfiles[i]->keys_num -1].key.DebugString(true).c_str(),L0files[i]->smallest.DebugString(true).c_str(),L0files[i]->largest.DebugString(true).c_str());
-  } */
-  
   Slice user_key = lkey.user_key();
   FileEntry* file = nullptr;
   int find_index = -1;
@@ -364,20 +333,12 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
       pre_right = -1;
     }
     int com_result = UserKeyCompareRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key));
-    /* RECORD_LOG("search:%lu point:%lu pre_left:%d pre_right:%d com_result:%d\n",file->filenum,next_file_num,pre_left,pre_right,com_result);
-    if(pre_left > 0 && pre_right > 0){
-      RECORD_LOG("[%s-%s]\n",file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
-    } */
     if( com_result == 0) { //在范围内
       if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
-        //RECORD_LOG("find!%d\n",find_index);
         GetValueInFile(file,find_index,value);
         *s=Status::OK();
         return true;
       }
-      /* if(pre_left > 0 && pre_right > 0){
-        RECORD_LOG("left:%d right:%d [%s-%s]\n",pre_left,pre_right,file->keys_meta[pre_left].key.DebugString(true).c_str(),file->keys_meta[pre_right].key.DebugString(true).c_str());
-      } */
       if(pre_left >= (int)first_key_indexs[i] && pre_left < (int)file->keys_num){
         pre_left = (int)file->keys_meta[pre_left].next - 1;  //在BinarySearchInFile中会有检测范围，无需担心-1带来越界
       }
@@ -396,20 +357,6 @@ bool NvmCfModule::Get(VersionStorageInfo* vstorage,Status *s,const LookupKey &lk
       pre_right = -1;  
       next_file_num = file->key_point_filenum;
     }
-    /* if(UserKeyInRange(&user_key,&(file->keys_meta[first_key_indexs[i]].key),&(file->keys_meta[file->keys_num - 1].key))){
-        if(BinarySearchInFile(file,first_key_indexs[i],&user_key,&find_index,&pre_left,&pre_right)){
-          GetValueInFile(file,find_index,value);
-          *s=Status::OK();
-          return true;
-        }
-        if(pre_left >= (int)first_key_indexs[i] && pre_left < (int)file->keys_num){
-          pre_left = (int)file->keys_meta[pre_left].next - 1;
-        }
-        if(pre_right >= (int)first_key_indexs[i] && pre_right < (int)file->keys_num){
-          pre_right = (int)file->keys_meta[pre_right].next;
-        }
-        next_file_num = file->key_point_filenum;
-    }*/
   }
   return false;
 
@@ -436,9 +383,6 @@ int NvmCfModule::UserKeyCompareRange(Slice *user_key,InternalKey *start,Internal
 }
 
 bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice *user_key,int *find_index,int *pre_left ,int *pre_right){
-/* #ifdef STATISTIC_OPEN
-  uint64_t start_time = get_now_micros();
-#endif */
   auto user_comparator = icmp_->user_comparator();
   int left = first_key_index;
   if(pre_left != nullptr && *pre_left >= first_key_index && *pre_left < (int)file->keys_num){
@@ -452,7 +396,6 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
   int mid = 0;
   while(left <= right){  //有等号可确定跳出循环时 right < left
     mid = (left + right)/2;
-    //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
     int compare_result = user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key);  //优化后字符串只比较一次
     if(compare_result > 0){
       right = mid - 1;
@@ -462,49 +405,29 @@ bool NvmCfModule::BinarySearchInFile(FileEntry* file, int first_key_index, Slice
     }
     else{   //找到的情况次数最少，放在最后，减少比较次数
       *find_index = mid;
-/* #ifdef STATISTIC_OPEN
-  uint64_t end_time = get_now_micros();
-  global_stats.l0_search_time += (end_time - start_time);
-#endif */
       return true;
     }
-    //RECORD_LOG("left:%d right:%d mid:%d\n",left,right,mid);
-    /* if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) == 0){   //代码优化
-      *find_index = mid;
-      return true;
-    }
-    else if(user_comparator->Compare(file->keys_meta[mid].key.user_key(),*user_key) > 0){
-      right = mid - 1;
-    }
-    else{
-      left = mid + 1;
-    }*/
   }
   *pre_right = left;
   *pre_left = right;
-/* #ifdef STATISTIC_OPEN
-  uint64_t end_time = get_now_micros();
-  global_stats.l0_search_time += (end_time - start_time);
-#endif */
   return false;
-
 }
 bool NvmCfModule::GetValueInFile(FileEntry* file,int find_index,std::string *value){
-/* #ifdef STATISTIC_OPEN
-  uint64_t start_time = get_now_micros();
-#endif */
-  char* data_addr = GetIndexPtr(file->sstable_index);
-  uint64_t key_value_offset = file->keys_meta[find_index].offset;
-  uint64_t key_size = DecodeFixed64(data_addr + key_value_offset);
-  key_value_offset += 8;
-  key_value_offset += key_size;
-  uint64_t value_size = DecodeFixed64(data_addr + key_value_offset);
-  key_value_offset += 8;
-  value->assign(data_addr + key_value_offset,value_size);
-/* #ifdef STATISTIC_OPEN
-  uint64_t end_time = get_now_micros();
-  global_stats.l0_read_time += (end_time - start_time);
-#endif */
+  uint64_t kv_size = file->keys_meta[find_index].size;
+  char * buf = new char[kv_size];
+  uint64_t offset = 0;
+  uint64_t res = ptr_sst_->ReadData(file->sstable_index,file->keys_meta[find_index].offset,kv_size,buf);
+  if( res < kv_size)
+	  return false;
+  // Add for NVMPager begin
+  uint64_t key_size = DecodeFixed64(buf);
+  offset += 8;
+  offset += key_size;
+  uint64_t value_size = DecodeFixed64(buf+offset);
+  offset += 8;
+  value->assign(buf+offset,value_size);
+  delete buf;
+  // Add for NVMPager end
   return true;
 }
 void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder* merge_iter_builder){
@@ -523,12 +446,9 @@ void NvmCfModule::AddIterators(VersionStorageInfo* vstorage,MergeIteratorBuilder
   for(unsigned int i = 0;i < findfiles.size();i++){
     file = findfiles.at(i);
     key_num = file->keys_num - first_key_indexs[i];
-    merge_iter_builder->AddIterator(NewNVMLevel0ReadIterator(icmp_, GetIndexPtr(file->sstable_index),file,first_key_indexs[i],key_num));
+    merge_iter_builder->AddIterator(NewNVMLevel0ReadIterator(icmp_, GetIndexPtr(file->sstable_index),ptr_sst_,file,first_key_indexs[i],key_num));
   }
-
-
 }
-
 void NvmCfModule::RecoverFromStorageInfo(VersionStorageInfo* vstorage){
   auto L0files = vstorage->LevelFiles(0);
   if( L0files.size() == 0) return;
@@ -536,6 +456,7 @@ void NvmCfModule::RecoverFromStorageInfo(VersionStorageInfo* vstorage){
     printf("error:open nvm cf file by creat, can't recover!\n");
     return;
   }
+  ptr_sst_->RecoverNVMPager(&L0files);
   for(int i = L0files.size() - 1; i >= 0; i--){ //保证顺序
     FileEntry* tmp = sst_meta_->FindFile(L0files[i]->fd.GetNumber(),true,false);
     if( tmp != nullptr) {  //find, how to do ?
@@ -543,18 +464,18 @@ void NvmCfModule::RecoverFromStorageInfo(VersionStorageInfo* vstorage){
       continue;
     }
     //add to nvm cf
-    ptr_sst_->RecoverAddSstable(L0files[i]->nvm_sstable_index);
     FileEntry* file = sst_meta_->AddFile(L0files[i]->fd.GetNumber(), L0files[i]->nvm_sstable_index);
     file->keys_num = L0files[i]->keys_num;
     file->key_point_filenum = L0files[i]->key_point_filenum;
 
     //恢复keys元数据
-    char * file_ptr = ptr_sst_->GetIndexPtr(file->sstable_index);
     uint64_t offset = L0files[i]->raw_file_size;
     uint64_t keys_meta_size = L0files[i]->nvm_meta_size;
 
     char buf[keys_meta_size];
-    memcpy(buf, file_ptr + offset, keys_meta_size);   //读取keys元数据
+    //Add for NVMPager begin
+    ptr_sst_->ReadData(file->sstable_index, offset, keys_meta_size, buf);//读取keys元数据
+    //Add for NVMPager end
 
     file->keys_meta = new KeysMetadata[file->keys_num];
     offset = 0;
@@ -581,17 +502,10 @@ void NvmCfModule::RecoverFromStorageInfo(VersionStorageInfo* vstorage){
       GetFixed64(&ptr_size, &file->keys_meta[j].size);
       offset += 8;
     }
-    RECORD_LOG("recover file:%lu key_point_filenum:%lu keys_num:%lu sstable_index:%lu\n",file->filenum, file->key_point_filenum, file->keys_num, file->sstable_index);
-    /* for(unsigned int j = 0;j < file->keys_num;j++){
-      RECORD_LOG("file:%lu %u %d %lu %lu [%s]-\n", file->filenum, j, file->keys_meta[j].next, file->keys_meta[j].offset, 
-        file->keys_meta[j].size, file->keys_meta[j].key.DebugString(true).c_str());
-    } */
   }
 }
-
 NvmCfModule* NewNvmCfModule(NvmCfOptions* nvmcfoption,const std::string &cf_name,uint32_t cf_id,const InternalKeyComparator* icmp){
   return new NvmCfModule(nvmcfoption,cf_name,cf_id,icmp);
 }
-
 
 }  // namespace rocksdb

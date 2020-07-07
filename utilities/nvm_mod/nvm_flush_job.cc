@@ -475,8 +475,9 @@ Status NvmFlushJob::BuildInsertNvm(InternalIterator *iter,
     //}*/
     FileEntry* file = nullptr;
     char* raw = nullptr;
-    nvm_cf_->AddL0TableRoom(meta_.fd.GetNumber(),&raw,&file);
+    nvm_cf_->AddL0TableRoom(meta_.fd.GetNumber(),&raw,&file,&meta_);
     //L0TableBuilder* L0builder = new L0TableBuilder(nvm_cf_,file,raw);
+    assert(file != nullptr);
     L0TableBuilderWithBuffer* L0builder = new L0TableBuilderWithBuffer(nvm_cf_,file,raw);
 
     MergeHelper merge(env, internal_comparator.user_comparator(),
@@ -691,7 +692,12 @@ Status BuildTableInsertNVM(
 
     FileEntry* file = nullptr;
     char* raw = nullptr;
-    nvm_cf_->AddL0TableRoom(meta->fd.GetNumber(),&raw,&file);
+    // Add for NVMPager begin
+    meta->file_page.clear();
+    meta->first_page_index = 0;
+    meta->compact_size_so_far = 0;
+    // Add for NVMPager end
+    nvm_cf_->AddL0TableRoom(meta->fd.GetNumber(),&raw,&file, meta);
     //L0TableBuilder* L0builder = new L0TableBuilder(nvm_cf_,file,raw);
     L0TableBuilderWithBuffer* L0builder = new L0TableBuilderWithBuffer(nvm_cf_,file,raw);
     

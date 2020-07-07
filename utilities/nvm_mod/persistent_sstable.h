@@ -99,14 +99,14 @@ class PersistentSstable {
 
 
  private:
-  char* raw_;
-  BitMap* bitmap_;
-  size_t mapped_len_;
+  char* raw_;             // pmem 内存映射的地址
+  BitMap* bitmap_;        // 记录每一个 table 空间是否被使用
+  size_t mapped_len_;     
   int is_pmem_;
-  uint64_t total_size_;
+  uint64_t total_size_;   // pmem 空间
   uint64_t each_size_;
-  uint64_t num_;
-  uint64_t use_num_;
+  uint64_t num_;          // L0 max table number
+  uint64_t use_num_;      // 记录被使用的 table 空间的个数
 };
 
 }  // namespace rocksdb

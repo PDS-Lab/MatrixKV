@@ -4219,7 +4219,8 @@ Status VersionSet::WriteSnapshot(log::Writer* log) {
                        f->fd.smallest_seqno, f->fd.largest_seqno,
                        f->marked_for_compaction, f->is_nvm_level0, 
                        f->first_key_index, f->nvm_sstable_index, 
-                       f->keys_num, f->key_point_filenum, f->raw_file_size, f->nvm_meta_size);
+                       f->keys_num, f->key_point_filenum, f->raw_file_size, f->nvm_meta_size, 
+                       f->compact_size_so_far, f->file_page, f->first_page_index);
         }
       }
       edit.SetLogNumber(cfd->GetLogNumber());
@@ -4476,7 +4477,7 @@ InternalIterator* VersionSet::MakeColumnCompactionInputIterator(
         for (size_t i = 0; i < c->GetColumnCompactionItem()->files.size(); i++) {
           file = c->GetColumnCompactionItem()->files.at(i);
 
-          list[num++] = NewColumnCompactionItemIterator(&cfd->internal_comparator(), cfd->nvmcfmodule->GetIndexPtr(file->sstable_index),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
+          list[num++] = NewColumnCompactionItemIterator(&cfd->internal_comparator(), cfd->nvmcfmodule->GetIndexPtr(file->sstable_index), cfd->nvmcfmodule->GetPersistentSstable(),file,c->GetColumnCompactionItem()->L0compactionfiles.at(i)->first_key_index,c->GetColumnCompactionItem()->keys_num.at(i),true);
         }
       } else {
         // Create concatenating iterator for the files from this level

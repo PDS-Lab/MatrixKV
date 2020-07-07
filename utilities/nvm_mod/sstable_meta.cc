@@ -8,8 +8,6 @@ namespace rocksdb {
 SstableMetadata::SstableMetadata(const InternalKeyComparator* icmp, const NvmCfOptions* nvmcfoption)
     :icmp_(icmp), nvmcfoption_(nvmcfoption){
     mu_ = new MyMutex();
-    RECORD_LOG("creat SstableMetadata\n");
-
 }
 
 SstableMetadata::~SstableMetadata(){
@@ -54,17 +52,7 @@ FileEntry* SstableMetadata::FindFile(uint64_t filenumber,bool forward,bool have_
 void SstableMetadata::GetL0Files(std::vector<FileMetaData*>& L0files,std::vector<FileEntry*> &findfiles){ //有先后顺序的L0
     bool find_file = false;
     unsigned int j = 0;
-    /* RECORD_LOG("L0 [");
-    for(unsigned int i = 0; i < L0files.size(); i++){
-        RECORD_LOG("%ld ",L0files[i]->fd.GetNumber());
-    }
-    RECORD_LOG("]\n"); */
     mu_->Lock();
-    /* RECORD_LOG("nvm L0 [");
-    for(unsigned int i = 0; i < files_.size(); i++){
-        RECORD_LOG("%ld ",files_[i]->filenum);
-    }
-    RECORD_LOG("]\n"); */
     for(unsigned int i = 0;i < L0files.size();i++){
         find_file = false;
         while(j < files_.size()){
@@ -178,7 +166,6 @@ void SstableMetadata::UpdateCompactionState(std::vector<FileMetaData*>& L0files)
     if (l0_files_size < nvmcfoption_->Level0_column_compaction_trigger_size) {
         RECORD_LOG("warn:L0 l0_files_size:%f MB < Level0_column_compaction_trigger_size:%f MB\n",l0_files_size/1048576.0, nvmcfoption_->Level0_column_compaction_trigger_size/1048576.0);
     }
-    //int level0_stop_writes_trigger = level0_stop_writes_trigger_;
     int file_num = L0files.size() - 1;
     uint64_t compaction_files_size = 0;
     for(;file_num >= 0; file_num--){  //目前所有table加入compaction_files，后面可设置数量

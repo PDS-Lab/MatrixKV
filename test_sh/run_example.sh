@@ -2,7 +2,7 @@
 
 
 bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/pmem/log"
+wal_dir="/mnt/extend/pmem/log"
 bench_value="4096"
 bench_compression="none" #"snappy,none"
 
@@ -10,13 +10,13 @@ bench_compression="none" #"snappy,none"
 bench_benchmarks="fillrandom,stats,readseq,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
 bench_num="2000000"
-bench_readnum="100000"
+bench_readnum="10000"
 #bench_max_open_files="1000"
 max_background_jobs="3"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/pmem/nvm"
+pmem_path="/mnt/extend/pmem/nvm"
 use_nvm="true"
 
 const_params="

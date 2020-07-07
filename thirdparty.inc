@@ -16,7 +16,7 @@ set(GFLAGS_INCLUDE ${GFLAGS_HOME}/build/native/include)
 set(GFLAGS_LIB_DEBUG ${GFLAGS_HOME}/lib/native/debug/amd64/gflags.lib)
 set(GFLAGS_LIB_RELEASE ${GFLAGS_HOME}/lib/native/retail/amd64/gflags.lib)
 
-# ================================================== GFLAGS ==================================================
+# ============================================ GFLAGS ==================================================
 # For compatibility
 if (GFLAGS)
   set(WITH_GFLAGS ON)

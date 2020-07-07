@@ -190,7 +190,7 @@ bool SstFileManagerImpl::EnoughRoomForCompaction(
     if (free_space < needed_headroom + size_added_by_compaction) {
       // We hit the condition of not enough disk space
       ROCKS_LOG_ERROR(logger_, "free space [%d bytes] is less than "
-          "needed headroom [%d bytes]\n", free_space, needed_headroom);
+          "needed headroom [%d bytes] path:%s \n", free_space, needed_headroom,fn);
       return false;
     }
   }
@@ -267,8 +267,8 @@ void SstFileManagerImpl::ClearError() {
       if (bg_err_.severity() == Status::Severity::kHardError) {
         if (free_space < reserved_disk_buffer_) {
           ROCKS_LOG_ERROR(logger_, "free space [%d bytes] is less than "
-              "required disk buffer [%d bytes]\n", free_space,
-              reserved_disk_buffer_);
+              "required disk buffer [%d bytes] path:%s\n", free_space,
+              reserved_disk_buffer_,path_.c_str());
           ROCKS_LOG_ERROR(logger_, "Cannot clear hard error\n");
           s = Status::NoSpace();
         }

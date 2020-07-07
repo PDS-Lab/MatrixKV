@@ -1,24 +1,24 @@
 #! /bin/sh
 
 
-bench_db_path="/mnt/ssd/ceshi"
-wal_dir="/pmem/log"
-bench_value="4096"
+bench_db_path="/mnt/ssd/test"
+wal_dir="/mnt/ssd/test"
+bench_value="1024"
 bench_compression="none" #"snappy,none"
 
 #bench_benchmarks="fillseq,stats,readseq,readrandom,stats" #"fillrandom,fillseq,readseq,readrandom,stats"
-#bench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
+##ench_benchmarks="fillrandom,stats,readseq,readrandom,readrandom,readrandom,stats"
 #bench_benchmarks="fillrandom,stats,wait,stats,readseq,readrandom,readrandom,readrandom,stats"
-bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,readseq,readrandom,stats"
+bench_benchmarks="fillrandom,stats,wait,clean_cache,stats,,readrandom,stats"
 #bench_benchmarks="fillseq,stats"
-bench_num="20000000"
+bench_num="80000000"
 bench_readnum="1000000"
 #bench_max_open_files="1000"
 max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-pmem_path="/pmem/nvm"
+pmem_path="/pmem0/test/nvm"
 use_nvm="true"
 
 const_params="
