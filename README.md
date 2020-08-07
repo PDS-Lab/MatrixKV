@@ -48,3 +48,4 @@ We appreciate PingCap and Intel for the hardware support and maintenance.
 - Ting Yao (tingyao@hust.edu.cn)
 - Zhiwen Liu (993096281@qq.com)
 - Yiwen Zhang (zhangyiwen@hust.edu.cn)
+- Chenghao Zhu (627120947@qq.com)
