@@ -46,6 +46,6 @@ We appreciate PingCap and Intel for the hardware support and maintenance.
 ## 5 Contributors
 - Ph.D supervisor: Jiguang Wan  (jgwan@hust.edu.cn)
 - Ting Yao (tingyao@hust.edu.cn)
+- Chenghao Zhu (627120947@qq.com)
 - Zhiwen Liu (993096281@qq.com)
 - Yiwen Zhang (zhangyiwen@hust.edu.cn)
-- Chenghao Zhu (627120947@qq.com)
